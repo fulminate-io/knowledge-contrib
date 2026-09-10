@@ -1,0 +1,21 @@
+# collector-manifest.tsv — what this directory is, for the four readers that
+# census it. The FORMAT and the KEY SET are not this port's to choose: they are
+# declared once in scripts/testdata/collector-port-contract.tsv and read from
+# there by the membership, standalone and isolation censuses and by the publish's
+# stale sweep. key<TAB>value, one pair per line, `#` comments and blank lines
+# ignored; a tab is what lets a command carry spaces with no quoting rule for
+# four readers in two languages to disagree about.
+#
+# CARRYING THIS FILE IS WHAT MAKES A DIRECTORY A PORT. A directory carrying it
+# AND a go.mod is in two classes at once, which is a contradiction rather than a
+# merge, and the port's own suite asserts this one carries no go.mod anywhere
+# beneath it.
+#
+# THE TWO COMMANDS ARE EXECUTED, not read: the standalone census runs them from a
+# cd into the STAGED directory. They carry no shell metacharacter and need no
+# install step, which is what the zero-dependency decision buys.
+
+language	python
+build	python3 -m compileall -q knowledge_collector
+test	python3 -m unittest discover
+ci_leg	framework-python-tests

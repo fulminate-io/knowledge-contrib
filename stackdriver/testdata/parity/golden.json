@@ -1,0 +1,199 @@
+{
+  "generated_by": "cmd/knowledge/internal/collector/logs.MaterializeLogGraph",
+  "command": "cp cmd/collectors/stackdriver/testdata/parity/generate.go cmd/knowledge/internal/paritygen/main.go \u0026\u0026 (cd cmd/knowledge \u0026\u0026 go run ./internal/paritygen \"$(git rev-parse HEAD)\") \u003e cmd/collectors/stackdriver/testdata/parity/golden.json",
+  "tree_sha": "45a0f91baf0367fc94d8e665fba334bf4acd4460",
+  "date": "2026-09-07T18:15:16Z",
+  "note": "Content is base64 of the node's raw Content bytes. The comparator writes the chunk payload raw; the collector base64-encodes it, because the collector's own envelope is JSON and Go's encoder replaces invalid UTF-8 rather than refusing it.",
+  "nodes": [
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "log-template",
+      "symbol_name": "connect-failed@err",
+      "metadata": {
+        "alias": "connect-failed@err",
+        "count": "3",
+        "first_seen": "2026-09-07T12:00:00.000000000Z",
+        "last_seen": "2026-09-07T12:01:00.000000000Z",
+        "pattern": "connect failed to \u003c*\u003e",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "type": "log-template",
+      "symbol_name": "queue-drain-failed@err",
+      "metadata": {
+        "alias": "queue-drain-failed@err",
+        "count": "2",
+        "first_seen": "2026-09-07T12:00:00.000000000Z",
+        "last_seen": "2026-09-07T12:00:30.000000000Z",
+        "pattern": "queue drain failed",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "id": "3b9828447781026b9d3acb5b4aa838c5016b90671ef8fb4822a51d613be661b4",
+      "type": "log-stream",
+      "symbol_name": "namespace_name=prod.service=api",
+      "metadata": {
+        "alias": "namespace_name=prod.service=api",
+        "fingerprint": "3b9828447781026b9d3acb5b4aa838c5016b90671ef8fb4822a51d613be661b4",
+        "label:namespace_name": "prod",
+        "label:service": "api"
+      }
+    },
+    {
+      "id": "816db72fffbda5f59ce71fea3e2e7e65d3f9424953f2521dbdd1cded9825b386",
+      "type": "log-stream",
+      "symbol_name": "namespace_name=prod.service=worker",
+      "metadata": {
+        "alias": "namespace_name=prod.service=worker",
+        "fingerprint": "816db72fffbda5f59ce71fea3e2e7e65d3f9424953f2521dbdd1cded9825b386",
+        "label:namespace_name": "prod",
+        "label:service": "worker"
+      }
+    },
+    {
+      "id": "log-chunk:cccccccccccccccccccccccccccccccc",
+      "type": "log-chunk",
+      "content_base64": "KLUv/QABAv8=",
+      "metadata": {
+        "end_time": "2026-09-07T12:01:00.000000000Z",
+        "entry_count": "3",
+        "start_time": "2026-09-07T12:00:00.000000000Z",
+        "stream_id": "3b9828447781026b9d3acb5b4aa838c5016b90671ef8fb4822a51d613be661b4",
+        "template_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "log-chunk:dddddddddddddddddddddddddddddddd",
+      "type": "log-chunk",
+      "content_base64": "KLUv/f79/AA=",
+      "metadata": {
+        "end_time": "2026-09-07T12:00:30.000000000Z",
+        "entry_count": "2",
+        "start_time": "2026-09-07T12:00:00.000000000Z",
+        "stream_id": "816db72fffbda5f59ce71fea3e2e7e65d3f9424953f2521dbdd1cded9825b386",
+        "template_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "id": "log-label:service=api",
+      "type": "log-label",
+      "symbol_name": "service=api",
+      "metadata": {
+        "label_key": "service",
+        "label_value": "api"
+      }
+    },
+    {
+      "id": "log-label:namespace_name=prod",
+      "type": "log-label",
+      "symbol_name": "namespace_name=prod",
+      "metadata": {
+        "label_key": "namespace_name",
+        "label_value": "prod"
+      }
+    },
+    {
+      "id": "log-label:service=worker",
+      "type": "log-label",
+      "symbol_name": "service=worker",
+      "metadata": {
+        "label_key": "service",
+        "label_value": "worker"
+      }
+    },
+    {
+      "id": "proxy:cloud:acct:res-api",
+      "type": "proxy",
+      "symbol_name": "service=api",
+      "description": "cloud proxy for log label service=api (resolved to acct/res-api)",
+      "source": "proxy:cloud:acct",
+      "metadata": {
+        "account": "acct",
+        "foreign_graph": "cloud",
+        "foreign_id": "res-api",
+        "foreign_type": "log-label"
+      }
+    },
+    {
+      "id": "proxy:cloud:acct:res-worker",
+      "type": "proxy",
+      "symbol_name": "service=worker",
+      "description": "cloud proxy for log label service=worker (resolved to acct/res-worker)",
+      "source": "proxy:cloud:acct",
+      "metadata": {
+        "account": "acct",
+        "foreign_graph": "cloud",
+        "foreign_id": "res-worker",
+        "foreign_type": "log-label"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "3b9828447781026b9d3acb5b4aa838c5016b90671ef8fb4822a51d613be661b4",
+      "to_id": "log-label:service=api",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "3b9828447781026b9d3acb5b4aa838c5016b90671ef8fb4822a51d613be661b4",
+      "to_id": "log-label:namespace_name=prod",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "816db72fffbda5f59ce71fea3e2e7e65d3f9424953f2521dbdd1cded9825b386",
+      "to_id": "log-label:service=worker",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "816db72fffbda5f59ce71fea3e2e7e65d3f9424953f2521dbdd1cded9825b386",
+      "to_id": "log-label:namespace_name=prod",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "log-chunk:cccccccccccccccccccccccccccccccc",
+      "to_id": "3b9828447781026b9d3acb5b4aa838c5016b90671ef8fb4822a51d613be661b4",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "to_id": "log-chunk:cccccccccccccccccccccccccccccccc",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "log-chunk:dddddddddddddddddddddddddddddddd",
+      "to_id": "816db72fffbda5f59ce71fea3e2e7e65d3f9424953f2521dbdd1cded9825b386",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "to_id": "log-chunk:dddddddddddddddddddddddddddddddd",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "log-label:service=api",
+      "to_id": "proxy:cloud:acct:res-api",
+      "type": "EMITTED_BY"
+    },
+    {
+      "from_id": "log-label:namespace=prod",
+      "to_id": "proxy:cloud:acct:res-api",
+      "type": "EMITTED_BY"
+    },
+    {
+      "from_id": "log-label:service=worker",
+      "to_id": "proxy:cloud:acct:res-worker",
+      "type": "EMITTED_BY"
+    },
+    {
+      "from_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "to_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "type": "CORRELATES_WITH",
+      "confidence": 0.5,
+      "method": "temporal+cloud-dependency",
+      "evidence": "services=api,worker resources=acct:res-api,acct:res-worker score=0.500"
+    }
+  ]
+}

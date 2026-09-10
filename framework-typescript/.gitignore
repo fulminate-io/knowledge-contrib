@@ -1,0 +1,8 @@
+# node_modules is NEVER committed and never ships. The publish copies this whole
+# directory with no exclusion of its own, so an installed tree left in place
+# would be published and leak-scanned.
+node_modules/
+# The build output. `npm run build` produces it and the manifest's build command
+# is what CI runs; a committed dist/ would be a second, silently stale copy of
+# every source file in this package.
+dist/

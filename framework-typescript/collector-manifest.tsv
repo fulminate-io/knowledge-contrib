@@ -1,0 +1,27 @@
+# collector-manifest.tsv — what this directory is, for the four readers that
+# partition cmd/collectors: the membership census, the standalone census, the
+# isolation census and the publish sweep.
+#
+# THE FORMAT IS key<TAB>value, one pair per line, `#` comments and blank lines
+# ignored. Neither the name of this file nor its key names are chosen here: both
+# come from scripts/testdata/collector-port-contract.tsv, the ONE declaration
+# those four readers share, so no two of them can look for different spellings of
+# the same thing. A tab separator is what lets a build command carry spaces with
+# no quoting rule for four readers in two languages to disagree about.
+#
+# CARRYING THIS FILE IS WHAT MAKES THIS DIRECTORY A PORT rather than a Go module.
+# A directory carrying both this and a go.mod is a contradiction, not a merge, so
+# this package has no go.mod and appears in none of go.work,
+# scripts/lint-matrix.json or scripts/ci-go-cache-paths.sh.
+#
+# THE TWO COMMANDS RUN IN THIS DIRECTORY, in the PUBLISHED layout as well as
+# here, with no workspace and no network beyond the committed lockfile. `npm ci`
+# rather than `npm install`: it installs exactly what package-lock.json resolves
+# and fails rather than updating it.
+#
+# ci_leg IS THE JOB KEY in .github/workflows/ci.yml, not the job's display name.
+# The membership census fails when the two disagree.
+language	typescript
+build	npm ci --no-audit --no-fund && npm run build
+test	npm test
+ci_leg	framework-typescript-tests

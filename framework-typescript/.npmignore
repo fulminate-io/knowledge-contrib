@@ -1,0 +1,5 @@
+# package.json's `files` list is what decides the published tarball; this file
+# exists so a local `npm pack` never picks up the two directories below even if
+# that list grows.
+node_modules/
+tests/

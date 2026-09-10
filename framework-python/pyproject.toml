@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# pyproject.toml — the packaging file, and the two facts in it that are
+# load-bearing rather than decorative.
+#
+# THERE IS NO `dependencies` KEY AND THAT IS THE POINT. This port takes NO RUNTIME
+# DEPENDENCY: it speaks MCP over newline-delimited JSON on the standard library.
+# The consequences are what the rest of this port rests on -- a user copies the
+# source and it runs, the test command is a bare interpreter invocation with no
+# install step, the CI leg needs no package index, and there is no lockfile for a
+# security advisory to land on. A dependency added here is a change to all four,
+# and the port's own suite reds when one appears.
+#
+# THE VERSION FLOOR IS REAL AND THE CI LEG PINS IT. The leg runs the interpreter
+# named here as the floor, not the runner image's default, so the floor is
+# exercised on every run rather than asserted. The port's suite reads the floor
+# from THIS file and the pin from the workflow independently and compares them;
+# an agreement asserted by reading one and echoing it is always true.
+#
+# THERE IS NO BUILD BACKEND SECTION EITHER. `knowledge collector add` points at an
+# interpreter and a script path, so nothing installs this package to use it, and a
+# build backend would be a network step in a port whose whole shape is not needing
+# one. This file is the project's metadata and its declaration of zero
+# dependencies, which is what R1 asks a reader to be able to check.
+
+[project]
+name = "knowledge-collector"
+version = "1.0.0"
+description = "The Python port of the knowledge custom-collector framework: write a walk, serve it as an MCP tool over stdio."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+keywords = ["knowledge", "mcp", "collector", "graph"]

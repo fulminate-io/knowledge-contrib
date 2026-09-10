@@ -1,0 +1,19 @@
+# collector-manifest.tsv — this directory is a PORT: a collector implementation
+# in a language that is not Go. Carrying this file is what makes it one; the
+# three collector censuses and the publish sweep all read it, and the keys below
+# are the ones scripts/testdata/collector-port-contract.tsv declares.
+#
+# FORMAT: key<TAB>value, one pair per line. Tab rather than space so a build or
+# test command carries spaces with no quoting rule for four readers in two
+# languages to disagree about.
+#
+# NEITHER COMMAND PASSES --offline. The lockfile pins every dependency, so
+# --locked is reproducible without forbidding the fetch that populates a cold
+# machine — and the standalone census runs these commands in the STAGED
+# PUBLISHED LAYOUT, which may be a cold checkout. The no-network assertion
+# belongs in the CI leg, which pre-fetches with --locked and then runs the tests
+# with the network off.
+language	rust
+build	cargo build --locked
+test	cargo test --locked -- --nocapture
+ci_leg	framework-rust-tests

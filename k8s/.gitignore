@@ -1,0 +1,9 @@
+# The compiled collector binary.
+#
+# `go build ./...` inside a main package writes its output next to the source,
+# under the package's own name — so an ordinary local build drops ./k8s here and
+# a careless `git add -A` commits a platform-specific binary. The repository's
+# root ignore file names the other three binaries individually
+# (/knowledge, /knowledge-server, /frontend) because they land at the repo root;
+# this one lands here, so the entry lives here.
+/k8s

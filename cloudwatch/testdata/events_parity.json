@@ -1,0 +1,159 @@
+{
+  "comment": [
+    "The recorded CloudWatch responses the parity fixture walks. Each group's pages are returned in order,",
+    "and the last page of a group carries no next_token. Timestamps are epoch milliseconds, as the API",
+    "returns them.",
+    "",
+    "WHAT EACH ENTRY IS HERE FOR, since a fixture whose rows are undocumented decays into noise:",
+    "  - The first two events of stream abc123 differ in exactly two tokens, so the second BROADENS the",
+    "    first's pattern and moves its template id, its alias and its SymbolName.",
+    "  - Those two arrive OUT OF TIMESTAMP ORDER, so first_seen is the minimum rather than the first arrival.",
+    "  - Their severities differ, so the template's aggregate severity is the maximum over the cluster",
+    "    rather than the first entry's.",
+    "  - Group /aws/lambda/my_function derives the service label my_function, whose UNDERSCORE survives",
+    "    into the alias; a sanitizer written as the obvious rule renders it with a dash instead.",
+    "  - The event with no log_stream name exercises the alias chain's missing-first-component branch.",
+    "  - The 75-character stream name exercises the 60-character truncation, which is part of the",
+    "    stream's IDENTITY because the label is hashed into the stream id.",
+    "  - The 12:11:30 event sits in a different epoch-aligned 5-minute window from every other event, so",
+    "    it lands in its own chunk.",
+    "  - The severity-prefixed and plain-text entries exercise two of the four message shapes; the JSON",
+    "    bodies exercise the third.",
+    "",
+    "THE DECLARED FOREIGN-GRAPH BLOCK, in the shape the client fills from the graphs this",
+    "collector's configuration entry names. It is what the production route resolves against: the",
+    "resolver matches a stream's service label against a resource's symbol_name, case-insensitively,",
+    "and ranks it by the resource_type METADATA key. The two resources in the block are exactly the",
+    "two the `resolutions` array records as expected, so a walk driven with this block produces that",
+    "array rather than being handed it.",
+    "",
+    "THE BLOCK IS KEYED BY GRAPH FAMILY, and it carries no comment of its own for that reason:",
+    "every key inside cloud_context IS a family name now, so a `comment` key would decode as a",
+    "declared family whose graphs are strings. It used to be a struct with a named `cloud` field,",
+    "which ignored any key it did not know; the map form is strict, which is why this note lives",
+    "out here.",
+    "",
+    "THE FAMILY IS `aws`, a name an operator registers, because there is no built-in cloud family",
+    "any more. The resolver takes EVERY declared family but code, so this name is one legitimate",
+    "value of that set and never one the production path checks for."
+  ],
+  "groups": [
+    {
+      "log_group": "/aws/lambda/my_function",
+      "pages": [
+        {
+          "next_token": "page-2",
+          "events": [
+            {
+              "event_id": "e-0003",
+              "timestamp": 1772366822000,
+              "log_stream_name": "2026/03/01/[LATEST]abc123",
+              "message": "ERROR connection refused to 10.0.0.5:5432"
+            },
+            {
+              "event_id": "e-0002",
+              "timestamp": 1772366780000,
+              "log_stream_name": "2026/03/01/[LATEST]abc123",
+              "message": "{\"level\":\"info\",\"message\":\"served request id=2 in 9ms\"}"
+            }
+          ]
+        },
+        {
+          "events": [
+            {
+              "event_id": "e-0001",
+              "timestamp": 1772366774000,
+              "log_stream_name": "2026/03/01/[LATEST]abc123",
+              "message": "{\"level\":\"error\",\"message\":\"served request id=1 in 5ms\"}"
+            },
+            {
+              "event_id": "e-0004",
+              "timestamp": 1772367090000,
+              "log_stream_name": "2026/03/01/[LATEST]def456",
+              "message": "{\"level\":\"warn\",\"message\":\"disk usage high\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "log_group": "/ecs/prod/api-server",
+      "pages": [
+        {
+          "events": [
+            {
+              "comment": "The CROSS-SERVICE ERROR that makes a correlation possible. It sits in a different log group from the lambda errors, so its owning service differs, and within the detector's window of them. Without a second service no pair can correlate at all, whatever the cloud block declares.",
+              "event_id": "e-0008",
+              "timestamp": 1772366790000,
+              "log_stream_name": "ecs-task-1",
+              "message": "ERROR upstream call failed after retries"
+            },
+            {
+              "event_id": "e-0005",
+              "timestamp": 1772366800000,
+              "log_stream_name": "ecs-task-1",
+              "message": "plain text with no level marker"
+            },
+            {
+              "event_id": "e-0006",
+              "timestamp": 1772366805000,
+              "message": "startup complete"
+            },
+            {
+              "event_id": "e-0007",
+              "timestamp": 1772366810000,
+              "log_stream_name": "this-is-a-very-long-cloudwatch-log-stream-name-that-exceeds-sixty-characters",
+              "message": "cache miss"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cloud_context": {
+    "aws": [
+      {
+        "graph_name": "acct-1",
+        "nodes": [
+          {
+            "id": "arn:aws:ecs:us-east-1:111122223333:service/prod/api-server",
+            "symbol_name": "api-server",
+            "metadata": {
+              "resource_type": "ecs:service"
+            }
+          },
+          {
+            "id": "arn:aws:lambda:us-east-1:111122223333:function:my_function",
+            "symbol_name": "my_function",
+            "metadata": {
+              "resource_type": "lambda:function"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "comment": "The declared dependency between the two resources. It is what upgrades a temporal coincidence between the two services' error templates into a CORRELATES_WITH edge; with the nodes declared and this edge absent, the pair is detected and stays unconfirmed.",
+            "from_id": "arn:aws:lambda:us-east-1:111122223333:function:my_function",
+            "to_id": "arn:aws:ecs:us-east-1:111122223333:service/prod/api-server"
+          }
+        ]
+      }
+    ]
+  },
+  "resolutions": [
+    {
+      "comment": "The service label of the ECS group resolves to an ECS service in account acct-1.",
+      "label_key": "service",
+      "label_value": "api-server",
+      "account": "acct-1",
+      "resource_id": "arn:aws:ecs:us-east-1:111122223333:service/prod/api-server"
+    },
+    {
+      "comment": "The Lambda group's service label resolves to a function in the SAME account, so two resolutions produce two EMITTED_BY edges and two distinct proxies.",
+      "label_key": "service",
+      "label_value": "my_function",
+      "account": "acct-1",
+      "resource_id": "arn:aws:lambda:us-east-1:111122223333:function:my_function"
+    }
+  ]
+}

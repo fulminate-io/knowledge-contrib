@@ -1,0 +1,36 @@
+{
+  "name": "knowledge-collector-framework",
+  "version": "0.1.0",
+  "description": "The MCP serving and contract layer every custom knowledge collector written in TypeScript is built on.",
+  "license": "Apache-2.0",
+  "_private": "the next key is npm's own refusal to publish; the decision it enforces is that this port is a library with no install, publish or npm-registry path",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "types": "./dist/src/index.d.ts",
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist/src",
+    "contract",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"dist/tests/*.test.js\""
+  },
+  "dependencies": {
+    "ajv": "8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.2",
+    "typescript": "5.9.3"
+  }
+}

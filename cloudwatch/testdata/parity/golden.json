@@ -1,0 +1,504 @@
+{
+  "edges": [
+    {
+      "from_id": "02353d19d7643f790bdc16b87e217e56",
+      "to_id": "log-chunk:b7458e88ba21c9b61ed797059de31c08",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "139e59bfd5e999d6f65b7c9541fd5b45aa7dab739a44e7784e8b5d0413e04f97",
+      "to_id": "log-label:log_group=/aws/lambda/my_function",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "139e59bfd5e999d6f65b7c9541fd5b45aa7dab739a44e7784e8b5d0413e04f97",
+      "to_id": "log-label:log_stream=2026/03/01/[LATEST]def456",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "139e59bfd5e999d6f65b7c9541fd5b45aa7dab739a44e7784e8b5d0413e04f97",
+      "to_id": "log-label:service=my_function",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "494de3d4bf8c1fee5e8ca71484aaf282",
+      "to_id": "log-chunk:3fa902d0bcbbc7febcc0444137400fb3",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "7b17d7ec240c25b3760e840301c66c58",
+      "to_id": "log-chunk:d41a4fc324bb73fd138ed958488df7b9",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "81690b70e140238c7dc5a180bc438e08",
+      "to_id": "log-chunk:0a8078f5f3d2255c6320fc4dae6947ef",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+      "to_id": "log-label:log_group=/aws/lambda/my_function",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+      "to_id": "log-label:log_stream=2026/03/01/[LATEST]abc123",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+      "to_id": "log-label:service=my_function",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+      "to_id": "log-label:log_group=/ecs/prod/api-server",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+      "to_id": "log-label:log_stream=ecs-task-1",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+      "to_id": "log-label:service=api-server",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "b9f7957364a9b8d438ab4b1652378e36bfcd6fdbd76436951acd4a7a0913c7ba",
+      "to_id": "log-label:log_group=/ecs/prod/api-server",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "b9f7957364a9b8d438ab4b1652378e36bfcd6fdbd76436951acd4a7a0913c7ba",
+      "to_id": "log-label:log_stream=this-is-a-very-long-cloudwatch-log-stream-name-that-excee...",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "b9f7957364a9b8d438ab4b1652378e36bfcd6fdbd76436951acd4a7a0913c7ba",
+      "to_id": "log-label:service=api-server",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "bdc51d1c5ddb5630127f72cf0209239e",
+      "to_id": "log-chunk:ccc5e7e2906e58858980bf78ef76f187",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "d2df55cb844cd8520da2f99b4c3708e1579cf7376e9ca7a31976f5df10b60831",
+      "to_id": "log-label:log_group=/ecs/prod/api-server",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "d2df55cb844cd8520da2f99b4c3708e1579cf7376e9ca7a31976f5df10b60831",
+      "to_id": "log-label:service=api-server",
+      "type": "HAS_LABEL"
+    },
+    {
+      "from_id": "eb2e9cb32ed7d80739cecfa97f31a5f8",
+      "to_id": "bdc51d1c5ddb5630127f72cf0209239e",
+      "type": "CORRELATES_WITH",
+      "confidence": 0.4666666666666667,
+      "method": "temporal+cloud-dependency",
+      "evidence": "services=my_function,api-server resources=acct-1:arn:aws:lambda:us-east-1:111122223333:function:my_function,acct-1:arn:aws:ecs:us-east-1:111122223333:service/prod/api-server score=0.467"
+    },
+    {
+      "from_id": "eb2e9cb32ed7d80739cecfa97f31a5f8",
+      "to_id": "log-chunk:e6b457f0ddda0ad336fbdefb7cea5783",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "f255840ae22db7c1e56a02d34ffa373a",
+      "to_id": "bdc51d1c5ddb5630127f72cf0209239e",
+      "type": "CORRELATES_WITH",
+      "confidence": 0.7575757575757576,
+      "method": "temporal+cloud-dependency",
+      "evidence": "services=my_function,api-server resources=acct-1:arn:aws:lambda:us-east-1:111122223333:function:my_function,acct-1:arn:aws:ecs:us-east-1:111122223333:service/prod/api-server score=0.758"
+    },
+    {
+      "from_id": "f255840ae22db7c1e56a02d34ffa373a",
+      "to_id": "log-chunk:fc8f6b2cce3c65f3746bab8edd52df12",
+      "type": "CONTAINS"
+    },
+    {
+      "from_id": "log-chunk:0a8078f5f3d2255c6320fc4dae6947ef",
+      "to_id": "b9f7957364a9b8d438ab4b1652378e36bfcd6fdbd76436951acd4a7a0913c7ba",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "log-chunk:3fa902d0bcbbc7febcc0444137400fb3",
+      "to_id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "log-chunk:b7458e88ba21c9b61ed797059de31c08",
+      "to_id": "d2df55cb844cd8520da2f99b4c3708e1579cf7376e9ca7a31976f5df10b60831",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "log-chunk:ccc5e7e2906e58858980bf78ef76f187",
+      "to_id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "log-chunk:d41a4fc324bb73fd138ed958488df7b9",
+      "to_id": "139e59bfd5e999d6f65b7c9541fd5b45aa7dab739a44e7784e8b5d0413e04f97",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "log-chunk:e6b457f0ddda0ad336fbdefb7cea5783",
+      "to_id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "log-chunk:fc8f6b2cce3c65f3746bab8edd52df12",
+      "to_id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+      "type": "BELONGS_TO"
+    },
+    {
+      "from_id": "log-label:service=api-server",
+      "to_id": "proxy:cloud:acct-1:arn:aws:ecs:us-east-1:111122223333:service/prod/api-server",
+      "type": "EMITTED_BY"
+    },
+    {
+      "from_id": "log-label:service=my_function",
+      "to_id": "proxy:cloud:acct-1:arn:aws:lambda:us-east-1:111122223333:function:my_function",
+      "type": "EMITTED_BY"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "02353d19d7643f790bdc16b87e217e56",
+      "type": "log-template",
+      "symbol_name": "startup-complete@info",
+      "metadata": {
+        "alias": "startup-complete@info",
+        "count": "1",
+        "first_seen": "2026-03-01T12:06:45.000000000Z",
+        "last_seen": "2026-03-01T12:06:45.000000000Z",
+        "pattern": "startup complete",
+        "severity": "INFO"
+      }
+    },
+    {
+      "id": "139e59bfd5e999d6f65b7c9541fd5b45aa7dab739a44e7784e8b5d0413e04f97",
+      "type": "log-stream",
+      "symbol_name": "2026-03-01-LATEST-def456.my_function",
+      "metadata": {
+        "alias": "2026-03-01-LATEST-def456.my_function",
+        "fingerprint": "139e59bfd5e999d6f65b7c9541fd5b45aa7dab739a44e7784e8b5d0413e04f97",
+        "label:log_group": "/aws/lambda/my_function",
+        "label:log_stream": "2026/03/01/[LATEST]def456",
+        "label:service": "my_function"
+      }
+    },
+    {
+      "id": "494de3d4bf8c1fee5e8ca71484aaf282",
+      "type": "log-template",
+      "symbol_name": "plain-text-no-level-marker@info",
+      "metadata": {
+        "alias": "plain-text-no-level-marker@info",
+        "count": "1",
+        "first_seen": "2026-03-01T12:06:40.000000000Z",
+        "last_seen": "2026-03-01T12:06:40.000000000Z",
+        "pattern": "plain text with no level marker",
+        "severity": "INFO"
+      }
+    },
+    {
+      "id": "7b17d7ec240c25b3760e840301c66c58",
+      "type": "log-template",
+      "symbol_name": "disk-usage-high@warn",
+      "metadata": {
+        "alias": "disk-usage-high@warn",
+        "count": "1",
+        "first_seen": "2026-03-01T12:11:30.000000000Z",
+        "last_seen": "2026-03-01T12:11:30.000000000Z",
+        "pattern": "disk usage high",
+        "severity": "WARN"
+      }
+    },
+    {
+      "id": "81690b70e140238c7dc5a180bc438e08",
+      "type": "log-template",
+      "symbol_name": "cache-miss@info",
+      "metadata": {
+        "alias": "cache-miss@info",
+        "count": "1",
+        "first_seen": "2026-03-01T12:06:50.000000000Z",
+        "last_seen": "2026-03-01T12:06:50.000000000Z",
+        "pattern": "cache miss",
+        "severity": "INFO"
+      }
+    },
+    {
+      "id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+      "type": "log-stream",
+      "symbol_name": "2026-03-01-LATEST-abc123.my_function",
+      "metadata": {
+        "alias": "2026-03-01-LATEST-abc123.my_function",
+        "fingerprint": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+        "label:log_group": "/aws/lambda/my_function",
+        "label:log_stream": "2026/03/01/[LATEST]abc123",
+        "label:service": "my_function"
+      }
+    },
+    {
+      "id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+      "type": "log-stream",
+      "symbol_name": "ecs-task-1.api-server",
+      "metadata": {
+        "alias": "ecs-task-1.api-server",
+        "fingerprint": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+        "label:log_group": "/ecs/prod/api-server",
+        "label:log_stream": "ecs-task-1",
+        "label:service": "api-server"
+      }
+    },
+    {
+      "id": "b9f7957364a9b8d438ab4b1652378e36bfcd6fdbd76436951acd4a7a0913c7ba",
+      "type": "log-stream",
+      "symbol_name": "this-is-a-very-long-cloudwatch-log-stream-name-that-excee.api-server",
+      "metadata": {
+        "alias": "this-is-a-very-long-cloudwatch-log-stream-name-that-excee.api-server",
+        "fingerprint": "b9f7957364a9b8d438ab4b1652378e36bfcd6fdbd76436951acd4a7a0913c7ba",
+        "label:log_group": "/ecs/prod/api-server",
+        "label:log_stream": "this-is-a-very-long-cloudwatch-log-stream-name-that-excee...",
+        "label:service": "api-server"
+      }
+    },
+    {
+      "id": "bdc51d1c5ddb5630127f72cf0209239e",
+      "type": "log-template",
+      "symbol_name": "upstream-call-failed-after-retries@err",
+      "metadata": {
+        "alias": "upstream-call-failed-after-retries@err",
+        "count": "1",
+        "first_seen": "2026-03-01T12:06:30.000000000Z",
+        "last_seen": "2026-03-01T12:06:30.000000000Z",
+        "pattern": "upstream call failed after retries",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "id": "d2df55cb844cd8520da2f99b4c3708e1579cf7376e9ca7a31976f5df10b60831",
+      "type": "log-stream",
+      "symbol_name": "api-server",
+      "metadata": {
+        "alias": "api-server",
+        "fingerprint": "d2df55cb844cd8520da2f99b4c3708e1579cf7376e9ca7a31976f5df10b60831",
+        "label:log_group": "/ecs/prod/api-server",
+        "label:service": "api-server"
+      }
+    },
+    {
+      "id": "eb2e9cb32ed7d80739cecfa97f31a5f8",
+      "type": "log-template",
+      "symbol_name": "connection-refused@err",
+      "metadata": {
+        "alias": "connection-refused@err",
+        "count": "1",
+        "first_seen": "2026-03-01T12:07:02.000000000Z",
+        "last_seen": "2026-03-01T12:07:02.000000000Z",
+        "pattern": "connection refused to \u003c*\u003e:\u003c*\u003e",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "id": "f255840ae22db7c1e56a02d34ffa373a",
+      "type": "log-template",
+      "symbol_name": "served-request@err",
+      "metadata": {
+        "alias": "served-request@err",
+        "count": "2",
+        "first_seen": "2026-03-01T12:06:14.000000000Z",
+        "last_seen": "2026-03-01T12:06:20.000000000Z",
+        "pattern": "served request \u003c*\u003e in \u003c*\u003e",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "id": "log-chunk:0a8078f5f3d2255c6320fc4dae6947ef",
+      "type": "log-chunk",
+      "content_omitted": true,
+      "metadata": {
+        "end_time": "2026-03-01T12:06:50.000000000Z",
+        "entry_count": "1",
+        "start_time": "2026-03-01T12:06:50.000000000Z",
+        "stream_id": "b9f7957364a9b8d438ab4b1652378e36bfcd6fdbd76436951acd4a7a0913c7ba",
+        "template_id": "81690b70e140238c7dc5a180bc438e08"
+      }
+    },
+    {
+      "id": "log-chunk:3fa902d0bcbbc7febcc0444137400fb3",
+      "type": "log-chunk",
+      "content_omitted": true,
+      "metadata": {
+        "end_time": "2026-03-01T12:06:40.000000000Z",
+        "entry_count": "1",
+        "start_time": "2026-03-01T12:06:40.000000000Z",
+        "stream_id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+        "template_id": "494de3d4bf8c1fee5e8ca71484aaf282"
+      }
+    },
+    {
+      "id": "log-chunk:b7458e88ba21c9b61ed797059de31c08",
+      "type": "log-chunk",
+      "content_omitted": true,
+      "metadata": {
+        "end_time": "2026-03-01T12:06:45.000000000Z",
+        "entry_count": "1",
+        "start_time": "2026-03-01T12:06:45.000000000Z",
+        "stream_id": "d2df55cb844cd8520da2f99b4c3708e1579cf7376e9ca7a31976f5df10b60831",
+        "template_id": "02353d19d7643f790bdc16b87e217e56"
+      }
+    },
+    {
+      "id": "log-chunk:ccc5e7e2906e58858980bf78ef76f187",
+      "type": "log-chunk",
+      "content_omitted": true,
+      "metadata": {
+        "end_time": "2026-03-01T12:06:30.000000000Z",
+        "entry_count": "1",
+        "start_time": "2026-03-01T12:06:30.000000000Z",
+        "stream_id": "b8940e4e2fd28c9230c8161db50fe2201ea158441819d9bf10fd453a32445fcf",
+        "template_id": "bdc51d1c5ddb5630127f72cf0209239e"
+      }
+    },
+    {
+      "id": "log-chunk:d41a4fc324bb73fd138ed958488df7b9",
+      "type": "log-chunk",
+      "content_omitted": true,
+      "metadata": {
+        "end_time": "2026-03-01T12:11:30.000000000Z",
+        "entry_count": "1",
+        "start_time": "2026-03-01T12:11:30.000000000Z",
+        "stream_id": "139e59bfd5e999d6f65b7c9541fd5b45aa7dab739a44e7784e8b5d0413e04f97",
+        "template_id": "7b17d7ec240c25b3760e840301c66c58"
+      }
+    },
+    {
+      "id": "log-chunk:e6b457f0ddda0ad336fbdefb7cea5783",
+      "type": "log-chunk",
+      "content_omitted": true,
+      "metadata": {
+        "end_time": "2026-03-01T12:07:02.000000000Z",
+        "entry_count": "1",
+        "start_time": "2026-03-01T12:07:02.000000000Z",
+        "stream_id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+        "template_id": "eb2e9cb32ed7d80739cecfa97f31a5f8"
+      }
+    },
+    {
+      "id": "log-chunk:fc8f6b2cce3c65f3746bab8edd52df12",
+      "type": "log-chunk",
+      "content_omitted": true,
+      "metadata": {
+        "end_time": "2026-03-01T12:06:20.000000000Z",
+        "entry_count": "2",
+        "start_time": "2026-03-01T12:06:14.000000000Z",
+        "stream_id": "9c2569e7e17fa685922c19300b209e0fb1f21be3512a0481f15f44b919dee518",
+        "template_id": "f255840ae22db7c1e56a02d34ffa373a"
+      }
+    },
+    {
+      "id": "log-label:log_group=/aws/lambda/my_function",
+      "type": "log-label",
+      "symbol_name": "log_group=/aws/lambda/my_function",
+      "metadata": {
+        "label_key": "log_group",
+        "label_value": "/aws/lambda/my_function"
+      }
+    },
+    {
+      "id": "log-label:log_group=/ecs/prod/api-server",
+      "type": "log-label",
+      "symbol_name": "log_group=/ecs/prod/api-server",
+      "metadata": {
+        "label_key": "log_group",
+        "label_value": "/ecs/prod/api-server"
+      }
+    },
+    {
+      "id": "log-label:log_stream=2026/03/01/[LATEST]abc123",
+      "type": "log-label",
+      "symbol_name": "log_stream=2026/03/01/[LATEST]abc123",
+      "metadata": {
+        "label_key": "log_stream",
+        "label_value": "2026/03/01/[LATEST]abc123"
+      }
+    },
+    {
+      "id": "log-label:log_stream=2026/03/01/[LATEST]def456",
+      "type": "log-label",
+      "symbol_name": "log_stream=2026/03/01/[LATEST]def456",
+      "metadata": {
+        "label_key": "log_stream",
+        "label_value": "2026/03/01/[LATEST]def456"
+      }
+    },
+    {
+      "id": "log-label:log_stream=ecs-task-1",
+      "type": "log-label",
+      "symbol_name": "log_stream=ecs-task-1",
+      "metadata": {
+        "label_key": "log_stream",
+        "label_value": "ecs-task-1"
+      }
+    },
+    {
+      "id": "log-label:log_stream=this-is-a-very-long-cloudwatch-log-stream-name-that-excee...",
+      "type": "log-label",
+      "symbol_name": "log_stream=this-is-a-very-long-cloudwatch-log-stream-name-that-excee...",
+      "metadata": {
+        "label_key": "log_stream",
+        "label_value": "this-is-a-very-long-cloudwatch-log-stream-name-that-excee..."
+      }
+    },
+    {
+      "id": "log-label:service=api-server",
+      "type": "log-label",
+      "symbol_name": "service=api-server",
+      "metadata": {
+        "label_key": "service",
+        "label_value": "api-server"
+      }
+    },
+    {
+      "id": "log-label:service=my_function",
+      "type": "log-label",
+      "symbol_name": "service=my_function",
+      "metadata": {
+        "label_key": "service",
+        "label_value": "my_function"
+      }
+    },
+    {
+      "id": "proxy:cloud:acct-1:arn:aws:ecs:us-east-1:111122223333:service/prod/api-server",
+      "type": "proxy",
+      "symbol_name": "service=api-server",
+      "source": "proxy:cloud:acct-1",
+      "description": "cloud proxy for log label service=api-server (resolved to acct-1/arn:aws:ecs:us-east-1:111122223333:service/prod/api-server)",
+      "metadata": {
+        "account": "acct-1",
+        "foreign_graph": "cloud",
+        "foreign_id": "arn:aws:ecs:us-east-1:111122223333:service/prod/api-server",
+        "foreign_type": "log-label"
+      }
+    },
+    {
+      "id": "proxy:cloud:acct-1:arn:aws:lambda:us-east-1:111122223333:function:my_function",
+      "type": "proxy",
+      "symbol_name": "service=my_function",
+      "source": "proxy:cloud:acct-1",
+      "description": "cloud proxy for log label service=my_function (resolved to acct-1/arn:aws:lambda:us-east-1:111122223333:function:my_function)",
+      "metadata": {
+        "account": "acct-1",
+        "foreign_graph": "cloud",
+        "foreign_id": "arn:aws:lambda:us-east-1:111122223333:function:my_function",
+        "foreign_type": "log-label"
+      }
+    }
+  ]
+}
