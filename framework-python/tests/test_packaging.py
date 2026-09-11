@@ -26,6 +26,11 @@ from . import support
 
 _PYPROJECT = os.path.join(support.PORT_ROOT, "pyproject.toml")
 _JOB_NAME = "framework-python-tests"
+# The paths filter this port's CI leg is gated on. It is DERIVED the way the
+# workflow and scripts/collectors-membership-census.sh derive it — `collectors-`
+# followed by the subject's path under cmd/collectors — so this constant cannot
+# drift from the name the census asserts.
+_FILTER_NAME = "collectors-" + os.path.basename(support.PORT_ROOT)
 
 
 def _declarations():
@@ -169,12 +174,46 @@ class CILegTest(unittest.TestCase):
         block = _job_block(_workflow_text(self), _JOB_NAME)
         self.assertIn("runs-on: ubuntu-latest", block)
 
-    def test_row24b_the_leg_is_gated_on_the_collectors_filter_which_already_covers_this_directory(self):
+    def test_row24b_the_leg_is_gated_on_this_ports_own_filter_and_not_the_class_wide_one(self):
+        """The leg rode the class-wide `collectors` filter while that was what
+        every collectors leg read, so any sibling module's change ran this suite.
+        It now reads a filter named for this port alone.
+
+        THE NEGATIVE HALF IS THE POINT. Asserting the port's own output is
+        satisfied by a gate that ALSO carries the class-wide one as a second OR
+        arm, which would put every sibling module back into this leg's trigger
+        surface with this row still green. So the class-wide spelling is asserted
+        ABSENT from the block as well.
+        """
         workflow = _workflow_text(self)
         block = _job_block(workflow, _JOB_NAME)
         self.assertIn("needs: changes", block)
-        self.assertIn("needs.changes.outputs.collectors == 'true'", block)
-        self.assertIn("- 'cmd/collectors/**'", workflow, "the filter that already fires for this port's directory")
+        self.assertIn("needs.changes.outputs.%s == 'true'" % _FILTER_NAME, block)
+        self.assertNotIn(
+            "needs.changes.outputs.collectors == 'true'",
+            block,
+            "the class-wide collectors filter fires on every sibling module and must not gate this leg",
+        )
+        # THE TAG CLAUSE STAYS: on a release tag every collectors leg runs
+        # whatever the diff touched, because the tag is what the release ships.
+        self.assertIn("startsWith(github.ref, 'refs/tags/v')", block)
+        self.assertIn(
+            "- 'cmd/collectors/framework-python/**'",
+            workflow,
+            "this port's own filter must name this port's directory",
+        )
+
+    def test_row24b2_the_ports_filter_is_declared_as_a_changes_job_output(self):
+        """A filter with no line in the `changes` job's `outputs:` block produces
+        no output, `needs.changes.outputs.<name>` reads the EMPTY STRING rather
+        than erroring, and this leg is gated off on every diff with nothing red.
+        Row 24b's gate assertion above passes over exactly that state, so the
+        output line is asserted separately."""
+        workflow = _workflow_text(self)
+        self.assertIn(
+            "%s: ${{ steps.filter.outputs.%s }}" % (_FILTER_NAME, _FILTER_NAME),
+            workflow,
+        )
 
     def test_row24c_the_leg_is_not_a_dir_shaped_collector_leg(self):
         """A port carries no go.mod, and the membership census partitions modules
