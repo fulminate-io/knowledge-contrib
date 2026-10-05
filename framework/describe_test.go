@@ -7,9 +7,10 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -95,7 +96,7 @@ func TestDescribeAnswersTheCollectorsOwnDeclaration(t *testing.T) {
 			if err := json.Unmarshal(raw, &want); err != nil {
 				t.Fatalf("decoding the fixture's own declaration: %v", err)
 			}
-			if !reflect.DeepEqual(got, want) {
+			if !cmp.Equal(got, want) {
 				t.Errorf("the served declaration is not the collector's own:\n served: %s\n   own: %s",
 					mustJSON(t, got), mustJSON(t, want))
 			}
@@ -144,6 +145,24 @@ func TestNewServerRefusesAMalformedDeclaration(t *testing.T) {
 	}
 }
 
+// TestServeStdioReturnsAMalformedDescribeAnswerToMain is the program-init row:
+// a describe query over a declaration the installer could not write is an
+// initialization error, and it travels up to the collector's main as a returned
+// error (main prints it with the collector's name and exits), rather than
+// ending the process from inside the library.
+func TestServeStdioReturnsAMalformedDescribeAnswerToMain(t *testing.T) {
+	saved := os.Args
+	t.Cleanup(func() { os.Args = saved })
+	os.Args = []string{saved[0], describeEnvTableArg}
+	err := ServeStdio[fixtureParams](t.Context(), &fixtureCollector{mode: fixtureConforming, declBad: true})
+	if err == nil {
+		t.Fatal("a describe query over a malformed declaration must return an error to main")
+	}
+	if !strings.Contains(err.Error(), "NOT A NAME") {
+		t.Errorf("the returned error must name the offending value, got: %v", err)
+	}
+}
+
 // TestDeclarationValidateRefusesEachOmissionIndividually walks the ways a
 // declaration can be incomplete. Each row bends ONE thing, so a validator that
 // stopped checking any single one turns a row red rather than leaving the suite
@@ -154,20 +173,20 @@ func TestDeclarationValidateRefusesEachOmissionIndividually(t *testing.T) {
 		bend       func(d *Declaration)
 		wantErrHas string
 	}{
-		{"summarizable never said", func(d *Declaration) { d.Behavior.Summarizable = nil }, "summarizable"},
-		{"embeddable never said", func(d *Declaration) { d.Behavior.Embeddable = nil }, "embeddable"},
-		{"syncable never said", func(d *Declaration) { d.Behavior.Syncable = nil }, "syncable"},
-		{"no node vocabulary at all", func(d *Declaration) { d.NodeTypes = nil }, "node_types"},
-		{"no edge vocabulary at all", func(d *Declaration) { d.EdgeTypes = nil }, "edge_types"},
-		{"no environment declaration at all", func(d *Declaration) { d.Environment = nil }, "environment"},
-		{"an empty node type", func(d *Declaration) { d.NodeTypes = []string{"issue", " "} }, "empty type name"},
-		{"a duplicated node type", func(d *Declaration) { d.NodeTypes = []string{"issue", "issue"} }, "twice"},
-		{"an unknown environment class", func(d *Declaration) {
+		{name: "summarizable never said", bend: func(d *Declaration) { d.Behavior.Summarizable = nil }, wantErrHas: "summarizable"},
+		{name: "embeddable never said", bend: func(d *Declaration) { d.Behavior.Embeddable = nil }, wantErrHas: "embeddable"},
+		{name: "syncable never said", bend: func(d *Declaration) { d.Behavior.Syncable = nil }, wantErrHas: "syncable"},
+		{name: "no node vocabulary at all", bend: func(d *Declaration) { d.NodeTypes = nil }, wantErrHas: "node_types"},
+		{name: "no edge vocabulary at all", bend: func(d *Declaration) { d.EdgeTypes = nil }, wantErrHas: "edge_types"},
+		{name: "no environment declaration at all", bend: func(d *Declaration) { d.Environment = nil }, wantErrHas: "environment"},
+		{name: "an empty node type", bend: func(d *Declaration) { d.NodeTypes = []string{"issue", " "} }, wantErrHas: "empty type name"},
+		{name: "a duplicated node type", bend: func(d *Declaration) { d.NodeTypes = []string{"issue", "issue"} }, wantErrHas: "twice"},
+		{name: "an unknown environment class", bend: func(d *Declaration) {
 			d.Environment = []EnvDeclaration{{Name: "TOK", Class: "token"}}
-		}, "token"},
-		{"a duplicated environment name", func(d *Declaration) {
+		}, wantErrHas: "token"},
+		{name: "a duplicated environment name", bend: func(d *Declaration) {
 			d.Environment = []EnvDeclaration{{Name: "TOK", Class: EnvClassSecret}, {Name: "TOK", Class: EnvClassPath}}
-		}, "twice"},
+		}, wantErrHas: "twice"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			decl := fixtureDeclaration()
@@ -224,9 +243,11 @@ func TestAThirdToolLeavesEveryRowGreen(t *testing.T) {
 		t.Fatalf("collect against a three-tool provider: %v", err)
 	}
 	doc := envelopeOf(t, res)
-	assertArray(t, doc, "nodes", 2)
+	if err := checkArray(doc, "nodes", 2); err != nil {
+		t.Fatal(err)
+	}
 
-	if got := describeDocument(t, p)["node_types"]; !reflect.DeepEqual(got, []any{"issue"}) {
+	if got := describeDocument(t, p)["node_types"]; !cmp.Equal(got, []any{"issue"}) {
 		t.Errorf("describe against a three-tool provider returned node_types %v", got)
 	}
 }
@@ -269,7 +290,7 @@ func TestDescribeArgvQueriesAnswerTheInstaller(t *testing.T) {
 				t.Fatalf("%s exited %v (stderr: %s)", tc.arg, err, stderr.String())
 			}
 			got := strings.Split(strings.TrimSpace(stdout.String()), "\n")
-			if !reflect.DeepEqual(got, tc.want) {
+			if !cmp.Equal(got, tc.want) {
 				t.Errorf("%s printed %q, want %q", tc.arg, got, tc.want)
 			}
 		})
@@ -369,7 +390,7 @@ func TestEnvTableIsSortedWithinClass(t *testing.T) {
 		{Name: "TOKEN", Class: EnvClassSecret},
 	}
 	want := []string{"path HOME", "selector ALPHA", "selector ZED", "secret TOKEN"}
-	if got := decl.EnvTable(); !reflect.DeepEqual(got, want) {
+	if got := decl.EnvTable(); !cmp.Equal(got, want) {
 		t.Errorf("EnvTable rendered %q, want %q", got, want)
 	}
 }

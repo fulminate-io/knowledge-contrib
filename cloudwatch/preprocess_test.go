@@ -15,15 +15,15 @@ func TestPreProcessMasksEachHighCardinalityShape(t *testing.T) {
 		in   string
 		want string
 	}{
-		{"uuid", "request 3f2504e0-4f89-11d3-9a0c-0305e82c3301 done", "request <*> done"},
-		{"rfc3339 timestamp", "at 2026-03-01T12:06:14Z ok", "at <*> ok"},
-		{"clock timestamp", "at 12:06:14 ok", "at <*> ok"},
-		{"ipv4", "peer 10.0.0.5 closed", "peer <*> closed"},
-		{"hex run", "trace abcdef01ab23cd45ef67 open", "trace <*> open"},
-		{"bare long number", "took 1234 units", "took <*> units"},
-		{"short number is NOT masked", "took 123 units", "took 123 units"},
-		{"url", "fetching https://example.com/a/very/long/path ok", "fetching <url> ok"},
-		{"epoch is claimed by the timestamp rule", "at 1772366774000 ok", "at <*> ok"},
+		{name: "uuid", in: "request 3f2504e0-4f89-11d3-9a0c-0305e82c3301 done", want: "request <*> done"},
+		{name: "rfc3339 timestamp", in: "at 2026-03-01T12:06:14Z ok", want: "at <*> ok"},
+		{name: "clock timestamp", in: "at 12:06:14 ok", want: "at <*> ok"},
+		{name: "ipv4", in: "peer 10.0.0.5 closed", want: "peer <*> closed"},
+		{name: "hex run", in: "trace abcdef01ab23cd45ef67 open", want: "trace <*> open"},
+		{name: "bare long number", in: "took 1234 units", want: "took <*> units"},
+		{name: "short number is NOT masked", in: "took 123 units", want: "took 123 units"},
+		{name: "url", in: "fetching https://example.com/a/very/long/path ok", want: "fetching <url> ok"},
+		{name: "epoch is claimed by the timestamp rule", in: "at 1772366774000 ok", want: "at <*> ok"},
 		{
 			// THE ORDERING CELL, and the one place the order is OBSERVABLE in
 			// the output. The timestamp rule's bare-epoch alternative carries
@@ -33,9 +33,9 @@ func TestPreProcessMasksEachHighCardinalityShape(t *testing.T) {
 			// tail, not to a single wildcard. Running the hex rule first would
 			// yield "trace <*> open" instead, and every template containing a
 			// digit-heavy identifier would get a different id.
-			"a digit run inside a hex id is claimed by the timestamp rule",
-			"trace 0123456789abcdef0 open",
-			"trace <*>abcdef0 open",
+			name: "a digit run inside a hex id is claimed by the timestamp rule",
+			in:   "trace 0123456789abcdef0 open",
+			want: "trace <*>abcdef0 open",
 		},
 		{
 			// The URL rule runs LAST, over already-masked text, so a URL whose
@@ -43,9 +43,9 @@ func TestPreProcessMasksEachHighCardinalityShape(t *testing.T) {
 			// is over the twenty-character minimum. A URL rule placed first
 			// would produce the same "<url>" here, so this cell pins the result
 			// rather than the order.
-			"a url survives the masking of digits inside it",
-			"see https://example.com/build/1772366774000/log",
-			"see <url>",
+			name: "a url survives the masking of digits inside it",
+			in:   "see https://example.com/build/1772366774000/log",
+			want: "see <url>",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -64,8 +64,8 @@ func TestTokenCountBucketBoundaries(t *testing.T) {
 		n    int
 		want string
 	}{
-		{1, "short"}, {3, "short"}, {4, "medium"}, {8, "medium"},
-		{9, "long"}, {15, "long"}, {16, "vlong"}, {100, "vlong"},
+		{n: 1, want: "short"}, {n: 3, want: "short"}, {n: 4, want: "medium"}, {n: 8, want: "medium"},
+		{n: 9, want: "long"}, {n: 15, want: "long"}, {n: 16, want: "vlong"}, {n: 100, want: "vlong"},
 	} {
 		if got := tokenCountBucket(tc.n); got != tc.want {
 			t.Errorf("tokenCountBucket(%d) = %q, want %q", tc.n, got, tc.want)

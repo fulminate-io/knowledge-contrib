@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // parity_test.go — R5-a, R5-b, R5-c and R5-d: the PARITY FLOOR as an exact set
@@ -147,7 +149,7 @@ func TestParity_UsesImageIsInTheSetAndProducesNoEdge(t *testing.T) {
 	}
 	require.True(t, set["USES_IMAGE"], "USES_IMAGE is in the 33")
 
-	nodes := []Node{
+	nodes := []framework.Node{
 		workloadNode("default/Deployment/api", map[string]string{
 			"images": "123456789012.dkr.ecr.us-east-1.amazonaws.com/api:v1",
 		}),

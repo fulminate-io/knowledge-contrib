@@ -107,14 +107,14 @@ func TestStreamAliasFallsBackToLowCardinalityLabels(t *testing.T) {
 // normalizer, including why `.` and `@` are unsafe INSIDE a component.
 func TestSanitizeCollapsesUnsafeRunsAndKeepsSeparatorsOut(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"api", "api"},
-		{"a_b-c:d", "a_b-c:d"},
-		{"a.b", "a-b"},
-		{"a@b", "a-b"},
-		{"a   b", "a-b"},
-		{"--a--", "a"},
-		{"", ""},
-		{"...", ""},
+		{in: "api", want: "api"},
+		{in: "a_b-c:d", want: "a_b-c:d"},
+		{in: "a.b", want: "a-b"},
+		{in: "a@b", want: "a-b"},
+		{in: "a   b", want: "a-b"},
+		{in: "--a--", want: "a"},
+		{in: "", want: ""},
+		{in: "...", want: ""},
 	} {
 		if got := sanitize(tc.in); got != tc.want {
 			t.Errorf("sanitize(%q) = %q, want %q", tc.in, got, tc.want)
@@ -130,18 +130,18 @@ func TestTemplateAliasRules(t *testing.T) {
 		severity string
 		want     string
 	}{
-		{"plain pattern", "Node <*> is not ready", severityWarn, "node-not-ready@warn"},
-		{"reason prefix stripped", "NodeNotReady: Node is not ready", severityError, "node-not-ready@err"},
-		{"seven tokens truncated to five", "one two three four five six seven", severityInfo,
-			"one-two-three-four-five@info"},
-		{"mixed case is lowercased", "UPPER Case Mixed Tokens", severityInfo, "upper-case-mixed-tokens@info"},
-		{"punctuation splits tokens", "connect failed: dial tcp 10.0.0.1:443", severityError,
-			"connect-failed-dial-tcp-10@err"},
-		{"stopwords only derives nothing", "the of on for to in is and or with a an", severityInfo, ""},
-		{"empty pattern derives nothing", "", severityInfo, ""},
-		{"an unmapped severity lowercases into the suffix", "x", "NOTASEVERITY", "x@notaseverity"},
-		{"an empty severity yields no suffix", "disk pressure", "", "disk-pressure"},
-		{"wildcards separate rather than fuse tokens", "disk<*>pressure", severityInfo, "disk-pressure@info"},
+		{name: "plain pattern", pattern: "Node <*> is not ready", severity: severityWarn, want: "node-not-ready@warn"},
+		{name: "reason prefix stripped", pattern: "NodeNotReady: Node is not ready", severity: severityError, want: "node-not-ready@err"},
+		{name: "seven tokens truncated to five", pattern: "one two three four five six seven", severity: severityInfo,
+			want: "one-two-three-four-five@info"},
+		{name: "mixed case is lowercased", pattern: "UPPER Case Mixed Tokens", severity: severityInfo, want: "upper-case-mixed-tokens@info"},
+		{name: "punctuation splits tokens", pattern: "connect failed: dial tcp 10.0.0.1:443", severity: severityError,
+			want: "connect-failed-dial-tcp-10@err"},
+		{name: "stopwords only derives nothing", pattern: "the of on for to in is and or with a an", severity: severityInfo, want: ""},
+		{name: "empty pattern derives nothing", pattern: "", severity: severityInfo, want: ""},
+		{name: "an unmapped severity lowercases into the suffix", pattern: "x", severity: "NOTASEVERITY", want: "x@notaseverity"},
+		{name: "an empty severity yields no suffix", pattern: "disk pressure", severity: "", want: "disk-pressure"},
+		{name: "wildcards separate rather than fuse tokens", pattern: "disk<*>pressure", severity: severityInfo, want: "disk-pressure@info"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := templateAliasFor(&logTemplate{Pattern: tc.pattern, Severity: tc.severity})
@@ -159,11 +159,11 @@ func TestTemplateAliasRules(t *testing.T) {
 // Without all three it would eat the head of an ordinary sentence.
 func TestStripReasonPrefixOnlyEatsACamelCaseReason(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"NodeNotReady: Node is not ready", "Node is not ready"},
-		{"error: connection refused", "error: connection refused"},
-		{"GET /x: 404 not found", "GET /x: 404 not found"},
-		{"A: short", "A: short"},
-		{": leading", ": leading"},
+		{in: "NodeNotReady: Node is not ready", want: "Node is not ready"},
+		{in: "error: connection refused", want: "error: connection refused"},
+		{in: "GET /x: 404 not found", want: "GET /x: 404 not found"},
+		{in: "A: short", want: "A: short"},
+		{in: ": leading", want: ": leading"},
 	} {
 		if got := stripReasonPrefix(tc.in); got != tc.want {
 			t.Errorf("stripReasonPrefix(%q) = %q, want %q", tc.in, got, tc.want)

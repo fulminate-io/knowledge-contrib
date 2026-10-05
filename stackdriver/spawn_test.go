@@ -224,11 +224,11 @@ func TestTheBoundsThreeInputsBehaveDifferentlyOverTheWire(t *testing.T) {
 		params    map[string]any
 		wantError bool
 	}{
-		{"absent is unbounded", map[string]any{"project": "p"}, false},
-		{"null reads as absent", map[string]any{"project": "p", "max_entries": nil}, false},
-		{"an explicit zero is refused", map[string]any{"project": "p", "max_entries": 0}, true},
-		{"a negative is refused", map[string]any{"project": "p", "max_entries": -1}, true},
-		{"a positive is honored", map[string]any{"project": "p", "max_entries": 3}, false},
+		{name: "absent is unbounded", params: map[string]any{"project": "p"}, wantError: false},
+		{name: "null reads as absent", params: map[string]any{"project": "p", "max_entries": nil}, wantError: false},
+		{name: "an explicit zero is refused", params: map[string]any{"project": "p", "max_entries": 0}, wantError: true},
+		{name: "a negative is refused", params: map[string]any{"project": "p", "max_entries": -1}, wantError: true},
+		{name: "a positive is honored", params: map[string]any{"project": "p", "max_entries": 3}, wantError: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			res, err := session.CallTool(t.Context(), &mcp.CallToolParams{

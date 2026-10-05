@@ -226,11 +226,36 @@ pub fn decode_result(tool: &str, structured: Option<&Value>) -> Result<CollectOu
         ))
     })?;
     validate_result_payload(tool, &raw)?;
-    serde_json::from_slice::<CollectOutput>(&raw).map_err(|e| {
+    let out = serde_json::from_slice::<CollectOutput>(&raw).map_err(|e| {
         Error::new(format!(
             "custom collector: tool {tool:?} result carries a field this collector contract does not define: {e}"
         ))
-    })
+    })?;
+    refuse_contradictory_reason(tool, &out)?;
+    Ok(out)
+}
+
+/// refuse_contradictory_reason refuses the two `walk_incomplete_reason` shapes
+/// that contradict the key's contract: a reason beside a walk asserting
+/// completeness, and an empty reason. An incomplete walk with no reason key is
+/// admitted, because the key is optional.
+fn refuse_contradictory_reason(tool: &str, out: &CollectOutput) -> Result<()> {
+    let Some(reason) = out.walk_incomplete_reason.as_deref() else {
+        return Ok(());
+    };
+    if out.walk_complete {
+        return Err(Error::new(format!(
+            "custom collector: tool {tool:?} result carries walk_incomplete_reason beside walk_complete true; \
+             the reason is sent only on an incomplete walk"
+        )));
+    }
+    if reason.is_empty() {
+        return Err(Error::new(format!(
+            "custom collector: tool {tool:?} result carries an empty walk_incomplete_reason beside walk_complete false; \
+             an incomplete walk sends a non-empty reason or omits the key"
+        )));
+    }
+    Ok(())
 }
 
 /// scalar_type reads a schema's `type` keyword when it is a plain string.

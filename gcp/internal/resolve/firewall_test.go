@@ -149,7 +149,7 @@ func TestFirewallIngressSourceTagsYieldsInstanceToInstance(t *testing.T) {
 			edgeKeys(got.Relations))
 	}
 	if len(got.Relations) != 1 {
-		t.Errorf("got %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
+		t.Errorf("Firewall(tag-matched rule) = %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
 	}
 	for _, r := range got.Relations {
 		if r.Type == gcpgraph.EdgeAllowsEgressTo {
@@ -178,7 +178,7 @@ func TestFirewallIngressSourceServiceAccountsYieldsInstanceToInstance(t *testing
 			edgeKeys(got.Relations))
 	}
 	if len(got.Relations) != 1 {
-		t.Errorf("got %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
+		t.Errorf("Firewall(account-matched rule) = %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
 	}
 }
 
@@ -200,7 +200,7 @@ func TestFirewallEgressDestinationRangesYieldsEgressEdgeOnly(t *testing.T) {
 			edgeKeys(got.Relations))
 	}
 	if len(got.Relations) != 1 {
-		t.Errorf("got %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
+		t.Errorf("Firewall(egress rule) = %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
 	}
 	if got.Relations[0].Metadata["egress"] != "true" {
 		t.Errorf("an egress edge does not carry the egress marker: %v", got.Relations[0].Metadata)
@@ -236,11 +236,11 @@ func TestFirewallSkipsDisabledAndDenyOnlyRules(t *testing.T) {
 		name string
 		fw   gcpcontent.Firewall
 	}{
-		{"disabled", gcpcontent.Firewall{
+		{name: "disabled", fw: gcpcontent.Firewall{
 			Name: "off", Network: vpc, Direction: "INGRESS", Disabled: true,
 			SourceRanges: []string{"0.0.0.0/0"}, Allowed: allowTCP443(),
 		}},
-		{"deny only", gcpcontent.Firewall{
+		{name: "deny only", fw: gcpcontent.Firewall{
 			Name: "deny", Network: vpc, Direction: "INGRESS",
 			SourceRanges: []string{"0.0.0.0/0"},
 			Denied:       []gcpcontent.FirewallRule{{Protocol: "tcp"}},
@@ -280,7 +280,7 @@ func TestFirewallNeverEmitsASelfEdge(t *testing.T) {
 		}
 	}
 	if len(got.Relations) != 0 {
-		t.Errorf("got %d edges, want 0: %v", len(got.Relations), edgeKeys(got.Relations))
+		t.Errorf("Firewall(self-matching rule) = %d edges, want 0: %v", len(got.Relations), edgeKeys(got.Relations))
 	}
 }
 

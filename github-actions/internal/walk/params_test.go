@@ -122,14 +122,14 @@ func TestACapBelowOneIsRefusedByName(t *testing.T) {
 // caller as seven per-enumeration errors or as a walk that looked empty.
 func TestTheCollectIDIsValidatedOnceAndNamesWhatIsWrong(t *testing.T) {
 	for _, row := range []struct{ id, tell string }{
-		{"", "no organization"},
-		{"   ", "no organization"},
-		{"acme/api", "letters, digits and hyphens"},
-		{"https://github.com/acme", "letters, digits and hyphens"},
-		{"acme_corp", "letters, digits and hyphens"},
-		{"-acme", "hyphen"},
-		{"acme-", "hyphen"},
-		{strings.Repeat("a", 40), "at most 39"},
+		{id: "", tell: "no organization"},
+		{id: "   ", tell: "no organization"},
+		{id: "acme/api", tell: "letters, digits and hyphens"},
+		{id: "https://github.com/acme", tell: "letters, digits and hyphens"},
+		{id: "acme_corp", tell: "letters, digits and hyphens"},
+		{id: "-acme", tell: "hyphen"},
+		{id: "acme-", tell: "hyphen"},
+		{id: strings.Repeat("a", 40), tell: "at most 39"},
 	} {
 		recorder := &recordingAPI{}
 		collector := walk.Collector{API: recorder.build}

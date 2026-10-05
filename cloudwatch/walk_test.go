@@ -123,8 +123,8 @@ func TestWalkFailsWholeOnAPageError(t *testing.T) {
 		name      string
 		errAtCall int
 	}{
-		{"on the first page", 1},
-		{"on a later page, after entries were read", 2},
+		{name: "on the first page", errAtCall: 1},
+		{name: "on a later page, after entries were read", errAtCall: 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			groups := pagedGroups([]recordedEvent{ev("1", 1772366774000, "alpha one")},

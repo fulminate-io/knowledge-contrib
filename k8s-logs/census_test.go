@@ -118,8 +118,9 @@ func TestNoSubprocessSpawn(t *testing.T) {
 		findings = append(findings, spawnFindings(t, path)...)
 	}
 	if len(findings) != 0 {
-		t.Fatalf("this collector spawns a process:\n  %s\n"+
-			"It reads the Kubernetes API through client-go and never by shelling out",
+		t.Fatalf(`this collector spawns a process:
+  %s
+It reads the Kubernetes API through client-go and never by shelling out`,
 			strings.Join(findings, "\n  "))
 	}
 	t.Logf("census: %d non-test source files walked, no process spawn", len(files))
@@ -135,16 +136,16 @@ func TestTheSpawnCensusIsNotInert(t *testing.T) {
 		name string
 		src  string
 	}{
-		{"a plain exec.Command", `package p
+		{name: "a plain exec.Command", src: `package p
 import "os/exec"
 func run() { _ = exec.Command("kubectl", "logs", "-n", "dev", "api-1") }`},
-		{"os/exec under an alias", `package p
+		{name: "os/exec under an alias", src: `package p
 import sh "os/exec"
 func run() { _ = sh.Command("kubectl", "logs") }`},
-		{"syscall.Exec under an alias", `package p
+		{name: "syscall.Exec under an alias", src: `package p
 import sys "syscall"
 func run() { _ = sys.Exec("/bin/kubectl", nil, nil) }`},
-		{"os.StartProcess", `package p
+		{name: "os.StartProcess", src: `package p
 import "os"
 func run() { _, _ = os.StartProcess("/bin/kubectl", nil, nil) }`},
 	} {
@@ -158,8 +159,8 @@ func run() { _, _ = os.StartProcess("/bin/kubectl", nil, nil) }`},
 				t.Fatal(err)
 			}
 			if got := spawnFindings(t, path); len(got) == 0 {
-				t.Fatalf("the census did not flag a spawning file; it would report this module clean "+
-					"whatever it contained. Source:\n%s", tc.src)
+				t.Fatalf(`the census did not flag a spawning file; it would report this module clean whatever it contained. Source:
+%s`, tc.src)
 			}
 		})
 	}
@@ -204,8 +205,9 @@ func TestOnlyTheCommonModulesAreImportedFromTheKnowledgeTree(t *testing.T) {
 	}
 	if len(refused) != 0 {
 		sort.Strings(refused)
-		t.Fatalf("this module imports the knowledge tree outside the framework and the common modules:\n  %s\n"+
-			"The collector contract crossing is JSON over MCP, never a Go type",
+		t.Fatalf(`this module imports the knowledge tree outside the framework and the common modules:
+  %s
+The collector contract crossing is JSON over MCP, never a Go type`,
 			strings.Join(refused, "\n  "))
 	}
 

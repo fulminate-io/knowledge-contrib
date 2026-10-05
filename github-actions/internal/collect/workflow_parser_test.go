@@ -23,34 +23,34 @@ func TestParseSecretRefsOverEveryForm(t *testing.T) {
 		definition string
 		want       []string
 	}{
-		{"no references at all", "name: CI\non: push\n", nil},
-		{"one reference", "run: echo ${{ secrets.API_KEY }}\n", []string{"API_KEY"}},
+		{name: "no references at all", definition: "name: CI\non: push\n", want: nil},
+		{name: "one reference", definition: "run: echo ${{ secrets.API_KEY }}\n", want: []string{"API_KEY"}},
 		{
-			"a repeated reference is one name",
-			"run: echo ${{ secrets.API_KEY }}\nrun: echo ${{ secrets.API_KEY }}\n",
-			[]string{"API_KEY"},
+			name:       "a repeated reference is one name",
+			definition: "run: echo ${{ secrets.API_KEY }}\nrun: echo ${{ secrets.API_KEY }}\n",
+			want:       []string{"API_KEY"},
 		},
 		{
-			"several names keep first-appearance order",
-			"run: ${{ secrets.B_KEY }}\nrun: ${{ secrets.A_KEY }}\n",
-			[]string{"B_KEY", "A_KEY"},
+			name:       "several names keep first-appearance order",
+			definition: "run: ${{ secrets.B_KEY }}\nrun: ${{ secrets.A_KEY }}\n",
+			want:       []string{"B_KEY", "A_KEY"},
 		},
 		{
-			"whitespace inside the expression is tolerated",
-			"run: ${{   secrets.API_KEY   }}\n",
-			[]string{"API_KEY"},
+			name:       "whitespace inside the expression is tolerated",
+			definition: "run: ${{   secrets.API_KEY   }}\n",
+			want:       []string{"API_KEY"},
 		},
 		{
-			"a lower-case name is NOT a secret reference: the provider's own secret " +
+			name: "a lower-case name is NOT a secret reference: the provider's own secret " +
 				"names are upper-case, and matching a lower-case one would read a variable " +
 				"reference as a secret",
-			"run: ${{ secrets.api_key }}\n",
-			nil,
+			definition: "run: ${{ secrets.api_key }}\n",
+			want:       nil,
 		},
 		{
-			"a name starting with a digit is not read, for the same reason",
-			"run: ${{ secrets.1KEY }}\n",
-			nil,
+			name:       "a name starting with a digit is not read, for the same reason",
+			definition: "run: ${{ secrets.1KEY }}\n",
+			want:       nil,
 		},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -67,50 +67,50 @@ func TestParseEnvironmentRefsOverEveryForm(t *testing.T) {
 		definition string
 		want       []string
 	}{
-		{"no environment at all", "jobs:\n  build:\n    runs-on: ubuntu-latest\n", nil},
-		{"the inline form", "    environment: production\n", []string{"production"}},
-		{"the quoted inline form", `    environment: "staging"` + "\n", []string{"staging"}},
-		{"the single-quoted inline form", "    environment: 'staging'\n", []string{"staging"}},
+		{name: "no environment at all", definition: "jobs:\n  build:\n    runs-on: ubuntu-latest\n", want: nil},
+		{name: "the inline form", definition: "    environment: production\n", want: []string{"production"}},
+		{name: "the quoted inline form", definition: `    environment: "staging"` + "\n", want: []string{"staging"}},
+		{name: "the single-quoted inline form", definition: "    environment: 'staging'\n", want: []string{"staging"}},
 		{
-			"a repeated name is one entry",
-			"    environment: production\n    environment: production\n",
-			[]string{"production"},
+			name:       "a repeated name is one entry",
+			definition: "    environment: production\n    environment: production\n",
+			want:       []string{"production"},
 		},
 		{
-			"several names keep first-appearance order",
-			"    environment: production\n    environment: staging\n",
-			[]string{"production", "staging"},
+			name:       "several names keep first-appearance order",
+			definition: "    environment: production\n    environment: staging\n",
+			want:       []string{"production", "staging"},
 		},
 		{
-			"THE BLOCK FORM IS NOT READ. Recognizing `environment:` followed by an " +
+			name: "THE BLOCK FORM IS NOT READ. Recognizing `environment:` followed by an " +
 				"indented `name:` means tracking indentation across lines, and `name:` " +
 				"appears under half a dozen unrelated blocks in a workflow — so a reader " +
 				"that guessed would emit a deploy edge to every step name in the file",
-			"    environment:\n      name: production\n",
-			nil,
+			definition: "    environment:\n      name: production\n",
+			want:       nil,
 		},
 		{
-			"THE FLOW-MAPPING FORM IS NOT READ: a value that opens a mapping is skipped " +
+			name: "THE FLOW-MAPPING FORM IS NOT READ: a value that opens a mapping is skipped " +
 				"rather than having a name read out of it",
-			"    environment: {name: production}\n",
-			nil,
+			definition: "    environment: {name: production}\n",
+			want:       nil,
 		},
 		{
-			"AN EXPRESSION IS READ AS WRITTEN, and the resulting edge resolves to no " +
+			name: "AN EXPRESSION IS READ AS WRITTEN, and the resulting edge resolves to no " +
 				"environment. The value is decided when the workflow RUNS and this " +
 				"collector reads the file; dropping the edge would change the graph a " +
 				"consumer already reads, and evaluating the expression is not something " +
 				"this collector can do",
-			"    environment: ${{ inputs.target }}\n",
-			[]string{"${{ inputs.target }}"},
+			definition: "    environment: ${{ inputs.target }}\n",
+			want:       []string{"${{ inputs.target }}"},
 		},
 		{
-			"A QUOTED MAPPING IS READ AS A NAME, because the mapping guard is applied " +
+			name: "A QUOTED MAPPING IS READ AS A NAME, because the mapping guard is applied " +
 				"before the quotes are stripped. It is the one input on which the two " +
 				"possible orders disagree, and this is the order the graph a consumer " +
 				"reads was built with",
-			`    environment: "{name: production}"` + "\n",
-			[]string{"{name: production}"},
+			definition: `    environment: "{name: production}"` + "\n",
+			want:       []string{"{name: production}"},
 		},
 	} {
 		t.Run(row.name, func(t *testing.T) {

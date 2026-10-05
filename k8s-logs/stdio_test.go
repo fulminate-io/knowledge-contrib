@@ -68,8 +68,8 @@ func TestMain(m *testing.M) {
 	// rather than under the ones that happened to set the variable.
 	endpoint := os.Getenv(apiEndpointEnv)
 	if endpoint == "" {
-		fmt.Fprintf(os.Stderr, "k8s-logs test provider: %s is unset; this child serves only against a "+
-			"test endpoint, never against a real kubeconfig\n", apiEndpointEnv)
+		fmt.Fprintf(os.Stderr, `k8s-logs test provider: %s is unset; this child serves only against a test endpoint, never against a real kubeconfig
+`, apiEndpointEnv)
 		os.Exit(2)
 	}
 	collector := &k8slogs.Collector{NewClient: func(string) (kubernetes.Interface, error) {
@@ -220,16 +220,16 @@ func TestAnInvalidCollectIsAToolErrorNotAnEmptySuccess(t *testing.T) {
 		name string
 		args map[string]any
 	}{
-		{"no namespaces", map[string]any{"id": "x", "params": map[string]any{}}},
-		{"an inverted range", map[string]any{"id": "x", "params": map[string]any{
+		{name: "no namespaces", args: map[string]any{"id": "x", "params": map[string]any{}}},
+		{name: "an inverted range", args: map[string]any{"id": "x", "params": map[string]any{
 			"namespaces": []string{"dev"},
 			"since":      "2026-09-07T11:00:00Z",
 			"until":      "2026-09-07T10:00:00Z",
 		}}},
-		{"a zero bound", map[string]any{"id": "x", "params": map[string]any{
+		{name: "a zero bound", args: map[string]any{"id": "x", "params": map[string]any{
 			"namespaces": []string{"dev"}, "tail_lines": 0,
 		}}},
-		{"an empty collect id", map[string]any{"id": "", "params": map[string]any{
+		{name: "an empty collect id", args: map[string]any{"id": "", "params": map[string]any{
 			"namespaces": []string{"dev"},
 		}}},
 	} {

@@ -4,6 +4,8 @@ package gcpcontent_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -45,18 +47,19 @@ func keysOf(t *testing.T, v any) []string {
 	return keys
 }
 
-func assertKeys(t *testing.T, got, want []string) {
-	t.Helper()
+func checkKeys(got, want []string) error {
+	var errs []error
 	for _, w := range want {
 		if !slices.Contains(got, w) {
-			t.Errorf("stored content is missing the key %q; it carries %v", w, got)
+			errs = append(errs, fmt.Errorf("stored content is missing the key %q; it carries %v", w, got))
 		}
 	}
 	for _, g := range got {
 		if !slices.Contains(want, g) {
-			t.Errorf("stored content carries the unexpected key %q; the declared set is %v", g, want)
+			errs = append(errs, fmt.Errorf("stored content carries the unexpected key %q; the declared set is %v", g, want))
 		}
 	}
+	return errors.Join(errs...)
 }
 
 // TestInstanceContentKeys pins every key of the stored instance content. Three
@@ -71,17 +74,21 @@ func TestInstanceContentKeys(t *testing.T) {
 		NetworkInterfaces: []gcpcontent.NetworkInterface{{Network: "n"}},
 		Disks:             []string{"d"},
 	})
-	assertKeys(t, got, []string{
+	if err := checkKeys(got, []string{
 		"creationTimestamp", "disks", "labels", "machineType", "name",
 		"networkInterfaces", "selfLink", "serviceAccounts", "status", "tags", "zone",
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestNetworkInterfaceContentKeys(t *testing.T) {
 	got := keysOf(t, gcpcontent.NetworkInterface{
 		Network: "n", Subnetwork: "s", NetworkIP: "10.0.0.1", ExternalIP: "34.1.2.3",
 	})
-	assertKeys(t, got, []string{"externalIP", "network", "networkIP", "subnetwork"})
+	if err := checkKeys(got, []string{"externalIP", "network", "networkIP", "subnetwork"}); err != nil {
+		t.Error(err)
+	}
 }
 
 // TestFirewallContentKeys pins the rule shape the firewall resolver dispatches
@@ -97,16 +104,20 @@ func TestFirewallContentKeys(t *testing.T) {
 		Allowed: []gcpcontent.FirewallRule{{Protocol: "tcp"}},
 		Denied:  []gcpcontent.FirewallRule{{Protocol: "udp"}},
 	})
-	assertKeys(t, got, []string{
+	if err := checkKeys(got, []string{
 		"allowed", "denied", "destinationRanges", "direction", "disabled", "name",
 		"network", "priority", "selfLink", "sourceRanges", "sourceServiceAccounts",
 		"sourceTags", "targetServiceAccounts", "targetTags",
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestFirewallRuleContentKeys(t *testing.T) {
 	got := keysOf(t, gcpcontent.FirewallRule{Protocol: "tcp", Ports: []string{"443"}})
-	assertKeys(t, got, []string{"ports", "protocol"})
+	if err := checkKeys(got, []string{"ports", "protocol"}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestSubnetworkContentKeys(t *testing.T) {
@@ -114,7 +125,9 @@ func TestSubnetworkContentKeys(t *testing.T) {
 		Name: "sn", SelfLink: "self", Network: "n", Region: "r",
 		IPCIDRRange: "10.0.0.0/24", Purpose: "PRIVATE",
 	})
-	assertKeys(t, got, []string{"ipCidrRange", "name", "network", "purpose", "region", "selfLink"})
+	if err := checkKeys(got, []string{"ipCidrRange", "name", "network", "purpose", "region", "selfLink"}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestRunServiceContentKeys(t *testing.T) {
@@ -122,14 +135,18 @@ func TestRunServiceContentKeys(t *testing.T) {
 		Name: "svc", URI: "https://svc", Images: []string{"gcr.io/p/app"},
 		Ingress: "all", ServiceAcc: "svc@p.iam.gserviceaccount.com",
 	})
-	assertKeys(t, got, []string{"images", "ingress", "name", "serviceAccount", "uri"})
+	if err := checkKeys(got, []string{"images", "ingress", "name", "serviceAccount", "uri"}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestRecordSetContentKeys(t *testing.T) {
 	got := keysOf(t, gcpcontent.RecordSet{
 		Name: "a.example.com.", Type: "A", TTL: 300, Rrdatas: []string{"34.1.2.3"}, Zone: "z",
 	})
-	assertKeys(t, got, []string{"name", "rrdatas", "ttl", "type", "zone"})
+	if err := checkKeys(got, []string{"name", "rrdatas", "ttl", "type", "zone"}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestSQLInstanceContentKeys(t *testing.T) {
@@ -137,7 +154,9 @@ func TestSQLInstanceContentKeys(t *testing.T) {
 		Name: "db", DatabaseVersion: "POSTGRES_15", Region: "r", State: "RUNNABLE",
 		Tier: "db-f1-micro", IPAddresses: []string{"35.1.2.3"},
 	})
-	assertKeys(t, got, []string{"databaseVersion", "ipAddresses", "name", "region", "state", "tier"})
+	if err := checkKeys(got, []string{"databaseVersion", "ipAddresses", "name", "region", "state", "tier"}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestForwardingRuleContentKeys(t *testing.T) {
@@ -145,10 +164,12 @@ func TestForwardingRuleContentKeys(t *testing.T) {
 		Name: "fr", SelfLink: "self", IPAddress: "34.9.9.9", IPProtocol: "TCP",
 		PortRange: "443", Target: "t", Network: "n", Subnetwork: "s", Region: "r",
 	})
-	assertKeys(t, got, []string{
+	if err := checkKeys(got, []string{
 		"ipAddress", "ipProtocol", "name", "network", "portRange", "region",
 		"selfLink", "subnetwork", "target",
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestGenericContentKeys(t *testing.T) {
@@ -156,9 +177,11 @@ func TestGenericContentKeys(t *testing.T) {
 		Name: "n", SelfLink: "self", Description: "d", State: "s", Location: "l",
 		CreateTime: "t", Labels: map[string]string{"a": "b"}, Fields: map[string]string{"c": "d"},
 	})
-	assertKeys(t, got, []string{
+	if err := checkKeys(got, []string{
 		"createTime", "description", "fields", "labels", "location", "name", "selfLink", "state",
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 }
 
 // TestOmitemptyKeepsAnEmptyResourceSmall is the other half of the key

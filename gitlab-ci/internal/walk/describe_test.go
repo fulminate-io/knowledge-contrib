@@ -76,7 +76,7 @@ func TestDescribe_TheDeclaredVocabularyIsWellFormed(t *testing.T) {
 	for _, pair := range []struct {
 		label string
 		types []string
-	}{{"node", decl.NodeTypes}, {"edge", decl.EdgeTypes}} {
+	}{{label: "node", types: decl.NodeTypes}, {label: "edge", types: decl.EdgeTypes}} {
 		seen := map[string]struct{}{}
 		for _, ty := range pair.types {
 			if ty == "" {

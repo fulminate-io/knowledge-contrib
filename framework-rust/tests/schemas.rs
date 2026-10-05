@@ -110,6 +110,7 @@ fn contract_schema_and_envelope_agree() {
         nodes: vec![],
         edges: vec![],
         walk_complete: false,
+        walk_incomplete_reason: Some("r".into()),
     };
     let encoded = serde_json::to_value(&empty).expect("the envelope serializes");
     let schema = contract_doc(output_contract_json());

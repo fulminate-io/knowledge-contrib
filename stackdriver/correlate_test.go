@@ -42,7 +42,7 @@ func (s *stubCloud) HasDependency(a, b resolvedResource) bool {
 func TestCorrelationIsCrossServiceAndErrorOnly(t *testing.T) {
 	out := correlationsFor(t, crossServiceErrorEntries(), nil)
 	if len(out) != 1 {
-		t.Fatalf("got %d candidate pairs, want 1: %+v", len(out), out)
+		t.Fatalf("correlationsFor(cross-service error entries) = %d candidate pairs, want 1: %+v", len(out), out)
 	}
 	if out[0].ServiceA == out[0].ServiceB {
 		t.Errorf("a same-service pair was produced: %+v", out[0])
@@ -72,7 +72,7 @@ func TestCorrelationIsCrossServiceAndErrorOnly(t *testing.T) {
 func TestAnUnconfirmedPairIsProducedButEmitsNothing(t *testing.T) {
 	out := correlationsFor(t, crossServiceErrorEntries(), nil)
 	if len(out) != 1 {
-		t.Fatalf("want one candidate, got %d", len(out))
+		t.Fatalf("got %d, want one candidate", len(out))
 	}
 	if out[0].StructurallyConfirmed {
 		t.Errorf("a pair was confirmed with no cloud context")
@@ -117,7 +117,7 @@ func TestCorrelationResultsAreSorted(t *testing.T) {
 	}
 	out := correlationsFor(t, entries, nil)
 	if len(out) < 2 {
-		t.Fatalf("want several pairs, got %d", len(out))
+		t.Fatalf("got %d, want several pairs", len(out))
 	}
 	for i := 1; i < len(out); i++ {
 		if out[i-1].ServiceA > out[i].ServiceA {
@@ -176,7 +176,7 @@ func TestServiceLabelPairsAreDeduplicatedByKeyAndValue(t *testing.T) {
 	}
 	pairs := serviceLabelPairs(streams)
 	if len(pairs) != 2 {
-		t.Fatalf("got %d pairs, want 2: %+v", len(pairs), pairs)
+		t.Fatalf("serviceLabelPairs(three streams) = %d pairs, want 2: %+v", len(pairs), pairs)
 	}
 }
 
@@ -203,7 +203,7 @@ func TestAnEmptyValuedServiceLabelIsNotResolved(t *testing.T) {
 	streams := []*logStream{newLogStream(labels("service", "", "app", "web"), tracker)}
 	pairs := serviceLabelPairs(streams)
 	if len(pairs) != 1 || pairs[0].key != "app" {
-		t.Fatalf("got %+v, want only the app pair", pairs)
+		t.Fatalf("serviceLabelPairs(empty service label) = %+v, want only the app pair", pairs)
 	}
 }
 
@@ -219,7 +219,7 @@ func TestComputeStreamResolutionsSkipsWhatTheCloudDoesNotResolve(t *testing.T) {
 	cloud := &stubCloud{services: map[string]resolvedResource{"api": {Account: "acct", ID: "res-api"}}}
 	got := computeStreamResolutions(streams, cloud)
 	if len(got) != 1 {
-		t.Fatalf("got %d resolutions, want 1: %+v", len(got), got)
+		t.Fatalf("computeStreamResolutions(api, unknown) = %d resolutions, want 1: %+v", len(got), got)
 	}
 	if got[0].LabelValue != "api" {
 		t.Errorf("the unresolved label was emitted: %+v", got[0])
@@ -264,7 +264,7 @@ func TestTheResolverIsHandedThisModulesOwnStream(t *testing.T) {
 		"worker": {Account: "acct", ID: "res-worker"},
 	}}
 	if got := correlationsFor(t, crossServiceErrorEntries(), cloud); len(got) != 1 {
-		t.Fatalf("want one candidate, got %d", len(got))
+		t.Fatalf("got %d, want one candidate", len(got))
 	}
 	if len(cloud.streams) == 0 {
 		t.Fatal("the resolver was never called, so this arm observes nothing")

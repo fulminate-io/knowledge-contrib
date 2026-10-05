@@ -56,42 +56,42 @@ func (f *fakeAcm) DescribeCertificate(_ context.Context, in *acm.DescribeCertifi
 	return f.describeCertificate(in)
 }
 
-type fakeApiGateway struct {
-	getRestApis         func(*apigateway.GetRestApisInput) (*apigateway.GetRestApisOutput, error)
+type fakeAPIGateway struct {
+	getRestAPIs         func(*apigateway.GetRestApisInput) (*apigateway.GetRestApisOutput, error)
 	getDomainNames      func(*apigateway.GetDomainNamesInput) (*apigateway.GetDomainNamesOutput, error)
 	getBasePathMappings func(*apigateway.GetBasePathMappingsInput) (*apigateway.GetBasePathMappingsOutput, error)
 }
 
-func (f *fakeApiGateway) GetRestApis(_ context.Context, in *apigateway.GetRestApisInput, _ ...func(*apigateway.Options)) (*apigateway.GetRestApisOutput, error) {
-	if f.getRestApis == nil {
+func (f *fakeAPIGateway) GetRestApis(_ context.Context, in *apigateway.GetRestApisInput, _ ...func(*apigateway.Options)) (*apigateway.GetRestApisOutput, error) {
+	if f.getRestAPIs == nil {
 		return &apigateway.GetRestApisOutput{}, nil
 	}
-	return f.getRestApis(in)
+	return f.getRestAPIs(in)
 }
 
-func (f *fakeApiGateway) GetDomainNames(_ context.Context, in *apigateway.GetDomainNamesInput, _ ...func(*apigateway.Options)) (*apigateway.GetDomainNamesOutput, error) {
+func (f *fakeAPIGateway) GetDomainNames(_ context.Context, in *apigateway.GetDomainNamesInput, _ ...func(*apigateway.Options)) (*apigateway.GetDomainNamesOutput, error) {
 	if f.getDomainNames == nil {
 		return &apigateway.GetDomainNamesOutput{}, nil
 	}
 	return f.getDomainNames(in)
 }
 
-func (f *fakeApiGateway) GetBasePathMappings(_ context.Context, in *apigateway.GetBasePathMappingsInput, _ ...func(*apigateway.Options)) (*apigateway.GetBasePathMappingsOutput, error) {
+func (f *fakeAPIGateway) GetBasePathMappings(_ context.Context, in *apigateway.GetBasePathMappingsInput, _ ...func(*apigateway.Options)) (*apigateway.GetBasePathMappingsOutput, error) {
 	if f.getBasePathMappings == nil {
 		return &apigateway.GetBasePathMappingsOutput{}, nil
 	}
 	return f.getBasePathMappings(in)
 }
 
-type fakeApiGatewayV2 struct {
-	getApis func(*apigatewayv2.GetApisInput) (*apigatewayv2.GetApisOutput, error)
+type fakeAPIGatewayV2 struct {
+	getAPIs func(*apigatewayv2.GetApisInput) (*apigatewayv2.GetApisOutput, error)
 }
 
-func (f *fakeApiGatewayV2) GetApis(_ context.Context, in *apigatewayv2.GetApisInput, _ ...func(*apigatewayv2.Options)) (*apigatewayv2.GetApisOutput, error) {
-	if f.getApis == nil {
+func (f *fakeAPIGatewayV2) GetApis(_ context.Context, in *apigatewayv2.GetApisInput, _ ...func(*apigatewayv2.Options)) (*apigatewayv2.GetApisOutput, error) {
+	if f.getAPIs == nil {
 		return &apigatewayv2.GetApisOutput{}, nil
 	}
-	return f.getApis(in)
+	return f.getAPIs(in)
 }
 
 type fakeCloudFront struct {

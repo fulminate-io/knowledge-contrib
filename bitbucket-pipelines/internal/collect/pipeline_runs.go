@@ -58,7 +58,7 @@ func repoRuns(
 		workspace, slug, min(depth, bbclient.MaxPagelen))
 
 	var runs []apiPipelineRun
-	err := client.GetPaginated(ctx, path, func(raw json.RawMessage) error {
+	err := client.FetchPaginated(ctx, path, func(raw json.RawMessage) error {
 		var page []apiPipelineRun
 		if err := json.Unmarshal(raw, &page); err != nil {
 			return fmt.Errorf("decoding a pipeline-runs page: %w", err)

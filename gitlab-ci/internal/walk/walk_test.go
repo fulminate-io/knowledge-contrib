@@ -143,8 +143,8 @@ func TestTheWalkCarriesNoGraphIdentity(t *testing.T) {
 
 	rendered := render(t, got)
 	if strings.Contains(rendered, "gitlab-"+fixtureGroup) {
-		t.Errorf("the result carries the source provider's derived graph name; this module "+
-			"neither prefixes nor rewrites the collect id:\n%s", rendered)
+		t.Errorf(`the result carries the source provider's derived graph name; this module neither prefixes nor rewrites the collect id:
+%s`, rendered)
 	}
 	// And the id reaches the node ids verbatim, which is the known positive: the
 	// group really was the one walked.

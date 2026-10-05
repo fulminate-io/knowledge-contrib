@@ -5,6 +5,8 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"sort"
 	"testing"
@@ -76,8 +78,12 @@ func TestTheEmittedGraphMatchesTheComparator(t *testing.T) {
 		t.Fatalf("assembling: %v", err)
 	}
 
-	compareNodes(t, want.Nodes, nodes)
-	compareEdges(t, want.Edges, edges)
+	if err := checkNodes(want.Nodes, nodes); err != nil {
+		t.Error(err)
+	}
+	if err := checkEdges(want.Edges, edges); err != nil {
+		t.Error(err)
+	}
 }
 
 // TestTheGoldenCarriesItsProvenance is what keeps the row above regenerable.
@@ -205,15 +211,15 @@ func parityFixture() ([]*logTemplate, []*logStream, []*logChunk, []resolvedProxy
 		chunks, resolutions, correlations
 }
 
-// compareNodes compares the two node sets keyed by id, field by field.
+// checkNodes compares the two node sets keyed by id, field by field.
 //
 // THE CONTENT COMPARISON IS THE ONE DELIBERATE DIFFERENCE and it is decoded on
 // both sides rather than skipped: the comparator writes the chunk payload as raw
 // bytes and this module base64-encodes it, because this module's envelope is
 // JSON and Go's encoder replaces invalid UTF-8 rather than refusing it. The
 // BYTES must still be identical, which is what this compares.
-func compareNodes(t *testing.T, want []goldenNode, got []framework.Node) {
-	t.Helper()
+func checkNodes(want []goldenNode, got []framework.Node) error {
+	var errs []error
 	gotByID := make(map[string]framework.Node, len(got))
 	for _, n := range got {
 		gotByID[n.ID] = n
@@ -226,63 +232,65 @@ func compareNodes(t *testing.T, want []goldenNode, got []framework.Node) {
 	for id, w := range wantByID {
 		g, ok := gotByID[id]
 		if !ok {
-			t.Errorf("the comparator emitted a %s node %q that this module did not", w.Type, id)
+			errs = append(errs, fmt.Errorf("the comparator emitted a %s node %q that this module did not", w.Type, id))
 			continue
 		}
 		if g.Type != w.Type {
-			t.Errorf("node %q type = %q, comparator %q", id, g.Type, w.Type)
+			errs = append(errs, fmt.Errorf("node %q type = %q, comparator %q", id, g.Type, w.Type))
 		}
 		if g.SymbolName != w.SymbolName {
-			t.Errorf("node %q SymbolName = %q, comparator %q", id, g.SymbolName, w.SymbolName)
+			errs = append(errs, fmt.Errorf("node %q SymbolName = %q, comparator %q", id, g.SymbolName, w.SymbolName))
 		}
 		if g.Description != w.Description {
-			t.Errorf("node %q Description = %q, comparator %q", id, g.Description, w.Description)
+			errs = append(errs, fmt.Errorf("node %q Description = %q, comparator %q", id, g.Description, w.Description))
 		}
 		if g.Source != w.Source {
-			t.Errorf("node %q Source = %q, comparator %q", id, g.Source, w.Source)
+			errs = append(errs, fmt.Errorf("node %q Source = %q, comparator %q", id, g.Source, w.Source))
 		}
-		compareContent(t, id, g.Content, w.Content)
-		compareMetadata(t, id, g.Metadata, w.Metadata)
+		errs = append(errs, checkContent(id, g.Content, w.Content))
+		errs = append(errs, checkMetadata(id, g.Metadata, w.Metadata))
 	}
 	for id, g := range gotByID {
 		if _, ok := wantByID[id]; !ok {
-			t.Errorf("this module emitted a %s node %q the comparator did not", g.Type, id)
+			errs = append(errs, fmt.Errorf("this module emitted a %s node %q the comparator did not", g.Type, id))
 		}
 	}
+	return errors.Join(errs...)
 }
 
-// compareContent decodes both sides to bytes before comparing.
-func compareContent(t *testing.T, id, got, want string) {
-	t.Helper()
+// checkContent decodes both sides to bytes before comparing.
+func checkContent(id, got, want string) error {
+	var errs []error
 	wantBytes, err := base64.StdEncoding.DecodeString(want)
 	if err != nil {
-		t.Fatalf("the golden's content for %q is not base64: %v", id, err)
+		return fmt.Errorf("the golden's content for %q is not base64: %v", id, err)
 	}
 	if len(wantBytes) == 0 && got == "" {
-		return
+		return errors.Join(errs...)
 	}
 	gotBytes, err := base64.StdEncoding.DecodeString(got)
 	if err != nil {
-		t.Errorf("node %q content is not base64: %v", id, err)
-		return
+		errs = append(errs, fmt.Errorf("node %q content is not base64: %v", id, err))
+		return errors.Join(errs...)
 	}
 	if string(gotBytes) != string(wantBytes) {
-		t.Errorf("node %q content bytes differ from the comparator's", id)
+		errs = append(errs, fmt.Errorf("node %q content bytes differ from the comparator's", id))
 	}
+	return errors.Join(errs...)
 }
 
-// compareMetadata compares two metadata maps key by key, naming what differs.
+// checkMetadata compares two metadata maps key by key, naming what differs.
 //
 // THE content_encoding KEY IS THIS MODULE'S OWN and is expected to be absent
 // from the comparator's node, because the comparator writes the payload raw and
 // has nothing to declare. It is the one admitted addition, and admitting it by
 // name rather than by ignoring extra keys is what keeps every OTHER addition a
 // failure.
-func compareMetadata(t *testing.T, id string, got, want map[string]string) {
-	t.Helper()
+func checkMetadata(id string, got, want map[string]string) error {
+	var errs []error
 	for _, k := range sortedKeys(want) {
 		if got[k] != want[k] {
-			t.Errorf("node %q metadata %s = %q, comparator %q", id, k, got[k], want[k])
+			errs = append(errs, fmt.Errorf("node %q metadata %s = %q, comparator %q", id, k, got[k], want[k]))
 		}
 	}
 	for _, k := range sortedKeys(got) {
@@ -292,13 +300,14 @@ func compareMetadata(t *testing.T, id string, got, want map[string]string) {
 		if k == "content_encoding" {
 			continue
 		}
-		t.Errorf("node %q carries the metadata key %s=%q, which the comparator does not", id, k, got[k])
+		errs = append(errs, fmt.Errorf("node %q carries the metadata key %s=%q, which the comparator does not", id, k, got[k]))
 	}
+	return errors.Join(errs...)
 }
 
-// compareEdges compares the two edge sets keyed by (from, to, type).
-func compareEdges(t *testing.T, want []goldenEdge, got []framework.Edge) {
-	t.Helper()
+// checkEdges compares the two edge sets keyed by (from, to, type).
+func checkEdges(want []goldenEdge, got []framework.Edge) error {
+	var errs []error
 	key := func(from, to, typ string) string { return from + "\x00" + to + "\x00" + typ }
 
 	gotByKey := make(map[string]framework.Edge, len(got))
@@ -313,34 +322,35 @@ func compareEdges(t *testing.T, want []goldenEdge, got []framework.Edge) {
 	for k, w := range wantByKey {
 		g, ok := gotByKey[k]
 		if !ok {
-			t.Errorf("the comparator emitted a %s edge %s->%s that this module did not",
-				w.Type, w.FromID, w.ToID)
+			errs = append(errs, fmt.Errorf("the comparator emitted a %s edge %s->%s that this module did not",
+				w.Type, w.FromID, w.ToID))
 			continue
 		}
 		if g.Confidence != w.Confidence {
-			t.Errorf("%s edge %s->%s confidence = %v, comparator %v",
-				w.Type, w.FromID, w.ToID, g.Confidence, w.Confidence)
+			errs = append(errs, fmt.Errorf("%s edge %s->%s confidence = %v, comparator %v",
+				w.Type, w.FromID, w.ToID, g.Confidence, w.Confidence))
 		}
 		if g.Method != w.Method {
-			t.Errorf("%s edge %s->%s method = %q, comparator %q", w.Type, w.FromID, w.ToID, g.Method, w.Method)
+			errs = append(errs, fmt.Errorf("%s edge %s->%s method = %q, comparator %q", w.Type, w.FromID, w.ToID, g.Method, w.Method))
 		}
 		if g.Evidence != w.Evidence {
-			t.Errorf("%s edge %s->%s evidence = %q, comparator %q",
-				w.Type, w.FromID, w.ToID, g.Evidence, w.Evidence)
+			errs = append(errs, fmt.Errorf("%s edge %s->%s evidence = %q, comparator %q",
+				w.Type, w.FromID, w.ToID, g.Evidence, w.Evidence))
 		}
 	}
 	for k, g := range gotByKey {
 		if _, ok := wantByKey[k]; !ok {
-			t.Errorf("this module emitted a %s edge %s->%s the comparator did not", g.Type, g.FromID, g.ToID)
+			errs = append(errs, fmt.Errorf("this module emitted a %s edge %s->%s the comparator did not", g.Type, g.FromID, g.ToID))
 		}
 	}
 
 	// The EMITTED_BY count is asserted separately, because a set comparison
 	// keyed by endpoints would hide a duplicate.
 	if gotCount, wantCount := countEdges(got), countGoldenEdges(want); gotCount[edgeTypeEmittedBy] != wantCount[edgeTypeEmittedBy] {
-		t.Errorf("emitted %d EMITTED_BY edges, comparator %d",
-			gotCount[edgeTypeEmittedBy], wantCount[edgeTypeEmittedBy])
+		errs = append(errs, fmt.Errorf("emitted %d EMITTED_BY edges, comparator %d",
+			gotCount[edgeTypeEmittedBy], wantCount[edgeTypeEmittedBy]))
 	}
+	return errors.Join(errs...)
 }
 
 func countEdges(edges []framework.Edge) map[string]int {

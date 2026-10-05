@@ -41,8 +41,8 @@ func TestTheInstallingSectionPointsAtThePublishedArtifacts(t *testing.T) {
 
 	for _, want := range []string{"knowledge-contrib", "install script"} {
 		if !strings.Contains(rest, want) {
-			t.Errorf("the %q section does not mention %q, so it does not tell a reader where the "+
-				"released binaries live or how to get one:\n%s", heading, want, rest)
+			t.Errorf(`the %q section does not mention %q, so it does not tell a reader where the released binaries live or how to get one:
+%s`, heading, want, rest)
 		}
 	}
 }

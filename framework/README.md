@@ -51,7 +51,7 @@ rather than as the message that was printed. Diagnostics go to stderr.
 
 ### Three checked-in JSON Schema files are the contract
 
-The contract is three documents, 21, 46 and 88 lines, all in this module's
+The contract is three documents, 21, 50 and 88 lines, all in this module's
 `contract/` directory and byte-identical to the copies the client checks in.
 They are checked in, rather than generated from a Go type, because the reader
 they exist for is writing a collector in another language.
@@ -222,7 +222,7 @@ and says so once in the collect output.
 
 ## What this module adds
 
-Everything above is the contract. This module is 1508 lines of Go across ten
+Everything above is the contract. This module is 1519 lines of Go across ten
 files that implement it once, so that none of it is visible to a collector:
 
 | Symbol | What it is |

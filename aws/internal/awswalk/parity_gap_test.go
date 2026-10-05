@@ -80,9 +80,8 @@ func TestParity_TheDeclaredGapIsStillGenuine(t *testing.T) {
 			t.Fatalf("glob %q in %s: %v", gap.OperationGlob, dir, err)
 		}
 		if len(matches) > 0 {
-			t.Errorf("the gap declared for %q says %s carries no matching operation, and %d file(s) now match "+
-				"%q: %v.\nThe pinned SDK has gained what the gap was waiting on. Implement the walk, add the "+
-				"type back to AllResourceTypes, and delete the gap.",
+			t.Errorf(`the gap declared for %q says %s carries no matching operation, and %d file(s) now match %q: %v.
+The pinned SDK has gained what the gap was waiting on. Implement the walk, add the type back to AllResourceTypes, and delete the gap.`,
 				gap.ResourceType, gap.SDKModule, len(matches), gap.OperationGlob, matches)
 		}
 

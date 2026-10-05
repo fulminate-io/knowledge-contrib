@@ -93,9 +93,8 @@ func TestEnv_ListedSetMatchesTheConfigPackagesReadSet(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("the pinned aws-sdk-go-v2/config package reads %d name(s) this collector's environment list "+
-			"does not carry: %v.\nAn operator whose entry omits one has a collector that silently ignores a "+
-			"setting they made.", len(missing), missing)
+		t.Errorf(`the pinned aws-sdk-go-v2/config package reads %d name(s) this collector's environment list does not carry: %v.
+An operator whose entry omits one has a collector that silently ignores a setting they made.`, len(missing), missing)
 	}
 }
 
@@ -159,9 +158,8 @@ func TestEnv_EveryServiceInTheClosureHasItsEndpointName(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("%d service endpoint override name(s) are read by a package in this module's closure and are "+
-			"not listed: %v.\nA missing one leaves an operator's private-endpoint override SILENTLY unset on "+
-			"exactly the client the credential chain authenticates through.", len(missing), missing)
+		t.Errorf(`%d service endpoint override name(s) are read by a package in this module's closure and are not listed: %v.
+A missing one leaves an operator's private-endpoint override SILENTLY unset on exactly the client the credential chain authenticates through.`, len(missing), missing)
 	}
 
 	// THE TRANSITIVE ARM, ASSERTED BY NAME rather than left to the count: these

@@ -2,7 +2,11 @@
 
 package main
 
-import "maps"
+import (
+	"maps"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
+)
 
 // testsupport_test.go — the fixture builders every table in this suite shares.
 //
@@ -14,11 +18,11 @@ import "maps"
 
 // node builds one contract node with the resource_type metadata every derived
 // pass keys on.
-func node(id, kind string, meta map[string]string) Node {
+func node(id, kind string, meta map[string]string) framework.Node {
 	m := map[string]string{"resource_type": kind}
 	maps.Copy(m, meta)
 	_, _, name, _ := splitID(id)
-	return Node{
+	return framework.Node{
 		ID:         id,
 		Type:       nodeTypeCloudResource,
 		SymbolName: name,
@@ -28,13 +32,13 @@ func node(id, kind string, meta map[string]string) Node {
 
 // workloadNode builds a node for a Deployment, the kind carrying a pod template
 // that every table here exercises.
-func workloadNode(id string, meta map[string]string) Node {
+func workloadNode(id string, meta map[string]string) framework.Node {
 	return node(id, "Deployment", meta)
 }
 
 // namespacedNode builds a node carrying the namespace metadata key that the
 // namespace-membership derivation reads.
-func namespacedNode(namespace, kind, name string, meta map[string]string) Node {
+func namespacedNode(namespace, kind, name string, meta map[string]string) framework.Node {
 	m := map[string]string{"namespace": namespace}
 	maps.Copy(m, meta)
 	return node(resourceID(namespace, kind, name), kind, m)
@@ -42,7 +46,7 @@ func namespacedNode(namespace, kind, name string, meta map[string]string) Node {
 
 // edgeTypes reduces an edge slice to the multiset of its type strings, which is
 // what most assertions here are about.
-func edgeTypes(edges []Edge) []string {
+func edgeTypes(edges []framework.Edge) []string {
 	out := make([]string, 0, len(edges))
 	for _, e := range edges {
 		out = append(out, e.Type)
@@ -52,11 +56,11 @@ func edgeTypes(edges []Edge) []string {
 
 // findEdge returns the first edge of the given type, or the zero Edge when the
 // slice carries none.
-func findEdge(edges []Edge, typ string) Edge {
+func findEdge(edges []framework.Edge, typ string) framework.Edge {
 	for _, e := range edges {
 		if e.Type == typ {
 			return e
 		}
 	}
-	return Edge{}
+	return framework.Edge{}
 }

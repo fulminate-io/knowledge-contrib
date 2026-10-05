@@ -104,9 +104,9 @@ func fixtureCloudFront() *fakeCloudFront {
 	}
 }
 
-func fixtureAPIGateway() *fakeApiGateway {
-	return &fakeApiGateway{
-		getRestApis: func(*apigateway.GetRestApisInput) (*apigateway.GetRestApisOutput, error) {
+func fixtureAPIGateway() *fakeAPIGateway {
+	return &fakeAPIGateway{
+		getRestAPIs: func(*apigateway.GetRestApisInput) (*apigateway.GetRestApisOutput, error) {
 			return &apigateway.GetRestApisOutput{Items: []apigatewaytypes.RestApi{{
 				Id: new(fixtureRestAPIID), Name: new("orders"), Description: new("orders REST API"),
 			}}}, nil
@@ -125,9 +125,9 @@ func fixtureAPIGateway() *fakeApiGateway {
 	}
 }
 
-func fixtureAPIGatewayV2() *fakeApiGatewayV2 {
-	return &fakeApiGatewayV2{
-		getApis: func(*apigatewayv2.GetApisInput) (*apigatewayv2.GetApisOutput, error) {
+func fixtureAPIGatewayV2() *fakeAPIGatewayV2 {
+	return &fakeAPIGatewayV2{
+		getAPIs: func(*apigatewayv2.GetApisInput) (*apigatewayv2.GetApisOutput, error) {
 			return &apigatewayv2.GetApisOutput{Items: []apigatewayv2types.Api{
 				{
 					ApiId: new(fixtureHTTPAPIID), Name: new("edge"),

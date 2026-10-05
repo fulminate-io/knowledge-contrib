@@ -13,9 +13,9 @@ import (
 )
 
 // kubernetes_master_probe_test.go — THE RE-EXEC INSTRUMENT for a variable read
-// at PACKAGE INITIALISATION.
+// at PACKAGE INITIALIZATION.
 //
-// WHY IT EXISTS. client-go reads KUBERNETES_MASTER once, in the initialiser of
+// WHY IT EXISTS. client-go reads KUBERNETES_MASTER once, in the initializer of
 // the package-level clientcmd.ClusterDefaults, before any test body runs. An
 // in-process t.Setenv is therefore too late by construction: the variable would
 // be unread in every arm and the three arms would agree for a reason that has
@@ -26,7 +26,7 @@ import (
 // SO THE ARM IS A CHILD PROCESS, this same test binary re-executed with the
 // variable in its environment, and it reports TWO values: the package default
 // client-go computed from the variable, which is the instrument's own proof that
-// the child's initialisation saw it, and the host this collector's own
+// the child's initialization saw it, and the host this collector's own
 // resolution produced, which is the thing under test.
 
 // kubernetesMasterProbeEnv marks a run as the child arm. Its presence is what
@@ -40,7 +40,7 @@ const kubernetesMasterProbeMarker = "KN_T41_PROBE_RESULT "
 // kubernetesMasterProbeResult is what one child arm reports.
 type kubernetesMasterProbeResult struct {
 	// ClusterDefault is clientcmd.ClusterDefaults.Server as the child's package
-	// initialisation computed it. It is the CONTROL: it moves when, and only
+	// initialization computed it. It is the CONTROL: it moves when, and only
 	// when, the child's init read the variable.
 	ClusterDefault string `json:"cluster_default"`
 	// Outcome is this collector's own resolution, reduced to a comparable value.

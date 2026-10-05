@@ -27,6 +27,7 @@ toolchain go1.26.8
 // repository's bitbucket-pipelines.yml.
 require (
 	github.com/fulminate-io/knowledge-contrib/framework v0.0.0
+	github.com/google/go-cmp v0.7.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

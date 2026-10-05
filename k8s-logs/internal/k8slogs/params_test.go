@@ -21,9 +21,9 @@ func TestNoNamespacesIsRefused(t *testing.T) {
 		name   string
 		params Params
 	}{
-		{"absent", Params{}},
-		{"empty list", Params{Namespaces: []string{}}},
-		{"an empty member", Params{Namespaces: []string{"dev", ""}}},
+		{name: "absent", params: Params{}},
+		{name: "empty list", params: Params{Namespaces: []string{}}},
+		{name: "an empty member", params: Params{Namespaces: []string{"dev", ""}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := tc.params.Validate()
@@ -116,10 +116,10 @@ func TestSelfBoundsMustBePositive(t *testing.T) {
 		name   string
 		params Params
 	}{
-		{"tail_lines zero", Params{Namespaces: []string{"dev"}, TailLines: ptr(0)}},
-		{"tail_lines negative", Params{Namespaces: []string{"dev"}, TailLines: ptr(-1)}},
-		{"limit_bytes zero", Params{Namespaces: []string{"dev"}, LimitBytes: ptr(0)}},
-		{"limit_bytes negative", Params{Namespaces: []string{"dev"}, LimitBytes: ptr(-5)}},
+		{name: "tail_lines zero", params: Params{Namespaces: []string{"dev"}, TailLines: ptr(0)}},
+		{name: "tail_lines negative", params: Params{Namespaces: []string{"dev"}, TailLines: ptr(-1)}},
+		{name: "limit_bytes zero", params: Params{Namespaces: []string{"dev"}, LimitBytes: ptr(0)}},
+		{name: "limit_bytes negative", params: Params{Namespaces: []string{"dev"}, LimitBytes: ptr(-5)}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if _, err := tc.params.Validate(); err == nil {

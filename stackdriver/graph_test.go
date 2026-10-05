@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -31,11 +33,19 @@ func TestEmittedNodeTypesAndMetadataKeys(t *testing.T) {
 		}
 	}
 
-	requireMetadata(t, byType[nodeTypeLogTemplate][0], "pattern", "severity", "count", "first_seen", "last_seen")
-	requireMetadata(t, byType[nodeTypeLogChunk][0], "stream_id", "template_id", "entry_count",
-		"start_time", "end_time", "content_encoding")
-	requireMetadata(t, byType[nodeTypeLogLabel][0], "label_key", "label_value")
-	requireMetadata(t, byType[nodeTypeLogStream][0], "fingerprint")
+	if err := checkMetadataKeys(byType[nodeTypeLogTemplate][0], "pattern", "severity", "count", "first_seen", "last_seen"); err != nil {
+		t.Error(err)
+	}
+	if err := checkMetadataKeys(byType[nodeTypeLogChunk][0], "stream_id", "template_id", "entry_count",
+		"start_time", "end_time", "content_encoding"); err != nil {
+		t.Error(err)
+	}
+	if err := checkMetadataKeys(byType[nodeTypeLogLabel][0], "label_key", "label_value"); err != nil {
+		t.Error(err)
+	}
+	if err := checkMetadataKeys(byType[nodeTypeLogStream][0], "fingerprint"); err != nil {
+		t.Error(err)
+	}
 
 	stream := byType[nodeTypeLogStream][0]
 	if stream.Metadata["label:service"] == "" {
@@ -59,11 +69,17 @@ func TestEmittedEdgeTypesAndDirections(t *testing.T) {
 		seen[e.Type]++
 		switch e.Type {
 		case edgeTypeContains:
-			assertEndpointTypes(t, typeByID, e, nodeTypeLogTemplate, nodeTypeLogChunk)
+			if err := checkEndpointTypes(typeByID, e, nodeTypeLogTemplate, nodeTypeLogChunk); err != nil {
+				t.Error(err)
+			}
 		case edgeTypeBelongsTo:
-			assertEndpointTypes(t, typeByID, e, nodeTypeLogChunk, nodeTypeLogStream)
+			if err := checkEndpointTypes(typeByID, e, nodeTypeLogChunk, nodeTypeLogStream); err != nil {
+				t.Error(err)
+			}
 		case edgeTypeHasLabel:
-			assertEndpointTypes(t, typeByID, e, nodeTypeLogStream, nodeTypeLogLabel)
+			if err := checkEndpointTypes(typeByID, e, nodeTypeLogStream, nodeTypeLogLabel); err != nil {
+				t.Error(err)
+			}
 		}
 	}
 	for _, want := range []string{edgeTypeContains, edgeTypeBelongsTo, edgeTypeHasLabel} {
@@ -327,26 +343,28 @@ func renderGraph(t *testing.T, entries []logEntry) string {
 	return string(b)
 }
 
-// requireMetadata asserts a node carries every named key with a non-empty value.
-func requireMetadata(t *testing.T, n framework.Node, keys ...string) {
-	t.Helper()
+// checkMetadataKeys asserts a node carries every named key with a non-empty value.
+func checkMetadataKeys(n framework.Node, keys ...string) error {
+	var errs []error
 	for _, k := range keys {
 		if n.Metadata[k] == "" {
-			t.Errorf("%s node %q carries no %s: %v", n.Type, n.ID, k, n.Metadata)
+			errs = append(errs, fmt.Errorf("%s node %q carries no %s: %v", n.Type, n.ID, k, n.Metadata))
 		}
 	}
+	return errors.Join(errs...)
 }
 
-// assertEndpointTypes asserts an edge runs between the two node types named, in
+// checkEndpointTypes asserts an edge runs between the two node types named, in
 // that direction.
-func assertEndpointTypes(t *testing.T, typeByID map[string]string, e framework.Edge, from, to string) {
-	t.Helper()
+func checkEndpointTypes(typeByID map[string]string, e framework.Edge, from, to string) error {
+	var errs []error
 	if typeByID[e.FromID] != from {
-		t.Errorf("%s edge runs FROM a %s, want a %s", e.Type, typeByID[e.FromID], from)
+		errs = append(errs, fmt.Errorf("%s edge runs FROM a %s, want a %s", e.Type, typeByID[e.FromID], from))
 	}
 	if typeByID[e.ToID] != to {
-		t.Errorf("%s edge runs TO a %s, want a %s", e.Type, typeByID[e.ToID], to)
+		errs = append(errs, fmt.Errorf("%s edge runs TO a %s, want a %s", e.Type, typeByID[e.ToID], to))
 	}
+	return errors.Join(errs...)
 }
 
 // keysOf renders a map's keys for a failure message.

@@ -83,8 +83,8 @@ func ServeStdio[P any](ctx context.Context, c Collector[P]) error {
 	}
 	// The two describe queries the installer's table generator asks, answered on
 	// the same terms as --version: first position only, before anything serves.
-	if serveDescribeQuery(c) {
-		return nil
+	if answered, err := serveDescribeQuery(c); answered || err != nil {
+		return err
 	}
 	srv, err := NewServer(c)
 	if err != nil {

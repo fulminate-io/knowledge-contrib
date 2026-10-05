@@ -3,6 +3,7 @@
 package lokiapi
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,35 +52,37 @@ func TestEachPathValuedNameErrorsNamingTheVariableAndThePath(t *testing.T) {
 		wantText string
 	}{
 		{
-			"a bearer-token file that does not exist", EnvBearerTokenFile,
-			map[string]string{EnvBearerTokenFile: missing}, missing,
-			"reading the bearer token named by",
+			name: "a bearer-token file that does not exist", variable: EnvBearerTokenFile,
+			env: map[string]string{EnvBearerTokenFile: missing}, path: missing,
+			wantText: "reading the bearer token named by",
 		},
 		{
-			"a bearer-token path that cannot be read", EnvBearerTokenFile,
-			map[string]string{EnvBearerTokenFile: unreadable}, unreadable,
-			"reading the bearer token named by",
+			name: "a bearer-token path that cannot be read", variable: EnvBearerTokenFile,
+			env: map[string]string{EnvBearerTokenFile: unreadable}, path: unreadable,
+			wantText: "reading the bearer token named by",
 		},
 		{
-			"a certificate authority that does not exist", EnvCACertPath,
-			map[string]string{EnvCACertPath: missing}, missing,
-			"reading the certificate authority named by",
+			name: "a certificate authority that does not exist", variable: EnvCACertPath,
+			env: map[string]string{EnvCACertPath: missing}, path: missing,
+			wantText: "reading the certificate authority named by",
 		},
 		{
-			"a certificate authority path that cannot be read", EnvCACertPath,
-			map[string]string{EnvCACertPath: unreadable}, unreadable,
-			"reading the certificate authority named by",
+			name: "a certificate authority path that cannot be read", variable: EnvCACertPath,
+			env: map[string]string{EnvCACertPath: unreadable}, path: unreadable,
+			wantText: "reading the certificate authority named by",
 		},
 		{
-			"a client certificate that does not exist", EnvClientCertPath,
-			map[string]string{EnvClientCertPath: missing, EnvClientKeyPath: missing}, missing,
-			"loading the client certificate named by",
+			name: "a client certificate that does not exist", variable: EnvClientCertPath,
+			env: map[string]string{EnvClientCertPath: missing, EnvClientKeyPath: missing}, path: missing,
+			wantText: "loading the client certificate named by",
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := NewClient("http://loki.example:3100", mustSettings(t, tc.env))
-			assertNamesBoth(t, err, tc.variable, tc.path)
+			if problem := checkNamesBoth(err, tc.variable, tc.path); problem != nil {
+				t.Fatal(problem)
+			}
 			if !strings.Contains(err.Error(), tc.wantText) {
 				t.Fatalf("the error says %q, which does not distinguish a READ failure from a CONTENT failure; want it to contain %q",
 					err.Error(), tc.wantText)
@@ -134,7 +137,9 @@ func TestAnEmptyTokenFileIsRefused(t *testing.T) {
 	if err == nil {
 		t.Fatal("an empty token file was accepted")
 	}
-	assertNamesBoth(t, err, EnvBearerTokenFile, path)
+	if problem := checkNamesBoth(err, EnvBearerTokenFile, path); problem != nil {
+		t.Fatal(problem)
+	}
 	// AND IT SAYS THE FILE IS EMPTY, not that it could not be read. The two
 	// causes send an operator to different places, and this is the half of the
 	// pair that keeps the read arm above honest.
@@ -154,21 +159,23 @@ func TestACertificateAuthorityFileWithNoPEMIsRefused(t *testing.T) {
 	if err == nil {
 		t.Fatal("a file holding no PEM certificate was accepted as a certificate authority")
 	}
-	assertNamesBoth(t, err, EnvCACertPath, path)
+	if problem := checkNamesBoth(err, EnvCACertPath, path); problem != nil {
+		t.Fatal(problem)
+	}
 	if !strings.Contains(err.Error(), "holds no PEM certificate") {
 		t.Fatalf("the error says %q, which does not distinguish a file with no PEM from an unreadable one", err.Error())
 	}
 }
 
-func assertNamesBoth(t *testing.T, err error, name, path string) {
-	t.Helper()
+func checkNamesBoth(err error, name, path string) error {
 	if err == nil {
-		t.Fatalf("no error for %s=%q", name, path)
+		return fmt.Errorf("no error for %s=%q", name, path)
 	}
 	if !strings.Contains(err.Error(), name) {
-		t.Fatalf("the error does not name the variable %s: %v", name, err)
+		return fmt.Errorf("the error does not name the variable %s: %v", name, err)
 	}
 	if !strings.Contains(err.Error(), path) {
-		t.Fatalf("the error does not name the path %s: %v", path, err)
+		return fmt.Errorf("the error does not name the path %s: %v", path, err)
 	}
+	return nil
 }

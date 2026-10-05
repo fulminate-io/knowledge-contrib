@@ -3,6 +3,7 @@
 package enventry_test
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -98,7 +99,11 @@ func TestIsDeclaredAnswersForBothDirections(t *testing.T) {
 // directory — is a red here rather than a variable the install table never
 // carries.
 func TestTheNamesReadAndTheNamesDeclaredAreTheSameSet(t *testing.T) {
-	read := namesReadByTheModule(t)
+	read, unresolved := namesReadByTheModule(t)
+	for _, site := range unresolved {
+		t.Errorf("%s: an environment lookup takes an argument this census cannot resolve; a name "+
+			"it cannot read is a name it cannot assert is declared", site)
+	}
 
 	// THE KNOWN POSITIVE. Without it, a census that resolved no constants would
 	// find nothing read and pass while the module read three names.
@@ -125,12 +130,13 @@ func TestTheNamesReadAndTheNamesDeclaredAreTheSameSet(t *testing.T) {
 }
 
 // namesReadByTheModule is every environment variable name the module looks up,
-// resolved through this package's own constants.
+// resolved through this package's own constants, and the file:line of every
+// lookup whose argument it could not resolve, for the Test to fail on.
 //
 // THE LOOKUPS NAME CONSTANTS RATHER THAN LITERALS, which is the point of the
 // declaration, so the census resolves a selector expression against this
 // package's exported names rather than reading a string out of the call.
-func namesReadByTheModule(t *testing.T) map[string]bool {
+func namesReadByTheModule(t *testing.T) (names map[string]bool, unresolved []string) {
 	t.Helper()
 	constants := map[string]string{
 		"UsernameVariable":     enventry.UsernameVariable,
@@ -164,24 +170,27 @@ func namesReadByTheModule(t *testing.T) map[string]bool {
 			if len(call.Args) != 1 {
 				return true
 			}
-			out[resolveName(t, call.Args[0], constants, path, fset)] = true
+			name, ok := resolveName(call.Args[0], constants)
+			if !ok {
+				unresolved = append(unresolved, fmt.Sprintf("%s:%d",
+					relativeToModule(t, path), fset.Position(call.Args[0].Pos()).Line))
+			}
+			out[name] = true
 			return true
 		})
 	}
 	delete(out, "")
-	return out
+	return out, unresolved
 }
 
-// resolveName turns one lookup argument into the name it reads, failing loudly
-// on an argument this census cannot resolve rather than skipping it.
-func resolveName(
-	t *testing.T, arg ast.Expr, constants map[string]string, path string, fset *token.FileSet,
-) string {
-	t.Helper()
+// resolveName turns one lookup argument into the name it reads, and reports
+// false on an argument this census cannot resolve so the caller fails loudly
+// rather than skipping it.
+func resolveName(arg ast.Expr, constants map[string]string) (string, bool) {
 	switch expr := arg.(type) {
 	case *ast.SelectorExpr:
 		if value, known := constants[expr.Sel.Name]; known {
-			return value
+			return value, true
 		}
 	case *ast.BasicLit:
 		if expr.Kind == token.STRING {
@@ -190,14 +199,11 @@ func resolveName(
 				// A LITERAL IS ITSELF A FINDING and the census returns it rather
 				// than ignoring it: the declaration exists so no site spells a name
 				// itself, and the assertion above will name it.
-				return value
+				return value, true
 			}
 		}
 	}
-	t.Errorf("%s:%d: an environment lookup takes an argument this census cannot resolve; a name "+
-		"it cannot read is a name it cannot assert is declared",
-		relativeToModule(t, path), fset.Position(arg.Pos()).Line)
-	return ""
+	return "", false
 }
 
 // moduleGoFiles is every Go file in the module, found by walking up to the

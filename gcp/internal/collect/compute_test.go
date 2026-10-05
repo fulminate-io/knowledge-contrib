@@ -134,7 +134,7 @@ func TestComputeInstancesConvertsOneInstance(t *testing.T) {
 		}
 	}
 	if len(got.Relations) != 4 {
-		t.Errorf("got %d edges, want 4: %v", len(got.Relations), relationKeys(got))
+		t.Errorf("ComputeInstances(vm) relations = %d edges, want 4: %v", len(got.Relations), relationKeys(got))
 	}
 }
 

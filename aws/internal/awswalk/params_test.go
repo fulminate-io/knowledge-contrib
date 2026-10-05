@@ -164,11 +164,11 @@ func TestParams_MalformedSelectorsAreRefusedBeforeAnyAPICall(t *testing.T) {
 		params Params
 		want   string
 	}{
-		{"a region that is not a region name", Params{Region: "US-East-1"}, "params.region"},
-		{"a region with no separators", Params{Region: "useast1"}, "params.region"},
-		{"a region that is punctuation", Params{Region: "-----"}, "params.region"},
-		{"an account that is not twelve digits", Params{Account: "12345"}, "params.account"},
-		{"an account with a letter in it", Params{Account: "12345678901x"}, "params.account"},
+		{name: "a region that is not a region name", params: Params{Region: "US-East-1"}, want: "params.region"},
+		{name: "a region with no separators", params: Params{Region: "useast1"}, want: "params.region"},
+		{name: "a region that is punctuation", params: Params{Region: "-----"}, want: "params.region"},
+		{name: "an account that is not twelve digits", params: Params{Account: "12345"}, want: "params.account"},
+		{name: "an account with a letter in it", params: Params{Account: "12345678901x"}, want: "params.account"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

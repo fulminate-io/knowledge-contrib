@@ -157,34 +157,34 @@ func TestErr_NoFailurePathPanics(t *testing.T) {
 		name string
 		run  func(*testing.T)
 	}{
-		{"deployment with every optional pointer nil", func(t *testing.T) {
+		{name: "deployment with every optional pointer nil", run: func(t *testing.T) {
 			bundle := newFakeBundle(t, []runtime.Object{
 				&corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "c", Namespace: "p"}},
 				&corev1.PersistentVolume{ObjectMeta: metav1.ObjectMeta{Name: "v"}},
 			}, nil, emptyDynamic())
 			_, err := walkCluster(t.Context(), bundle, framework.ForeignContext{})
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		}},
-		{"custom resource whose spec is a string", func(t *testing.T) {
+		{name: "custom resource whose spec is a string", run: func(t *testing.T) {
 			item := &unstructuredOf{apiVersion: "keda.sh/v1alpha1", kind: "ScaledObject"}
 			edges := extractKEDA(item.build("prod", "x", map[string]any{"spec": "not-an-object"}), "ScaledObject")
 			assert.Empty(t, edges)
 		}},
-		{"custom resource whose route list holds scalars", func(t *testing.T) {
+		{name: "custom resource whose route list holds scalars", run: func(t *testing.T) {
 			item := &unstructuredOf{apiVersion: "traefik.io/v1alpha1", kind: "IngressRoute"}
 			edges := extractTraefik(item.build("prod", "x", map[string]any{
 				"spec": map[string]any{"routes": []any{"not-a-map", 42}}}), "IngressRoute")
 			assert.Empty(t, edges)
 		}},
-		{"network policy whose content is not JSON", func(t *testing.T) {
+		{name: "network policy whose content is not JSON", run: func(t *testing.T) {
 			n := namespacedNode("prod", "NetworkPolicy", "broken", map[string]string{"policy_types": "Ingress"})
 			n.Content = "{not json"
-			assert.Empty(t, buildNetworkPolicyReachabilityEdges([]Node{n}))
+			assert.Empty(t, buildNetworkPolicyReachabilityEdges([]framework.Node{n}))
 		}},
-		{"selector metadata that does not decode", func(t *testing.T) {
+		{name: "selector metadata that does not decode", run: func(t *testing.T) {
 			svc := namespacedNode("prod", "Service", "api", map[string]string{"selector": "{{{"})
 			pod := namespacedNode("prod", "Pod", "p", map[string]string{"label/app": "api"})
-			assert.Empty(t, buildSelectsEdges([]Node{svc, pod}),
+			assert.Empty(t, buildSelectsEdges([]framework.Node{svc, pod}),
 				"a selector that does not decode selects NOTHING; treating it as empty would "+
 					"match every pod in the namespace")
 		}},

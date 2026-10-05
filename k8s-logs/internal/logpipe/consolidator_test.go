@@ -185,12 +185,12 @@ func TestEachStackFrameRejectionDiscriminates(t *testing.T) {
 		name string
 		line string
 	}{
-		{"a JSON object", `{"msg":"served /b","file":"main.go:42","offset":"+0x1c"}`},
-		{"a JSON array", `["main.go:42 +0x1c"]`},
-		{"a timestamped line", "2026-09-07 10:00:00 handler.go:10 +0x1c ready"},
-		{"a logfmt line", "time=2026-09-07 msg=\"/src/app/main.go:42 +0x1c\""},
-		{"a ts= line", "ts=2026-09-07 msg=\"/src/app/main.go:42 +0x1c\""},
-		{"long prose with no Go marker", strings.Repeat("the deployment finished successfully ", 12)},
+		{name: "a JSON object", line: `{"msg":"served /b","file":"main.go:42","offset":"+0x1c"}`},
+		{name: "a JSON array", line: `["main.go:42 +0x1c"]`},
+		{name: "a timestamped line", line: "2026-09-07 10:00:00 handler.go:10 +0x1c ready"},
+		{name: "a logfmt line", line: "time=2026-09-07 msg=\"/src/app/main.go:42 +0x1c\""},
+		{name: "a ts= line", line: "ts=2026-09-07 msg=\"/src/app/main.go:42 +0x1c\""},
+		{name: "long prose with no Go marker", line: strings.Repeat("the deployment finished successfully ", 12)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if matchesGoStackPattern(tc.line) {

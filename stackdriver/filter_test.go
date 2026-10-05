@@ -164,7 +164,8 @@ func TestAQuotedTextFilterCannotOpenASecondClause(t *testing.T) {
 // anything. Admitting a clause separator here left the whole suite green before
 // this arm existed.
 func TestSanitizeQueryValueStripsWhatEscapingWouldOnlyNeutralize(t *testing.T) {
-	got := sanitizeQueryValue("api" + "\n" + `x" OR (1=1)` + "\r\t" + ";|`$")
+	got := sanitizeQueryValue(`api
+x" OR (1=1)` + "\r\t" + ";|`$")
 	for _, forbidden := range []string{"\n", "\r", "\t", `"`, "(", ")", ";", "|", "`", "$"} {
 		if strings.Contains(got, forbidden) {
 			t.Errorf("sanitizeQueryValue kept %q in %q", forbidden, got)
@@ -263,22 +264,22 @@ func TestMapGCPSeverityFloorsToTheHighestNamedLevelAtOrBelow(t *testing.T) {
 		in   logging.Severity
 		want string
 	}{
-		{"emergency", logging.Emergency, severityCritical},
-		{"alert", logging.Alert, severityCritical},
-		{"critical", logging.Critical, severityCritical},
-		{"error", logging.Error, severityError},
-		{"warning", logging.Warning, severityWarn},
-		{"notice", logging.Notice, severityInfo},
-		{"info", logging.Info, severityInfo},
-		{"debug", logging.Debug, severityDebug},
-		{"default", logging.Default, severityInfo},
+		{name: "emergency", in: logging.Emergency, want: severityCritical},
+		{name: "alert", in: logging.Alert, want: severityCritical},
+		{name: "critical", in: logging.Critical, want: severityCritical},
+		{name: "error", in: logging.Error, want: severityError},
+		{name: "warning", in: logging.Warning, want: severityWarn},
+		{name: "notice", in: logging.Notice, want: severityInfo},
+		{name: "info", in: logging.Info, want: severityInfo},
+		{name: "debug", in: logging.Debug, want: severityDebug},
+		{name: "default", in: logging.Default, want: severityInfo},
 		// The in-between values take the highest NAMED level at or below them,
 		// which is a floor rather than a round-up. These three arms are what
 		// pin that direction.
-		{"between warning and error floors to warn", logging.Warning + 50, severityWarn},
-		{"between info and notice floors to info", logging.Info + 50, severityInfo},
-		{"between error and critical floors to error", logging.Error + 50, severityError},
-		{"above emergency stays critical", logging.Emergency + 100, severityCritical},
+		{name: "between warning and error floors to warn", in: logging.Warning + 50, want: severityWarn},
+		{name: "between info and notice floors to info", in: logging.Info + 50, want: severityInfo},
+		{name: "between error and critical floors to error", in: logging.Error + 50, want: severityError},
+		{name: "above emergency stays critical", in: logging.Emergency + 100, want: severityCritical},
 	} {
 		if got := mapGCPSeverity(tc.in); got != tc.want {
 			t.Errorf("%s: mapGCPSeverity(%v) = %s, want %s", tc.name, tc.in, got, tc.want)

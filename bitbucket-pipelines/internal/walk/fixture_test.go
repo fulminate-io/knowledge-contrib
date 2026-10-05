@@ -31,15 +31,16 @@ var recorded = map[string]string{
 	"repositories/acme": `{"values":[{"uuid":"{r}","slug":"api","full_name":"acme/api",
 	  "is_private":true,"scm":"git","language":"go","mainbranch":{"name":"main"}}],"next":""}`,
 
-	"repositories/acme/api/src/main/bitbucket-pipelines.yml": "pipelines:\n" +
-		"  default:\n" +
-		"    - step:\n" +
-		"        name: build\n" +
-		"        deployment: production\n" +
-		"        runs-on:\n" +
-		"          - self-hosted\n" +
-		"        script:\n" +
-		"          - 'echo $API_KEY'\n",
+	"repositories/acme/api/src/main/bitbucket-pipelines.yml": `pipelines:
+  default:
+    - step:
+        name: build
+        deployment: production
+        runs-on:
+          - self-hosted
+        script:
+          - 'echo $API_KEY'
+`,
 
 	"repositories/acme/api/pipelines": `{"values":[{"uuid":"{run}","build_number":1,
 	  "created_on":"2026-09-01T10:00:00Z","completed_on":"2026-09-01T10:01:00Z",

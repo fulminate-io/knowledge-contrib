@@ -44,7 +44,7 @@ func TestSharedVPCEmitsTheLocalHalfForAForeignParentNetwork(t *testing.T) {
 		t.Fatalf("no SHARED_WITH from the host network to the local subnet: %v", edgeKeys(got.Relations))
 	}
 	if len(got.Relations) != 1 {
-		t.Errorf("got %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
+		t.Errorf("SharedVPC(host network) = %d edges, want 1: %v", len(got.Relations), edgeKeys(got.Relations))
 	}
 	if got.Relations[0].Method != resolve.MethodSharedVPC {
 		t.Errorf("edge method: got %q, want %q", got.Relations[0].Method, resolve.MethodSharedVPC)

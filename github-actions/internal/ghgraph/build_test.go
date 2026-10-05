@@ -160,7 +160,7 @@ func TestTheOutputIsSortedAndDeduplicated(t *testing.T) {
 	}
 }
 
-// TestTwoCopiesOfOneIdDeduplicateTheSameWayInEitherArrivalOrder is the row the
+// TestTwoCopiesOfOneIDDeduplicateTheSameWayInEitherArrivalOrder is the row the
 // carry-forward promise rests on once more than one enumeration mints the same
 // node.
 //
@@ -182,7 +182,7 @@ func TestTheOutputIsSortedAndDeduplicated(t *testing.T) {
 // omits the empty ones, so the shorter copy is a prefix of the longer one, and
 // the comma that continues the longer one sorts before the brace that ends the
 // shorter.
-func TestTwoCopiesOfOneIdDeduplicateTheSameWayInEitherArrivalOrder(t *testing.T) {
+func TestTwoCopiesOfOneIDDeduplicateTheSameWayInEitherArrivalOrder(t *testing.T) {
 	base := ghgraph.Resource{
 		ID:           ghgraph.UserID("acme", "ada"),
 		Name:         "ada",
@@ -199,19 +199,19 @@ func TestTwoCopiesOfOneIdDeduplicateTheSameWayInEitherArrivalOrder(t *testing.T)
 		field string
 		vary  func(ghgraph.Resource) ghgraph.Resource
 	}{
-		{"Content", func(res ghgraph.Resource) ghgraph.Resource {
+		{field: "Content", vary: func(res ghgraph.Resource) ghgraph.Resource {
 			res.Content = `{"kind":"User","name":"ada","id":7,"html_url":"https://github.com/ada"}`
 			return res
 		}},
-		{"Name", func(res ghgraph.Resource) ghgraph.Resource {
+		{field: "Name", vary: func(res ghgraph.Resource) ghgraph.Resource {
 			res.Name = "ada-renamed"
 			return res
 		}},
-		{"ResourceType", func(res ghgraph.Resource) ghgraph.Resource {
+		{field: "ResourceType", vary: func(res ghgraph.Resource) ghgraph.Resource {
 			res.ResourceType = ghgraph.ResourceTypeTeam
 			return res
 		}},
-		{"Metadata", func(res ghgraph.Resource) ghgraph.Resource {
+		{field: "Metadata", vary: func(res ghgraph.Resource) ghgraph.Resource {
 			res.Metadata = map[string]string{"org": "acme", "repo": "acme/api"}
 			return res
 		}},
@@ -237,10 +237,10 @@ func TestTwoCopiesOfOneIdDeduplicateTheSameWayInEitherArrivalOrder(t *testing.T)
 					len(first), len(second))
 			}
 			if !sameNode(first[0], second[0]) {
-				t.Errorf("two copies differing only in %s resolve by arrival order:\n"+
-					"  base first:  %s\n  other first: %s\n"+
-					"The sort key does not read %s, so a stable sort leaves the pair in whatever "+
-					"order the concurrent fan-out finished in.",
+				t.Errorf(`two copies differing only in %s resolve by arrival order:
+  base first:  %s
+  other first: %s
+The sort key does not read %s, so a stable sort leaves the pair in whatever order the concurrent fan-out finished in.`,
 					row.field, render(first[0]), render(second[0]), row.field)
 			}
 		})
@@ -275,12 +275,9 @@ func TestTwoCopiesOfOneIdDeduplicateTheSameWayInEitherArrivalOrder(t *testing.T)
 // counted field actually orders.
 func TestTheResourceSortKeyReadsEveryFieldTheResourceCarries(t *testing.T) {
 	const ordered = 5 // ID, Content, Name, ResourceType, Metadata
-	if got := reflect.TypeOf(ghgraph.Resource{}).NumField(); got != ordered {
-		t.Errorf("Resource carries %d fields and the node ordering is written against %d.\n"+
-			"Two copies of one id that agree on every ORDERED field compare equal, and the stable "+
-			"sort then leaves them in the concurrent fan-out's arrival order — which is the race "+
-			"the ordering exists to remove. Add the new field to buildNodes' comparison and give "+
-			"it a subtest above.", got, ordered)
+	if got := reflect.TypeFor[ghgraph.Resource]().NumField(); got != ordered {
+		t.Errorf(`Resource carries %d fields and the node ordering is written against %d.
+Two copies of one id that agree on every ORDERED field compare equal, and the stable sort then leaves them in the concurrent fan-out's arrival order — which is the race the ordering exists to remove. Add the new field to buildNodes' comparison and give it a subtest above.`, got, ordered)
 	}
 }
 

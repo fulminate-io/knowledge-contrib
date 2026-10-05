@@ -115,12 +115,12 @@ func projectPipeline(
 func fetchDefinition(ctx context.Context, api API, project *gl.Project) ([]byte, error) {
 	ref := project.DefaultBranch
 	file, _, err := api.Files.GetFile(ctx, project.ID, pipelineFile, &gl.GetFileOptions{Ref: &ref})
+	if statusOf(err) == http.StatusNotFound {
+		// NOT AN INCOMPLETENESS. The provider answered, and the answer is that
+		// this project defines no pipeline.
+		return nil, nil
+	}
 	if err != nil {
-		if statusOf(err) == http.StatusNotFound {
-			// NOT AN INCOMPLETENESS. The provider answered, and the answer is that
-			// this project defines no pipeline.
-			return nil, nil
-		}
 		return nil, fmt.Errorf("reading the %s of %q: %w", pipelineFile, project.PathWithNamespace, err)
 	}
 	if file == nil {

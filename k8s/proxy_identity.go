@@ -5,6 +5,8 @@ package main
 import (
 	"regexp"
 	"strings"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // proxy_identity.go — the three remaining proxy families: ASSUMES_IDENTITY,
@@ -32,8 +34,8 @@ import (
 // names no subscription at all.
 //
 // A ServiceAccount with none of the three annotations emits nothing.
-func buildAssumesIdentityEdges(nodes []Node, acc *proxyAccumulator) []Edge {
-	var out []Edge
+func buildAssumesIdentityEdges(nodes []framework.Node, acc *proxyAccumulator) []framework.Edge {
+	var out []framework.Edge
 	for i := range nodes {
 		n := &nodes[i]
 		if n.Metadata["resource_type"] != "ServiceAccount" {
@@ -44,7 +46,7 @@ func buildAssumesIdentityEdges(nodes []Node, acc *proxyAccumulator) []Edge {
 			if !ok {
 				continue
 			}
-			out = append(out, Edge{
+			out = append(out, framework.Edge{
 				FromID: n.ID,
 				ToID:   proxyID,
 				Type:   edgeAssumesIdentity,
@@ -126,8 +128,8 @@ func gcpProjectFromEmail(email string) string {
 // separate functions rather than one generic pass because the source shapes
 // have nothing in common; a single implementation over one of them leaves the
 // other's parse untested.
-func buildUsesDiskEdges(nodes []Node, acc *proxyAccumulator) []Edge {
-	var out []Edge
+func buildUsesDiskEdges(nodes []framework.Node, acc *proxyAccumulator) []framework.Edge {
+	var out []framework.Edge
 	for i := range nodes {
 		n := &nodes[i]
 		if n.Metadata["resource_type"] != "PersistentVolume" {
@@ -141,7 +143,7 @@ func buildUsesDiskEdges(nodes []Node, acc *proxyAccumulator) []Edge {
 		if !ok {
 			continue
 		}
-		out = append(out, Edge{
+		out = append(out, framework.Edge{
 			FromID: n.ID,
 			ToID:   proxyID,
 			Type:   edgeUsesDisk,
@@ -245,8 +247,8 @@ var externalPatterns = []externalPattern{
 // THE DEDUPE: two matches to the same target from one workload collapse to one
 // edge. A workload naming the same database in a URL and in a hostname variable
 // has one dependency, not two.
-func buildConnectsToEdges(nodes []Node, acc *proxyAccumulator) []Edge {
-	var out []Edge
+func buildConnectsToEdges(nodes []framework.Node, acc *proxyAccumulator) []framework.Edge {
+	var out []framework.Edge
 	seen := map[string]bool{}
 	for i := range nodes {
 		n := &nodes[i]
@@ -268,7 +270,7 @@ func buildConnectsToEdges(nodes []Node, acc *proxyAccumulator) []Edge {
 				continue
 			}
 			seen[key] = true
-			out = append(out, Edge{
+			out = append(out, framework.Edge{
 				FromID: n.ID,
 				ToID:   proxyID,
 				Type:   edgeConnectsTo,
@@ -297,7 +299,7 @@ type externalReference struct {
 // bodies: this collector strips Secret values before they ever reach a node, so
 // there is no secret value in scope here to leak. The prefix names the metadata
 // KEY the match came from, which is a name rather than a value.
-func externalReferences(n *Node) []externalReference {
+func externalReferences(n *framework.Node) []externalReference {
 	var out []externalReference
 	keys := sortedUnique(mapKeys(n.Metadata))
 	for _, key := range keys {

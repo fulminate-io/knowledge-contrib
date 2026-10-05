@@ -28,9 +28,9 @@ func TestAnExplicitZeroOrNegativeEntryBoundIsRefused(t *testing.T) {
 		name  string
 		value int
 	}{
-		{"an explicit zero", 0},
-		{"a negative bound", -1},
-		{"a large negative bound", -5000},
+		{name: "an explicit zero", value: 0},
+		{name: "a negative bound", value: -1},
+		{name: "a large negative bound", value: -5000},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			v := tc.value

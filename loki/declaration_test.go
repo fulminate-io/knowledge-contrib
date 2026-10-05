@@ -4,6 +4,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"slices"
 	"strings"
@@ -58,15 +60,27 @@ func TestDeclaredForeignContext_NamesTheFieldsTheResolverMatchesOn(t *testing.T)
 		// `name` and `service` are metadata keys, and an undeclared key arrives
 		// ABSENT rather than empty, so a declaration missing them indexes every
 		// candidate under its symbol name alone.
-		requireContains(t, family, "node_fields", d.NodeFields, "symbol_name")
-		requireContains(t, family, "metadata_keys", d.MetadataKeys, metaName)
-		requireContains(t, family, "metadata_keys", d.MetadataKeys, metaService)
+		if err := checkContains(family, "node_fields", d.NodeFields, "symbol_name"); err != nil {
+			t.Error(err)
+		}
+		if err := checkContains(family, "metadata_keys", d.MetadataKeys, metaName); err != nil {
+			t.Error(err)
+		}
+		if err := checkContains(family, "metadata_keys", d.MetadataKeys, metaService); err != nil {
+			t.Error(err)
+		}
 
 		// THE ID, without which the edge read has no pivot and the client refuses
 		// the declaration by name.
-		requireContains(t, family, "node_fields", d.NodeFields, "id")
-		requireContains(t, family, "edge_fields", d.EdgeFields, "from_id")
-		requireContains(t, family, "edge_fields", d.EdgeFields, "to_id")
+		if err := checkContains(family, "node_fields", d.NodeFields, "id"); err != nil {
+			t.Error(err)
+		}
+		if err := checkContains(family, "edge_fields", d.EdgeFields, "from_id"); err != nil {
+			t.Error(err)
+		}
+		if err := checkContains(family, "edge_fields", d.EdgeFields, "to_id"); err != nil {
+			t.Error(err)
+		}
 
 		if family == "cloud" || family == "logs" {
 			t.Errorf("the %s family is retired; a declaration naming it is refused at collect time", family)
@@ -81,11 +95,12 @@ func TestDeclaredForeignContext_NamesTheFieldsTheResolverMatchesOn(t *testing.T)
 	}
 }
 
-func requireContains(t *testing.T, family, what string, list []string, want string) {
-	t.Helper()
+func checkContains(family, what string, list []string, want string) error {
+	var errs []error
 	if !slices.Contains(list, want) {
-		t.Errorf("the %q entry's %s is %v and must declare %q", family, what, list, want)
+		errs = append(errs, fmt.Errorf("the %q entry's %s is %v and must declare %q", family, what, list, want))
 	}
+	return errors.Join(errs...)
 }
 
 // TestTheDeclaredFieldSetIsTheOneTheResolverReads is the seam row, and the
@@ -171,8 +186,9 @@ func TestTheREADMEShipsTheDeclaredContextBlock(t *testing.T) {
 		t.Fatalf("README.md is %d bytes, too short to be this module's documentation", len(body))
 	}
 	if !strings.Contains(string(body), fragment) {
-		t.Fatalf("the README's worked entry does not carry this module's declared context block. "+
-			"Paste this into the entry:\n\n%s", fragment)
+		t.Fatalf(`the README's worked entry does not carry this module's declared context block. Paste this into the entry:
+
+%s`, fragment)
 	}
 
 	// AND THE PROSE, because the `reason` on each declaration is a Go field the

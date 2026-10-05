@@ -24,8 +24,9 @@ func TestEveryDeclaredTypeHasItsOwnSummarizer(t *testing.T) {
 	slices.Sort(declared)
 
 	if !slices.Equal(registered, declared) {
-		t.Errorf("the registered summarizers and the declared vocabulary differ:\n"+
-			"registered: %v\ndeclared:   %v", registered, declared)
+		t.Errorf(`the registered summarizers and the declared vocabulary differ:
+registered: %v
+declared:   %v`, registered, declared)
 	}
 	if len(declared) != 11 {
 		t.Errorf("this collector declares %d resource types, want 11 — the source provider's eight "+
@@ -148,7 +149,7 @@ func TestTheSummaryLinesReproduceTheSourceProvidersOwn(t *testing.T) {
 	} {
 		t.Run(row.res.ResourceType, func(t *testing.T) {
 			if got := ghgraph.Summarize(row.res); got != row.want {
-				t.Errorf("got %q, want %q", got, row.want)
+				t.Errorf("Summarize(%s) = %q, want %q", row.res.ResourceType, got, row.want)
 			}
 		})
 	}

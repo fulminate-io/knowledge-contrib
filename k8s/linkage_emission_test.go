@@ -45,15 +45,15 @@ func TestLinkage_FourShapesReachTheResultThroughTheGraphFamilyFields(t *testing.
 	want := []struct {
 		from, to, typ, sourceFamily, targetFamily string
 	}{
-		{"charts/api/Chart.yaml", "prod/Deployment/api-server", edgeDeploys, graphFamilyCode, ""},
-		{"prod/ServiceAccount/irsa-sa", "arn:aws:iam::123456789012:role/api-role",
-			edgeWorkloadIdentity, "", familyAWS},
-		{"prod/ServiceAccount/gcp-sa",
-			"projects/fulminate-services/serviceAccounts/api@fulminate-services.iam.gserviceaccount.com",
-			edgeWorkloadIdentity, "", familyGCP},
-		{"prod/ServiceAccount/azure-sa",
-			"/subscriptions/sub-abc/resourceGroups/rg/providers/identity/api-identity",
-			edgeWorkloadIdentity, "", familyAzure},
+		{from: "charts/api/Chart.yaml", to: "prod/Deployment/api-server", typ: edgeDeploys, sourceFamily: graphFamilyCode, targetFamily: ""},
+		{from: "prod/ServiceAccount/irsa-sa", to: "arn:aws:iam::123456789012:role/api-role",
+			typ: edgeWorkloadIdentity, sourceFamily: "", targetFamily: familyAWS},
+		{from: "prod/ServiceAccount/gcp-sa",
+			to:  "projects/fulminate-services/serviceAccounts/api@fulminate-services.iam.gserviceaccount.com",
+			typ: edgeWorkloadIdentity, sourceFamily: "", targetFamily: familyGCP},
+		{from: "prod/ServiceAccount/azure-sa",
+			to:  "/subscriptions/sub-abc/resourceGroups/rg/providers/identity/api-identity",
+			typ: edgeWorkloadIdentity, sourceFamily: "", targetFamily: familyAzure},
 	}
 	require.Len(t, edges, len(want), "all four shapes are emitted, and no fifth exists")
 
@@ -222,7 +222,7 @@ func TestLinkage_TheWalkThreadsTheDeclaredContextToTheLinkPhase(t *testing.T) {
 
 	// THE SELECTION READS BOTH FIELDS. Filtering on TargetGraph alone would make
 	// the DEPLOYS edge invisible to the very assertion meant to observe it.
-	var linkage []Edge
+	var linkage []framework.Edge
 	for _, e := range res.Edges {
 		if e.SourceGraph != "" || e.TargetGraph != "" {
 			linkage = append(linkage, e)

@@ -381,9 +381,9 @@ func TestTheOracleRefusesAnEmptyResourceID(t *testing.T) {
 		name string
 		a, b correlation.ResolvedResource
 	}{
-		{"empty on the left", correlation.ResolvedResource{Account: "fulminate-services"}, real},
-		{"empty on the right", real, correlation.ResolvedResource{Account: "fulminate-services"}},
-		{"empty on both", correlation.ResolvedResource{}, correlation.ResolvedResource{}},
+		{name: "empty on the left", a: correlation.ResolvedResource{Account: "fulminate-services"}, b: real},
+		{name: "empty on the right", a: real, b: correlation.ResolvedResource{Account: "fulminate-services"}},
+		{name: "empty on both", a: correlation.ResolvedResource{}, b: correlation.ResolvedResource{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if oracle.HasDependency(tc.a, tc.b) {

@@ -66,7 +66,7 @@ func listRepos(
 	ctx context.Context, client *bbclient.Client, workspace string,
 ) ([]apiRepo, error) {
 	var repos []apiRepo
-	err := client.GetPaginated(ctx, fmt.Sprintf("repositories/%s", workspace),
+	err := client.FetchPaginated(ctx, fmt.Sprintf("repositories/%s", workspace),
 		func(raw json.RawMessage) error {
 			var page []apiRepo
 			if err := json.Unmarshal(raw, &page); err != nil {

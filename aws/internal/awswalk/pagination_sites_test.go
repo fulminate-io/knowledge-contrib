@@ -3,6 +3,8 @@
 package awswalk
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/fulminate-io/knowledge-contrib/framework"
@@ -61,9 +63,11 @@ func TestPagination_DescribeListenersReadsPageTwo(t *testing.T) {
 	}
 
 	res := runWalk(t, clients, Params{})
-	assertPageEdges(t, res, "elbv2.DescribeListeners", calls,
+	if err := checkPageEdges(res, "elbv2.DescribeListeners", calls,
 		edgeProbe{fixtureLBARN, certPageOne, EdgeUsesCert},
-		edgeProbe{fixtureLBARN, certPageTwo, EdgeUsesCert})
+		edgeProbe{fixtureLBARN, certPageTwo, EdgeUsesCert}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestPagination_GetBasePathMappingsReadsPageTwo(t *testing.T) {
@@ -73,7 +77,7 @@ func TestPagination_GetBasePathMappingsReadsPageTwo(t *testing.T) {
 	)
 	calls := 0
 	clients := fixtureClients()
-	clients.APIGateway.(*fakeApiGateway).getBasePathMappings = func(
+	clients.APIGateway.(*fakeAPIGateway).getBasePathMappings = func(
 		in *apigateway.GetBasePathMappingsInput,
 	) (*apigateway.GetBasePathMappingsOutput, error) {
 		calls++
@@ -90,9 +94,11 @@ func TestPagination_GetBasePathMappingsReadsPageTwo(t *testing.T) {
 
 	res := runWalk(t, clients, Params{})
 	from := apiGWDomainNodeID(t, res)
-	assertPageEdges(t, res, "apigateway.GetBasePathMappings", calls,
+	if err := checkPageEdges(res, "apigateway.GetBasePathMappings", calls,
 		edgeProbe{from, restAPIARN(fixtureRegion, apiPageOne), EdgeBoundTo},
-		edgeProbe{from, restAPIARN(fixtureRegion, apiPageTwo), EdgeBoundTo})
+		edgeProbe{from, restAPIARN(fixtureRegion, apiPageTwo), EdgeBoundTo}); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestPagination_ListTargetsByRuleReadsPageTwo(t *testing.T) {
@@ -118,9 +124,11 @@ func TestPagination_ListTargetsByRuleReadsPageTwo(t *testing.T) {
 	}
 
 	res := runWalk(t, clients, Params{})
-	assertPageEdges(t, res, "eventbridge.ListTargetsByRule", calls,
+	if err := checkPageEdges(res, "eventbridge.ListTargetsByRule", calls,
 		edgeProbe{fixtureRuleARN, targetPageOne, EdgeTriggers},
-		edgeProbe{fixtureRuleARN, targetPageTwo, EdgeTriggers})
+		edgeProbe{fixtureRuleARN, targetPageTwo, EdgeTriggers}); err != nil {
+		t.Error(err)
+	}
 }
 
 // edgeProbe is one edge a page is expected to produce.
@@ -145,16 +153,15 @@ func apiGWDomainNodeID(t *testing.T, res framework.Result) string {
 	return ""
 }
 
-// assertPageEdges checks that every probed edge landed and that the read made
-// exactly two requests.
+// checkPageEdges reports whether every probed edge landed and the read made
+// exactly two requests, returning every miss as one error for the Test to fail on.
 //
 // THE FIRST PROBE IS THE CONTROL. It is the page-ONE edge, and it is asserted for
 // the same reason every absence claim in this repository carries a known
 // positive: without it, a walk that never called the read at all would report the
 // page-two edge as missing and be indistinguishable from a walk that dropped it.
-func assertPageEdges(t *testing.T, res framework.Result, operation string, calls int, probes ...edgeProbe) {
-	t.Helper()
-
+func checkPageEdges(res framework.Result, operation string, calls int, probes ...edgeProbe) error {
+	var errs []error
 	for i, p := range probes {
 		found := false
 		for _, e := range res.Edges {
@@ -167,18 +174,19 @@ func assertPageEdges(t *testing.T, res framework.Result, operation string, calls
 			continue
 		}
 		if i == 0 {
-			t.Fatalf("%s: the PAGE-ONE edge %s -[%s]-> %s is absent, so this probe never reached the read and "+
+			return fmt.Errorf("%s: the PAGE-ONE edge %s -[%s]-> %s is absent, so this probe never reached the read and "+
 				"proves nothing about pagination. Fix the fixture before reading the page-two result.",
 				operation, p.from, p.edgeType, p.to)
 		}
-		t.Errorf("%s: the PAGE-TWO edge %s -[%s]-> %s is absent while the page-one edge landed. The read stops "+
+		errs = append(errs, fmt.Errorf("%s: the PAGE-TWO edge %s -[%s]-> %s is absent while the page-one edge landed. The read stops "+
 			"at the first page: either the input does not carry the continuation token back, or the nextToken "+
 			"adapter returns the wrong field. An account larger than one page is then reported as a small one.",
-			operation, p.from, p.edgeType, p.to)
+			operation, p.from, p.edgeType, p.to))
 	}
 
 	if calls != 2 {
-		t.Errorf("%s was called %d time(s) over a two-page account, want exactly 2. One call means the token "+
-			"was never followed; more than two means the loop is re-requesting a page.", operation, calls)
+		errs = append(errs, fmt.Errorf("%s was called %d time(s) over a two-page account, want exactly 2. One call means the token "+
+			"was never followed; more than two means the loop is re-requesting a page.", operation, calls))
 	}
+	return errors.Join(errs...)
 }

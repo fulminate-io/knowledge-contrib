@@ -31,18 +31,18 @@ func TestParamsRefusals(t *testing.T) {
 		mutate func(p *Params)
 		want   string
 	}{
-		{"an empty address", func(p *Params) { p.Address = "" }, "empty"},
-		{"an address with no scheme", func(p *Params) { p.Address = "localhost:3100" }, "scheme"},
-		{"a file:// address", func(p *Params) { p.Address = "file:///etc/passwd" }, "scheme"},
-		{"an address with no host", func(p *Params) { p.Address = "https://" }, "no host"},
-		{"an empty start", func(p *Params) { p.Start = "" }, `"start" bound is empty`},
-		{"an empty end", func(p *Params) { p.End = "" }, `"end" bound is empty`},
-		{"a start that is not RFC 3339", func(p *Params) { p.Start = "yesterday" }, "not an RFC 3339"},
-		{"an end that is not RFC 3339", func(p *Params) { p.End = "2026-09-07" }, "not an RFC 3339"},
-		{"an inverted window", func(p *Params) { p.Start, p.End = p.End, p.Start }, "start must be before end"},
-		{"an instantaneous window", func(p *Params) { p.End = p.Start }, "start must be before end"},
-		{"a severity outside the vocabulary", func(p *Params) { p.SeverityMin = "ERR0R" }, "is not a severity"},
-		{"a lowercase severity, which is not the canonical spelling", func(p *Params) { p.SeverityMin = "error" }, "is not a severity"},
+		{name: "an empty address", mutate: func(p *Params) { p.Address = "" }, want: "empty"},
+		{name: "an address with no scheme", mutate: func(p *Params) { p.Address = "localhost:3100" }, want: "scheme"},
+		{name: "a file:// address", mutate: func(p *Params) { p.Address = "file:///etc/passwd" }, want: "scheme"},
+		{name: "an address with no host", mutate: func(p *Params) { p.Address = "https://" }, want: "no host"},
+		{name: "an empty start", mutate: func(p *Params) { p.Start = "" }, want: `"start" bound is empty`},
+		{name: "an empty end", mutate: func(p *Params) { p.End = "" }, want: `"end" bound is empty`},
+		{name: "a start that is not RFC 3339", mutate: func(p *Params) { p.Start = "yesterday" }, want: "not an RFC 3339"},
+		{name: "an end that is not RFC 3339", mutate: func(p *Params) { p.End = "2026-09-07" }, want: "not an RFC 3339"},
+		{name: "an inverted window", mutate: func(p *Params) { p.Start, p.End = p.End, p.Start }, want: "start must be before end"},
+		{name: "an instantaneous window", mutate: func(p *Params) { p.End = p.Start }, want: "start must be before end"},
+		{name: "a severity outside the vocabulary", mutate: func(p *Params) { p.SeverityMin = "ERR0R" }, want: "is not a severity"},
+		{name: "a lowercase severity, which is not the canonical spelling", mutate: func(p *Params) { p.SeverityMin = "error" }, want: "is not a severity"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -235,8 +235,8 @@ func TestWalkFailsRatherThanReturningAnEmptyResult(t *testing.T) {
 		name   string
 		params Params
 	}{
-		{"a bad address", Params{Address: "not-a-url", Start: "2026-09-07T12:00:00Z", End: "2026-09-07T13:00:00Z"}},
-		{"a bad window", Params{Address: "http://localhost:1", Start: "nope", End: "2026-09-07T13:00:00Z"}},
+		{name: "a bad address", params: Params{Address: "not-a-url", Start: "2026-09-07T12:00:00Z", End: "2026-09-07T13:00:00Z"}},
+		{name: "a bad window", params: Params{Address: "http://localhost:1", Start: "nope", End: "2026-09-07T13:00:00Z"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

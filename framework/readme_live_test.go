@@ -4,9 +4,10 @@ package framework
 
 import (
 	"encoding/json"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -62,12 +63,12 @@ func TestREADMEHandshakeClaimsMatchALiveCollector(t *testing.T) {
 		live, docd string
 		why        string
 	}{
-		{"protocolVersion", init.ProtocolVersion, documented.ProtocolVersion,
-			"the revision this framework negotiates; a block naming another one sends a port author to the wrong specification"},
-		{"serverInfo.name", init.ServerInfo.Name, documented.ServerInfo.Name,
-			"the SERVED TOOL's name — the fact the block exists to teach, since a reader expects the collector's own name here"},
-		{"serverInfo.version", init.ServerInfo.Version, documented.ServerInfo.Version,
-			"this serving layer's version, which is not the binary's build stamp"},
+		{name: "protocolVersion", live: init.ProtocolVersion, docd: documented.ProtocolVersion,
+			why: "the revision this framework negotiates; a block naming another one sends a port author to the wrong specification"},
+		{name: "serverInfo.name", live: init.ServerInfo.Name, docd: documented.ServerInfo.Name,
+			why: "the SERVED TOOL's name — the fact the block exists to teach, since a reader expects the collector's own name here"},
+		{name: "serverInfo.version", live: init.ServerInfo.Version, docd: documented.ServerInfo.Version,
+			why: "this serving layer's version, which is not the binary's build stamp"},
 	} {
 		if field.live == "" {
 			t.Fatalf("the live handshake carries an empty %s; comparing the document against it would "+
@@ -115,9 +116,10 @@ func TestREADMESchemaClaimsMatchTheAdvertisedSchemas(t *testing.T) {
 
 	wantOut := decode(t, clientContract(t, "collector_output.schema.json"))
 	gotOut := decode(t, []byte(mustJSON(t, collect.OutputSchema)))
-	if !reflect.DeepEqual(gotOut, wantOut) {
-		t.Errorf("the advertised OUTPUT schema is not the contract's, so the README's rule that it is "+
-			"advertised verbatim is false:\n want: %s\n  got: %s", mustJSON(t, wantOut), mustJSON(t, gotOut))
+	if !cmp.Equal(gotOut, wantOut) {
+		t.Errorf(`the advertised OUTPUT schema is not the contract's, so the README's rule that it is advertised verbatim is false:
+ want: %s
+  got: %s`, mustJSON(t, wantOut), mustJSON(t, gotOut))
 	}
 
 	wantIn := decode(t, clientContract(t, "collector_input.schema.json"))
@@ -130,12 +132,13 @@ func TestREADMESchemaClaimsMatchTheAdvertisedSchemas(t *testing.T) {
 	}
 	stripParams(t, wantIn)
 	stripParams(t, gotIn)
-	if !reflect.DeepEqual(gotIn, wantIn) {
-		t.Errorf("the advertised INPUT schema differs from the contract outside properties.params, so the "+
-			"README's splice rule is false:\n want: %s\n  got: %s", mustJSON(t, wantIn), mustJSON(t, gotIn))
+	if !cmp.Equal(gotIn, wantIn) {
+		t.Errorf(`the advertised INPUT schema differs from the contract outside properties.params, so the README's splice rule is false:
+ want: %s
+  got: %s`, mustJSON(t, wantIn), mustJSON(t, gotIn))
 	}
 
-	assertClaims(t, readmeSection(t, doc, "### Three wire-shaping rules a port has to reproduce"), []claim{
+	if err := checkClaims(readmeSection(t, doc, "### Three wire-shaping rules a port has to reproduce"), []claim{
 		{"verbatim", "rule 1: the output schema is the contract file, because an inferred one is refused"},
 		{`["null","array"]`, "the union an inferred slice schema produces, which is WHY rule 1 exists"},
 		{`params`, "rule 2: the property spliced into the contract document"},
@@ -147,7 +150,9 @@ func TestREADMESchemaClaimsMatchTheAdvertisedSchemas(t *testing.T) {
 		// whitespace-normalizes both sides, so the wrapped line matches.
 		{"`[]` for `nodes` and `edges`, never `null`",
 			"rule 3: the nil slice a walk that found nothing produces, and must not send"},
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 }
 
 // TestREADMEDeclarationSectionMatchesTheServedDeclarationTool — A PENDING PIN.

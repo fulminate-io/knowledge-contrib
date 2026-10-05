@@ -26,7 +26,7 @@ func TestAnIncompletenessInThePhaseOneReadMarksTheWalkRatherThanEndingIt(t *test
 	for _, sentinel := range []error{
 		collect.ErrDenied, collect.ErrRateLimited, collect.ErrPartial,
 	} {
-		wrapped := fmt.Errorf("bitbucket-repos: %w (acme/api: rendering its detail)", sentinel)
+		wrapped := fmt.Errorf("%w: bitbucket-repos (acme/api: rendering its detail)", sentinel)
 
 		incomplete, fatal := phaseOneOutcome("acme", wrapped)
 		if fatal != nil {

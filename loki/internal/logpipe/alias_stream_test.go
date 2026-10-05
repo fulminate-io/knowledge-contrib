@@ -29,23 +29,23 @@ func TestStreamAliasDispatchesOnLabelKeysInOrder(t *testing.T) {
 		labels map[string]string
 		want   string
 	}{
-		{"k8s wins on reason", map[string]string{"reason": "OOMKilled", "pod_name": "api-7b6"}, "api-7b6.OOMKilled"},
-		{"cloudwatch on log_stream", map[string]string{"log_stream": "ecs-task", "service": "api-server"}, "ecs-task.api-server"},
+		{name: "k8s wins on reason", labels: map[string]string{"reason": "OOMKilled", "pod_name": "api-7b6"}, want: "api-7b6.OOMKilled"},
+		{name: "cloudwatch on log_stream", labels: map[string]string{"log_stream": "ecs-task", "service": "api-server"}, want: "ecs-task.api-server"},
 		// The leading slash of a log group name is unsafe, so it would open the
 		// component with a dash; sanitize TRIMS it, which is why this reads
 		// "aws-lambda-fn" and not "-aws-lambda-fn".
-		{"cloudwatch on log_group", map[string]string{"log_group": "/aws/lambda/fn", "log_stream": "s1"}, "s1.aws-lambda-fn"},
-		{"stackdriver on resource_type", map[string]string{"resource_type": "k8s_container", "host": "api-7b6"}, "api-7b6.k8s_container"},
-		{"loki on app", map[string]string{"app": "checkout", "instance": "host-3"}, "checkout@host-3"},
-		{"generic when no discriminator", map[string]string{"job": "j1", "namespace": "prod"}, "job=j1.namespace=prod"},
+		{name: "cloudwatch on log_group", labels: map[string]string{"log_group": "/aws/lambda/fn", "log_stream": "s1"}, want: "s1.aws-lambda-fn"},
+		{name: "stackdriver on resource_type", labels: map[string]string{"resource_type": "k8s_container", "host": "api-7b6"}, want: "api-7b6.k8s_container"},
+		{name: "loki on app", labels: map[string]string{"app": "checkout", "instance": "host-3"}, want: "checkout@host-3"},
+		{name: "generic when no discriminator", labels: map[string]string{"job": "j1", "namespace": "prod"}, want: "job=j1.namespace=prod"},
 
 		// THE ORDER IS WHAT THESE ASSERT. Each set carries two discriminators,
 		// and the earlier check has to win; reordering inferProvider re-aliases
 		// every stream that carries both.
-		{"reason beats resource_type", map[string]string{"reason": "Evicted", "resource_type": "k8s_container", "pod_name": "p1"}, "p1.Evicted"},
-		{"reason beats log_group", map[string]string{"reason": "Evicted", "log_group": "g", "log_stream": "s"}, "Evicted"},
-		{"log_group beats resource_type", map[string]string{"log_group": "g1", "resource_type": "gce_instance"}, "g1"},
-		{"resource_type beats app", map[string]string{"resource_type": "gce_instance", "app": "checkout"}, "gce_instance"},
+		{name: "reason beats resource_type", labels: map[string]string{"reason": "Evicted", "resource_type": "k8s_container", "pod_name": "p1"}, want: "p1.Evicted"},
+		{name: "reason beats log_group", labels: map[string]string{"reason": "Evicted", "log_group": "g", "log_stream": "s"}, want: "Evicted"},
+		{name: "log_group beats resource_type", labels: map[string]string{"log_group": "g1", "resource_type": "gce_instance"}, want: "g1"},
+		{name: "resource_type beats app", labels: map[string]string{"resource_type": "gce_instance", "app": "checkout"}, want: "gce_instance"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -104,10 +104,10 @@ func TestStreamAliasChainTestsTheValueNotTheKey(t *testing.T) {
 		labels map[string]string
 		want   string
 	}{
-		{"loki empty instance falls to host", map[string]string{"app": "checkout", "instance": "", "host": "h-9"}, "checkout@h-9"},
-		{"k8s empty pod_name falls to service", map[string]string{"reason": "OOMKilled", "pod_name": "", "service": "s1"}, "s1.OOMKilled"},
-		{"stackdriver empty host falls to pod_name", map[string]string{"resource_type": "rt", "host": "", "pod_name": "p"}, "p.rt"},
-		{"cloudwatch empty service falls to log_group", map[string]string{"log_stream": "ls", "service": "", "log_group": "lg"}, "ls.lg"},
+		{name: "loki empty instance falls to host", labels: map[string]string{"app": "checkout", "instance": "", "host": "h-9"}, want: "checkout@h-9"},
+		{name: "k8s empty pod_name falls to service", labels: map[string]string{"reason": "OOMKilled", "pod_name": "", "service": "s1"}, want: "s1.OOMKilled"},
+		{name: "stackdriver empty host falls to pod_name", labels: map[string]string{"resource_type": "rt", "host": "", "pod_name": "p"}, want: "p.rt"},
+		{name: "cloudwatch empty service falls to log_group", labels: map[string]string{"log_stream": "ls", "service": "", "log_group": "lg"}, want: "ls.lg"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -129,11 +129,11 @@ func TestStreamAliasCollapsesToItsSinglePresentComponent(t *testing.T) {
 		labels map[string]string
 		want   string
 	}{
-		{"k8s reason alone", map[string]string{"reason": "OOMKilled"}, "OOMKilled"},
-		{"stackdriver resource_type alone", map[string]string{"resource_type": "rt"}, "rt"},
-		{"cloudwatch log_group alone", map[string]string{"log_group": "lg"}, "lg"},
-		{"cloudwatch log_stream alone", map[string]string{"log_stream": "ls"}, "ls"},
-		{"loki app alone", map[string]string{"app": "checkout"}, "checkout"},
+		{name: "k8s reason alone", labels: map[string]string{"reason": "OOMKilled"}, want: "OOMKilled"},
+		{name: "stackdriver resource_type alone", labels: map[string]string{"resource_type": "rt"}, want: "rt"},
+		{name: "cloudwatch log_group alone", labels: map[string]string{"log_group": "lg"}, want: "lg"},
+		{name: "cloudwatch log_stream alone", labels: map[string]string{"log_stream": "ls"}, want: "ls"},
+		{name: "loki app alone", labels: map[string]string{"app": "checkout"}, want: "checkout"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

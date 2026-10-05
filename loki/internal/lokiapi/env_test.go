@@ -202,10 +202,10 @@ func TestAHalfSetCredentialPairIsRefusedNamingTheMissingHalf(t *testing.T) {
 		env     map[string]string
 		missing string
 	}{
-		{"a username with no password", map[string]string{EnvUsername: "u"}, EnvPassword},
-		{"a password with no username", map[string]string{EnvPassword: "p"}, EnvUsername},
-		{"a client certificate with no key", map[string]string{EnvClientCertPath: "/c.pem"}, EnvClientKeyPath},
-		{"a client key with no certificate", map[string]string{EnvClientKeyPath: "/k.pem"}, EnvClientCertPath},
+		{name: "a username with no password", env: map[string]string{EnvUsername: "u"}, missing: EnvPassword},
+		{name: "a password with no username", env: map[string]string{EnvPassword: "p"}, missing: EnvUsername},
+		{name: "a client certificate with no key", env: map[string]string{EnvClientCertPath: "/c.pem"}, missing: EnvClientKeyPath},
+		{name: "a client key with no certificate", env: map[string]string{EnvClientKeyPath: "/k.pem"}, missing: EnvClientCertPath},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -13,6 +13,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // walk.go — THE ENUMERATION ORDER for the 26 fixed kinds the typed clientsets
@@ -187,8 +189,8 @@ func containerImages(spec corev1.PodSpec) []string {
 // IT DEDUPES ON (type, target). A container that names the same Secret in both
 // an envFrom and a volume states one relationship, not two, and a graph
 // carrying it twice reports a false fan-out.
-func podTemplateEdges(ownerID, namespace string, spec corev1.PodSpec) []Edge {
-	var out []Edge
+func podTemplateEdges(ownerID, namespace string, spec corev1.PodSpec) []framework.Edge {
+	var out []framework.Edge
 	seen := map[string]bool{}
 	emit := func(kind, name, edgeType, method string) {
 		if name == "" {
@@ -200,7 +202,7 @@ func podTemplateEdges(ownerID, namespace string, spec corev1.PodSpec) []Edge {
 			return
 		}
 		seen[key] = true
-		out = append(out, Edge{FromID: ownerID, ToID: target, Type: edgeType, Method: method})
+		out = append(out, framework.Edge{FromID: ownerID, ToID: target, Type: edgeType, Method: method})
 	}
 
 	if spec.ServiceAccountName != "" {

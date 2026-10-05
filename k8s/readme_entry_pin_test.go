@@ -42,8 +42,9 @@ func TestTheREADMEShipsTheGeneratedEntry(t *testing.T) {
 		"README.md is %d bytes, too short to be this module's documentation", len(body))
 
 	require.Containsf(t, string(body), generated,
-		"the README's config entry is not the one ExampleEntry generates. Paste this in place of "+
-			"the fenced json block:\n\n%s", generated)
+		`the README's config entry is not the one ExampleEntry generates. Paste this in place of the fenced json block:
+
+%s`, generated)
 }
 
 // TestTheREADMEDescribesTheContextBlockItShips is the prose half. The `reason`

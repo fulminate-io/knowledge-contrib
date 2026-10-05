@@ -25,7 +25,7 @@ const fixtureHistoryDepth = 50
 // declared order, and fails on any error.
 func walkTheFixture(t *testing.T) bbgraph.Result {
 	t.Helper()
-	got, err := walkTheFixtureAllowingError(t, newFixture(t), func([]collect.Subcollector) {})
+	got, err := walkTheFixtureAllowingError(newFixture(t), func([]collect.Subcollector) {})
 	if err != nil {
 		t.Fatalf("the recorded workspace walked with an error: %v", err)
 	}
@@ -41,9 +41,8 @@ func walkTheFixture(t *testing.T) bbgraph.Result {
 // stability test that ran the same fixed order twice would produce identical
 // input both times and pass with the sorting deleted.
 func walkTheFixtureAllowingError(
-	t *testing.T, fixture *fixtureServer, arrange func([]collect.Subcollector),
+	fixture *fixtureServer, arrange func([]collect.Subcollector),
 ) (bbgraph.Result, error) {
-	t.Helper()
 	client := fixture.client()
 
 	repositories, err := collect.Repositories(client).Run(context.Background(), fixtureWorkspace)

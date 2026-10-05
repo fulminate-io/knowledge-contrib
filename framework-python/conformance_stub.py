@@ -115,6 +115,9 @@ MODES = (
 
 # The literal a refused collect carries, transcribed from the client stub.
 TOOL_ERROR_TEXT = "the stub provider refused this collect"
+# The reason the incomplete-walk mode sends as walk_incomplete_reason: the
+# client stub's stubIncompleteWalkReason, which its completeness test asserts.
+INCOMPLETE_WALK_REASON = "the stub asserts a partial walk"
 
 # The two process exits, transcribed from the client stub.
 EXIT_BEFORE_HANDSHAKE_CODE = 3
@@ -237,7 +240,12 @@ def stub_payload(mode, arguments):
             "walk_complete": True,
         }
     if mode == MODE_INCOMPLETE_WALK:
-        return {"nodes": [{"id": "n1", "type": "issue"}], "edges": [], "walk_complete": False}
+        return {
+            "nodes": [{"id": "n1", "type": "issue"}],
+            "edges": [],
+            "walk_complete": False,
+            "walk_incomplete_reason": INCOMPLETE_WALK_REASON,
+        }
     if mode == MODE_EMPTY_GRAPH:
         return {"nodes": [], "edges": [], "walk_complete": True}
     if mode == MODE_OVER_FORMER_CAP:

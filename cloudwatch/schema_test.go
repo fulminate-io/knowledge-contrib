@@ -57,7 +57,7 @@ func TestAdvertisedParamsDeclareTheLogGroupsAndTheWindow(t *testing.T) {
 // client validates against the advertised schema, so a paramless collect never
 // reaches the handler.
 func TestACollectWithNoLogGroupIsRefusedBeforeTheWalk(t *testing.T) {
-	p := dialStdioProvider(t, modeServe)
+	p := dialStdioProviderWithEnv(t, modeServe, credentialFreeBlock(t))
 
 	res, err := p.call(t, map[string]any{"id": "instance-1", "params": map[string]any{}})
 	if err == nil && (res == nil || !res.IsError) {
@@ -82,7 +82,8 @@ func TestACollectWithNoLogGroupIsRefusedBeforeTheWalk(t *testing.T) {
 	if strings.Contains(reached, "log_groups") {
 		t.Errorf("the call with the key present was still refused for the key: %s", reached)
 	}
-	// The walk itself fails on this machine, which holds no AWS credential —
+	// The walk itself fails, because the child's block leaves it no AWS
+	// credential —
 	// that arm is asserted in TestCredentialChainFailureNamesTheChain. What
 	// this control shows is that validation let the call through.
 	if !strings.Contains(reached, "credential") && !strings.Contains(reached, "region") {
@@ -215,7 +216,7 @@ func mustJSON(t *testing.T, v any) string {
 // explicit zero would hand the walk an absent bound and drain the source. Only
 // a call through the real provider observes which of the three happened.
 func TestAnExplicitZeroBoundIsRefusedThroughTheLiveProvider(t *testing.T) {
-	p := dialStdioProvider(t, modeServe)
+	p := dialStdioProviderWithEnv(t, modeServe, credentialFreeBlock(t))
 
 	res, err := p.call(t, map[string]any{
 		"id":     "instance-1",
@@ -236,8 +237,9 @@ func TestAnExplicitZeroBoundIsRefusedThroughTheLiveProvider(t *testing.T) {
 
 	// THE CONTROL, in the same run: the same collect with the key OMITTED gets
 	// past validation and reaches the walk, which then fails at the credential
-	// chain on this machine. That is what shows the zero was refused for its
-	// value rather than for the key being present at all.
+	// chain, since the child's block leaves it none. That is what shows the
+	// zero was refused for its value rather than for the key being present at
+	// all.
 	res, err = p.call(t, map[string]any{
 		"id":     "instance-1",
 		"params": map[string]any{"log_groups": []any{"/g"}},

@@ -5,6 +5,7 @@ package azure
 import (
 	"context"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 )
@@ -26,7 +27,7 @@ import (
 // drivable without Azure.
 type subBase struct {
 	name           string
-	cred           azureCredential
+	cred           azcore.TokenCredential
 	subscriptionID string
 	// transport replaces the HTTP transport every ARM client in this walk is
 	// built on. It is nil in the shipped binary, where the SDK's own default
@@ -122,14 +123,14 @@ var subCollectorNames = []string{
 // THE ORDER IS THE MERGE ORDER. The runner fans them out concurrently but
 // merges their results in this order, so the sequence a collect produces
 // depends on this list rather than on which goroutine finished first.
-func buildSubCollectors(cred azureCredential, subID string) []subCollector {
+func buildSubCollectors(cred azcore.TokenCredential, subID string) []subCollector {
 	return buildSubCollectorsOn(cred, subID, nil)
 }
 
 // buildSubCollectorsOn is buildSubCollectors with the transport seam supplied.
 // The shipped path calls it with nil; the census drives the whole set through
 // one fake transport.
-func buildSubCollectorsOn(cred azureCredential, subID string, transport policy.Transporter) []subCollector {
+func buildSubCollectorsOn(cred azcore.TokenCredential, subID string, transport policy.Transporter) []subCollector {
 	base := func(name string) subBase {
 		return subBase{name: name, cred: cred, subscriptionID: subID, transport: transport}
 	}

@@ -146,12 +146,12 @@ func TestInClusterFailureIsDistinguishableFromTheCombinedMessage(t *testing.T) {
 // other provider.
 func TestParseKubeContext(t *testing.T) {
 	for _, tc := range []struct{ in, project, cluster string }{
-		{"gke_fulminate-services_us-central1_main-us-central1", "fulminate-services", "main-us-central1"},
-		{"gke_p_us-central1-a_c", "p", "c"},
-		{"arn:aws:eks:us-east-1:1234:cluster/prod", "", ""},
-		{"minikube", "", ""},
-		{"gke_toofew", "", ""},
-		{"", "", ""},
+		{in: "gke_fulminate-services_us-central1_main-us-central1", project: "fulminate-services", cluster: "main-us-central1"},
+		{in: "gke_p_us-central1-a_c", project: "p", cluster: "c"},
+		{in: "arn:aws:eks:us-east-1:1234:cluster/prod", project: "", cluster: ""},
+		{in: "minikube", project: "", cluster: ""},
+		{in: "gke_toofew", project: "", cluster: ""},
+		{in: "", project: "", cluster: ""},
 	} {
 		project, cluster := ParseKubeContext(tc.in)
 		if project != tc.project || cluster != tc.cluster {

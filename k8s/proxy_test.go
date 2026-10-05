@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // proxy_test.go — the SIX PROXY FAMILIES, one row each.
@@ -22,7 +24,7 @@ import (
 // endpoints land in the same batch; a family that emitted its edge and forgot
 // its node would produce exactly the dangling edge it exists to avoid.
 
-func proxyNodeByID(t *testing.T, nodes []Node, id string) Node {
+func proxyNodeByID(t *testing.T, nodes []framework.Node, id string) framework.Node {
 	t.Helper()
 	for _, n := range nodes {
 		if n.ID == id {
@@ -31,7 +33,7 @@ func proxyNodeByID(t *testing.T, nodes []Node, id string) Node {
 		}
 	}
 	t.Fatalf("no proxy node with id %q among %d nodes", id, len(nodes))
-	return Node{}
+	return framework.Node{}
 }
 
 // === PXY-a: EXPOSED_BY ===
@@ -43,7 +45,7 @@ func TestProxy_ExposedBy_DedupesTwoIngressEntriesForOneLoadBalancer(t *testing.T
 		"service_type": "LoadBalancer",
 		"lb_ingress":   "ip=203.0.113.5,hostname=203.0.113.5",
 	})
-	nodes, edges := buildProxyFamilies([]Node{svc}, "")
+	nodes, edges := buildProxyFamilies([]framework.Node{svc}, "")
 
 	assert.Equal(t, 1, countEdges(edges, edgeExposedBy),
 		"two ingress entries resolving to the SAME load balancer are one relationship")
@@ -58,7 +60,7 @@ func TestProxy_ExposedBy_DedupesTwoIngressEntriesForOneLoadBalancer(t *testing.T
 
 func TestProxy_ExposedBy_ServiceWithNoLoadBalancerEmitsNothing(t *testing.T) {
 	svc := namespacedNode("prod", "Service", "internal", map[string]string{"service_type": "ClusterIP"})
-	nodes, edges := buildProxyFamilies([]Node{svc}, "")
+	nodes, edges := buildProxyFamilies([]framework.Node{svc}, "")
 	assert.Zero(t, countEdges(edges, edgeExposedBy))
 	assert.Empty(t, nodes, "no edge means no proxy was minted either")
 }
@@ -70,7 +72,7 @@ func TestProxy_RunsInCluster_OneEdgePerResourceAndNoSelfOrProxyEdges(t *testing.
 	// into the same result. That proxy must NOT then gain a RUNS_IN_CLUSTER
 	// edge of its own: it stands for a resource in another graph, which has its
 	// own cluster relationship over there.
-	nodes := []Node{
+	nodes := []framework.Node{
 		node("Namespace/prod", "Namespace", nil),
 		namespacedNode("prod", "Pod", "api-1", nil),
 		namespacedNode("prod", "Service", "api", map[string]string{"lb_ingress": "ip=203.0.113.5"}),
@@ -97,7 +99,7 @@ func TestProxy_RunsInCluster_OneEdgePerResourceAndNoSelfOrProxyEdges(t *testing.
 }
 
 func TestProxy_RunsInCluster_UnresolvableContextEmitsNothing(t *testing.T) {
-	nodes := []Node{namespacedNode("prod", "Pod", "api-1", nil)}
+	nodes := []framework.Node{namespacedNode("prod", "Pod", "api-1", nil)}
 	// A self-managed cluster, or an operator-renamed context, names no cloud
 	// resource. This arm is also what proves a fixture reached the producer at
 	// all rather than being filtered out earlier.
@@ -107,7 +109,7 @@ func TestProxy_RunsInCluster_UnresolvableContextEmitsNothing(t *testing.T) {
 }
 
 func TestProxy_RunsInCluster_EKSContext(t *testing.T) {
-	nodes := []Node{namespacedNode("prod", "Pod", "api-1", nil)}
+	nodes := []framework.Node{namespacedNode("prod", "Pod", "api-1", nil)}
 	const context = "arn:aws:eks:us-east-1:123456789012:cluster/prod"
 	proxies, edges := buildProxyFamilies(nodes, context)
 	proxyID := proxyIDFor("123456789012", context)
@@ -123,7 +125,7 @@ func TestProxy_BackedByVM_GCE(t *testing.T) {
 	n := node("Node/gke-node-1", "Node", map[string]string{
 		"provider_id": "gce://fulminate-services/us-central1-a/gke-node-1",
 	})
-	proxies, edges := buildProxyFamilies([]Node{n}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{n}, "")
 	proxyID := proxyIDFor("fulminate-services",
 		"projects/fulminate-services/zones/us-central1-a/instances/gke-node-1")
 	assert.True(t, hasEdge(edges, "Node/gke-node-1", proxyID, edgeBackedByVM))
@@ -142,7 +144,7 @@ func TestProxy_BackedByVM_SuppressedWhenTheAccountCannotBeDetermined(t *testing.
 	// And a providerID that does not parse at all.
 	garbage := node("Node/weird", "Node", map[string]string{"provider_id": "not-a-provider-id"})
 
-	proxies, edges := buildProxyFamilies([]Node{aws, garbage}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{aws, garbage}, "")
 	assert.Zero(t, countEdges(edges, edgeBackedByVM))
 	assert.Empty(t, proxies)
 }
@@ -165,7 +167,7 @@ func TestProxy_AssumesIdentity_BothIDMintingArms(t *testing.T) {
 		metaKeyAzureClientID: "11111111-2222-3333-4444-555555555555",
 	})
 
-	proxies, edges := buildProxyFamilies([]Node{irsa, azure}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{irsa, azure}, "")
 
 	accountArm := proxyIDFor("123456789012", "arn:aws:iam::123456789012:role/api-role")
 	danglingArm := proxyIDFor("", "11111111-2222-3333-4444-555555555555")
@@ -196,7 +198,7 @@ func TestProxy_AssumesIdentity_GCPArm(t *testing.T) {
 	sa := namespacedNode("prod", "ServiceAccount", "gcp-sa", map[string]string{
 		metaKeyGCPServiceAccount: "api@fulminate-services.iam.gserviceaccount.com",
 	})
-	proxies, edges := buildProxyFamilies([]Node{sa}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{sa}, "")
 	proxyID := proxyIDFor("fulminate-services",
 		"projects/fulminate-services/serviceAccounts/api@fulminate-services.iam.gserviceaccount.com")
 	assert.True(t, hasEdge(edges, "prod/ServiceAccount/gcp-sa", proxyID, edgeAssumesIdentity))
@@ -205,7 +207,7 @@ func TestProxy_AssumesIdentity_GCPArm(t *testing.T) {
 
 func TestProxy_AssumesIdentity_NoAnnotationEmitsNothing(t *testing.T) {
 	sa := namespacedNode("prod", "ServiceAccount", "plain", nil)
-	proxies, edges := buildProxyFamilies([]Node{sa}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{sa}, "")
 	assert.Zero(t, countEdges(edges, edgeAssumesIdentity))
 	assert.Empty(t, proxies)
 }
@@ -227,7 +229,7 @@ func TestProxy_UsesDisk_BothIDMintingArms(t *testing.T) {
 		"volume_driver": "ebs.csi.aws.com",
 	})
 
-	proxies, edges := buildProxyFamilies([]Node{gce, ebs}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{gce, ebs}, "")
 
 	accountArm := proxyIDFor("fulminate-services",
 		"projects/fulminate-services/zones/us-central1-a/disks/pvc-abc")
@@ -243,7 +245,7 @@ func TestProxy_UsesDisk_VolumeNamingNoCloudDiskEmitsNothing(t *testing.T) {
 		"volume_handle": "/mnt/disks/ssd0",
 		"volume_driver": "kubernetes.io/no-provisioner",
 	})
-	proxies, edges := buildProxyFamilies([]Node{local}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{local}, "")
 	assert.Zero(t, countEdges(edges, edgeUsesDisk))
 	assert.Empty(t, proxies)
 }
@@ -266,7 +268,7 @@ func TestProxy_ConnectsTo_EvidenceCarriesTheMatchNotTheValue(t *testing.T) {
 		"database_url": "postgres://admin:" + password + "@" + host + ":5432/app",
 	})
 
-	proxies, edges := buildProxyFamilies([]Node{workload}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{workload}, "")
 	require.Equal(t, 1, countEdges(edges, edgeConnectsTo))
 	e := findEdge(edges, edgeConnectsTo)
 
@@ -289,7 +291,7 @@ func TestProxy_ConnectsTo_DedupesTwoMatchesToOneTarget(t *testing.T) {
 		"database_url":  "postgres://" + host + ":5432/app",
 		"database_host": host,
 	})
-	_, edges := buildProxyFamilies([]Node{workload}, "")
+	_, edges := buildProxyFamilies([]framework.Node{workload}, "")
 	assert.Equal(t, 1, countEdges(edges, edgeConnectsTo),
 		"a workload naming the same database twice has one dependency")
 }
@@ -298,7 +300,7 @@ func TestProxy_ConnectsTo_NoRecognizedEndpointEmitsNothing(t *testing.T) {
 	workload := workloadNode("prod/Deployment/api", map[string]string{
 		"database_url": "postgres://postgres.prod.svc.cluster.local:5432/app",
 	})
-	proxies, edges := buildProxyFamilies([]Node{workload}, "")
+	proxies, edges := buildProxyFamilies([]framework.Node{workload}, "")
 	assert.Zero(t, countEdges(edges, edgeConnectsTo),
 		"an in-cluster address is not an external cloud service")
 	assert.Empty(t, proxies)
@@ -310,7 +312,7 @@ func TestProxy_ConnectsTo_NoRecognizedEndpointEmitsNothing(t *testing.T) {
 // the whole proxy mechanism rests on: a second collect of an unchanged cluster
 // must mint the SAME ids, or the graph grows a duplicate proxy per run.
 func TestProxy_IDSchemeIsDeterministicAcrossRuns(t *testing.T) {
-	nodes := []Node{
+	nodes := []framework.Node{
 		node("Node/gke-node-1", "Node", map[string]string{
 			"provider_id": "gce://fulminate-services/us-central1-a/gke-node-1"}),
 		namespacedNode("prod", "ServiceAccount", "api-sa", map[string]string{
@@ -351,7 +353,7 @@ func TestProxy_RunsInCluster_SkipsAProxyAlreadyInTheNodeSlice(t *testing.T) {
 		"projects/fulminate-services/locations/us-central1/clusters/main-us-central1")
 
 	acc := newProxyAccumulator()
-	nodes := []Node{
+	nodes := []framework.Node{
 		namespacedNode("prod", "Pod", "api-1", nil),
 		// A proxy some other family minted, standing for a resource in another
 		// graph. It has its own cluster relationship over there.
@@ -397,7 +399,7 @@ func TestProxy_RunsInCluster_SkipsANodeCarryingTheClusterProxyID(t *testing.T) {
 		"projects/fulminate-services/locations/us-central1/clusters/main-us-central1")
 
 	acc := newProxyAccumulator()
-	nodes := []Node{
+	nodes := []framework.Node{
 		namespacedNode("prod", "Pod", "api-1", nil),
 		// A node carrying the cluster proxy's exact ID and an ORDINARY type, so
 		// the sibling proxy-type guard cannot be what skips it.

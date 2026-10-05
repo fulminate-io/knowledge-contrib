@@ -82,10 +82,10 @@ func TestWindowStartFloorsToTheEpochAlignedBucket(t *testing.T) {
 		ts   time.Time
 		want time.Time
 	}{
-		{"exactly on an edge stays on it", time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC), time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC)},
-		{"one nanosecond after an edge floors to it", time.Date(2026, 9, 7, 12, 5, 0, 1, time.UTC), time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC)},
-		{"one nanosecond before an edge floors to the previous", time.Date(2026, 9, 7, 12, 4, 59, 999999999, time.UTC), time.Date(2026, 9, 7, 12, 0, 0, 0, time.UTC)},
-		{"mid-bucket floors down", time.Date(2026, 9, 7, 12, 7, 30, 0, time.UTC), time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC)},
+		{name: "exactly on an edge stays on it", ts: time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC), want: time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC)},
+		{name: "one nanosecond after an edge floors to it", ts: time.Date(2026, 9, 7, 12, 5, 0, 1, time.UTC), want: time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC)},
+		{name: "one nanosecond before an edge floors to the previous", ts: time.Date(2026, 9, 7, 12, 4, 59, 999999999, time.UTC), want: time.Date(2026, 9, 7, 12, 0, 0, 0, time.UTC)},
+		{name: "mid-bucket floors down", ts: time.Date(2026, 9, 7, 12, 7, 30, 0, time.UTC), want: time.Date(2026, 9, 7, 12, 5, 0, 0, time.UTC)},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -197,12 +197,12 @@ func TestChunkFrameInputClasses(t *testing.T) {
 		name    string
 		entries []chunkEntry
 	}{
-		{"zero entries", nil},
-		{"one entry with no vars", []chunkEntry{{Timestamp: time.Unix(0, 1).UTC()}}},
-		{"one entry with several vars", []chunkEntry{{Timestamp: time.Unix(0, 1).UTC(), Vars: []string{"a", "bb", "ccc"}}}},
-		{"a var carrying a multi-byte rune", []chunkEntry{{Timestamp: time.Unix(0, 1).UTC(), Vars: []string{"héllo-世界"}}}},
-		{"a negative timestamp, which is why the timestamp varint is signed",
-			[]chunkEntry{{Timestamp: time.Unix(0, -1000).UTC()}}},
+		{name: "zero entries", entries: nil},
+		{name: "one entry with no vars", entries: []chunkEntry{{Timestamp: time.Unix(0, 1).UTC()}}},
+		{name: "one entry with several vars", entries: []chunkEntry{{Timestamp: time.Unix(0, 1).UTC(), Vars: []string{"a", "bb", "ccc"}}}},
+		{name: "a var carrying a multi-byte rune", entries: []chunkEntry{{Timestamp: time.Unix(0, 1).UTC(), Vars: []string{"héllo-世界"}}}},
+		{name: "a negative timestamp, which is why the timestamp varint is signed",
+			entries: []chunkEntry{{Timestamp: time.Unix(0, -1000).UTC()}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -303,7 +303,7 @@ func TestChunksAreSortedDeterministically(t *testing.T) {
 	if err != nil {
 		t.Fatalf("assembleChunks: %v", err)
 	}
-	want := []struct{ s, tmpl string }{{"s1", "t1"}, {"s1", "t2"}, {"s2", "t1"}, {"s2", "t2"}}
+	want := []struct{ s, tmpl string }{{s: "s1", tmpl: "t1"}, {s: "s1", tmpl: "t2"}, {s: "s2", tmpl: "t1"}, {s: "s2", tmpl: "t2"}}
 	if len(chunks) != len(want) {
 		t.Fatalf("chunks = %d, want %d", len(chunks), len(want))
 	}
@@ -362,11 +362,11 @@ func TestEntryTimeRangeIsTheMinAndMaxOverAnOutOfOrderSlice(t *testing.T) {
 		order      []time.Time
 		start, end time.Time
 	}{
-		{"descending, which is the order a page arrives in", []time.Time{late, middle, early}, early, late},
-		{"ascending", []time.Time{early, middle, late}, early, late},
-		{"the extremes in the middle", []time.Time{middle, late, early}, early, late},
-		{"a single entry is its own range", []time.Time{middle}, middle, middle},
-		{"repeats collapse", []time.Time{middle, middle, middle}, middle, middle},
+		{name: "descending, which is the order a page arrives in", order: []time.Time{late, middle, early}, start: early, end: late},
+		{name: "ascending", order: []time.Time{early, middle, late}, start: early, end: late},
+		{name: "the extremes in the middle", order: []time.Time{middle, late, early}, start: early, end: late},
+		{name: "a single entry is its own range", order: []time.Time{middle}, start: middle, end: middle},
+		{name: "repeats collapse", order: []time.Time{middle, middle, middle}, start: middle, end: middle},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

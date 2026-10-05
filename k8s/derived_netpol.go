@@ -5,6 +5,8 @@ package main
 import (
 	"encoding/json"
 	"strings"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // derived_netpol.go — RESTRICTS_INGRESS and RESTRICTS_EGRESS: which pods a
@@ -57,10 +59,10 @@ func policyDirections(meta map[string]string) (ingress, egress bool) {
 // rather than an oversight: matching every pod in the namespace from an absent
 // key would be indistinguishable from matching every pod because the key failed
 // to parse, and the second is a fan-out across the whole namespace.
-func buildNetworkPolicyRestrictionEdges(nodes []Node) []Edge {
+func buildNetworkPolicyRestrictionEdges(nodes []framework.Node) []framework.Edge {
 	pods := podsByNamespace(nodes)
 
-	var out []Edge
+	var out []framework.Edge
 	for i := range nodes {
 		n := &nodes[i]
 		if n.Metadata["resource_type"] != "NetworkPolicy" {
@@ -79,10 +81,10 @@ func buildNetworkPolicyRestrictionEdges(nodes []Node) []Edge {
 				continue
 			}
 			if ingress {
-				out = append(out, Edge{FromID: n.ID, ToID: pod.ID, Type: edgeRestrictsIngress})
+				out = append(out, framework.Edge{FromID: n.ID, ToID: pod.ID, Type: edgeRestrictsIngress})
 			}
 			if egress {
-				out = append(out, Edge{FromID: n.ID, ToID: pod.ID, Type: edgeRestrictsEgress})
+				out = append(out, framework.Edge{FromID: n.ID, ToID: pod.ID, Type: edgeRestrictsEgress})
 			}
 		}
 	}
@@ -120,7 +122,7 @@ type labelSelector struct {
 
 // decodeNetworkPolicy decodes a policy node's body, reporting failure rather
 // than yielding a zero value that would silently emit nothing.
-func decodeNetworkPolicy(n *Node) (netpolSpec, bool) {
+func decodeNetworkPolicy(n *framework.Node) (netpolSpec, bool) {
 	if n.Content == "" {
 		return netpolSpec{}, false
 	}

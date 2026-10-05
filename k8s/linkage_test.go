@@ -53,7 +53,7 @@ func TestLinkage_ContractCarriesBothGraphFamilyFields(t *testing.T) {
 
 // contractEdgeType is the ONE reflection call site, so the field assertions and
 // the type-identity assertion cannot disagree about what they read.
-func contractEdgeType() reflect.Type { return reflect.TypeFor[Edge]() }
+func contractEdgeType() reflect.Type { return reflect.TypeFor[framework.Edge]() }
 
 // edgeFieldNames reports the contract edge's field names BY REFLECTION over the
 // aliased type. A hand-written list here would be a comment: the contract could
@@ -73,8 +73,8 @@ func edgeFieldNames() []string {
 // THE CONTEXT IS BUILT IN THE CONTRACT'S OWN SHAPE, which is what the client
 // fills and the walk receives. The code slice carries the Chart.yaml file nodes
 // with their bodies; the azure slice carries an identity keyed by its client id.
-func fullLinkageFixture() ([]Node, framework.ForeignContext) {
-	nodes := []Node{
+func fullLinkageFixture() ([]framework.Node, framework.ForeignContext) {
+	nodes := []framework.Node{
 		// THE WORKLOAD'S NAME DIFFERS FROM THE CHART IT IS LABELED FOR ON
 		// PURPOSE. With both spelled "api" a predicate reading the node's own
 		// name instead of the label gives the same answer, and the DEPLOYS row
@@ -197,7 +197,7 @@ func TestLinkage_Deploys_DirectionIsChartToKubernetesNode(t *testing.T) {
 // fixture using only the unversioned label never exercises the stripping.
 func TestLinkage_Deploys_VersionedChartLabelIsStripped(t *testing.T) {
 	_, fc := fullLinkageFixture()
-	versioned := []Node{workloadNode("prod/Deployment/api-server", map[string]string{
+	versioned := []framework.Node{workloadNode("prod/Deployment/api-server", map[string]string{
 		"label/helm.sh/chart": "api-1.2.3",
 	})}
 	edges := computeLinkageEdges(versioned, fc)
@@ -207,7 +207,7 @@ func TestLinkage_Deploys_VersionedChartLabelIsStripped(t *testing.T) {
 
 	// CONTROL: a node carrying neither label matches nothing.
 	assert.Zero(t, countLinkage(computeLinkageEdges(
-		[]Node{workloadNode("prod/Deployment/plain", nil)}, fc), edgeDeploys))
+		[]framework.Node{workloadNode("prod/Deployment/plain", nil)}, fc), edgeDeploys))
 }
 
 func TestLinkage_StripChartVersion(t *testing.T) {
@@ -238,7 +238,7 @@ func TestLinkage_WorkloadIdentity_IRSANeedsNoContext(t *testing.T) {
 	// CONTROL: the identical fixture with the key ABSENT emits none. Removing
 	// the PREDICATE is what suppresses this shape, not removing the block.
 	assert.Zero(t, countLinkage(computeLinkageEdges(
-		[]Node{namespacedNode("prod", "ServiceAccount", "plain", nil)}, framework.ForeignContext{}),
+		[]framework.Node{namespacedNode("prod", "ServiceAccount", "plain", nil)}, framework.ForeignContext{}),
 		edgeWorkloadIdentity))
 }
 
@@ -267,7 +267,7 @@ func TestLinkage_WorkloadIdentity_AzureIsTheOneThatReadsAForeignGraph(t *testing
 
 	// A bare client id names nothing on its own, so with no identities in the
 	// block there is nothing to point at.
-	azureOnly := []Node{namespacedNode("prod", "ServiceAccount", "azure-sa", map[string]string{
+	azureOnly := []framework.Node{namespacedNode("prod", "ServiceAccount", "azure-sa", map[string]string{
 		metaKeyAzureClientID: "11111111-2222-3333-4444-555555555555"})}
 	assert.Zero(t, countLinkage(computeLinkageEdges(azureOnly, framework.ForeignContext{}), edgeWorkloadIdentity),
 		"unlike IRSA and GCP, the Azure shape cannot resolve without the block")
@@ -278,7 +278,7 @@ func TestLinkage_WorkloadIdentity_AzureIsTheOneThatReadsAForeignGraph(t *testing
 // collector emitting WORKLOAD_IDENTITY unconditionally passes LNK-c, LNK-d and
 // LNK-e together.
 func TestLinkage_NoPredicateMeansNoEdges(t *testing.T) {
-	nodes := []Node{
+	nodes := []framework.Node{
 		// A ServiceAccount carrying NONE of the three identity keys.
 		namespacedNode("prod", "ServiceAccount", "plain", nil),
 		// A workload carrying neither Helm label.

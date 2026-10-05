@@ -13,34 +13,34 @@ func TestBuildLogQLSelectorSources(t *testing.T) {
 		want string
 	}{
 		{
-			"a verbatim selector is used as written",
-			Query{Selector: `{app="checkout", env="prod"}`},
-			`{app="checkout", env="prod"}`,
+			name: "a verbatim selector is used as written",
+			q:    Query{Selector: `{app="checkout", env="prod"}`},
+			want: `{app="checkout", env="prod"}`,
 		},
 		{
-			"a verbatim selector wins over the structured fields",
-			Query{Selector: `{app="checkout"}`, Source: "prod", FieldFilters: map[string]string{"pod": "p1"}},
-			`{app="checkout"}`,
+			name: "a verbatim selector wins over the structured fields",
+			q:    Query{Selector: `{app="checkout"}`, Source: "prod", FieldFilters: map[string]string{"pod": "p1"}},
+			want: `{app="checkout"}`,
 		},
 		{
-			"the source becomes a namespace matcher",
-			Query{Source: "prod"},
-			`{namespace="prod"}`,
+			name: "the source becomes a namespace matcher",
+			q:    Query{Source: "prod"},
+			want: `{namespace="prod"}`,
 		},
 		{
-			"field filters are mapped to this provider's own label names",
-			Query{FieldFilters: map[string]string{"service": "checkout", "host": "n1"}},
-			`{node="n1", service_name="checkout"}`,
+			name: "field filters are mapped to this provider's own label names",
+			q:    Query{FieldFilters: map[string]string{"service": "checkout", "host": "n1"}},
+			want: `{node="n1", service_name="checkout"}`,
 		},
 		{
-			"an unmapped field passes through, because a Loki's labels are its operator's",
-			Query{FieldFilters: map[string]string{"tier": "gold"}},
-			`{tier="gold"}`,
+			name: "an unmapped field passes through, because a Loki's labels are its operator's",
+			q:    Query{FieldFilters: map[string]string{"tier": "gold"}},
+			want: `{tier="gold"}`,
 		},
 		{
-			"nothing to select falls back to every namespaced stream",
-			Query{},
-			`{namespace=~".+"}`,
+			name: "nothing to select falls back to every namespaced stream",
+			q:    Query{},
+			want: `{namespace=~".+"}`,
 		},
 	}
 	for _, tc := range cases {
@@ -87,10 +87,10 @@ func TestTextFilterAndRawQueryAreAppended(t *testing.T) {
 		q    Query
 		want string
 	}{
-		{"a text filter becomes a line filter", Query{Source: "prod", TextFilter: "timeout"}, `{namespace="prod"} |= "timeout"`},
-		{"a text filter is quoted, so a quote inside it cannot escape", Query{Source: "prod", TextFilter: `say "hi"`}, `{namespace="prod"} |= "say \"hi\""`},
-		{"a raw query is appended verbatim", Query{Source: "prod", RawQuery: `| json | line_format "{{.msg}}"`}, `{namespace="prod"} | json | line_format "{{.msg}}"`},
-		{"both are appended in order", Query{Source: "prod", TextFilter: "timeout", RawQuery: "| json"}, `{namespace="prod"} |= "timeout" | json`},
+		{name: "a text filter becomes a line filter", q: Query{Source: "prod", TextFilter: "timeout"}, want: `{namespace="prod"} |= "timeout"`},
+		{name: "a text filter is quoted, so a quote inside it cannot escape", q: Query{Source: "prod", TextFilter: `say "hi"`}, want: `{namespace="prod"} |= "say \"hi\""`},
+		{name: "a raw query is appended verbatim", q: Query{Source: "prod", RawQuery: `| json | line_format "{{.msg}}"`}, want: `{namespace="prod"} | json | line_format "{{.msg}}"`},
+		{name: "both are appended in order", q: Query{Source: "prod", TextFilter: "timeout", RawQuery: "| json"}, want: `{namespace="prod"} |= "timeout" | json`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

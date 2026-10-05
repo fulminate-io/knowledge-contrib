@@ -171,6 +171,10 @@ func TestParityAgainstBuiltinGolden(t *testing.T) {
 			len(want.Nodes), len(want.Edges))
 	}
 
-	compareNodes(t, want.Nodes, result.Nodes)
-	compareEdges(t, want.Edges, result.Edges)
+	if err := checkNodes(want.Nodes, result.Nodes); err != nil {
+		t.Error(err)
+	}
+	if err := checkEdges(want.Edges, result.Edges); err != nil {
+		t.Error(err)
+	}
 }

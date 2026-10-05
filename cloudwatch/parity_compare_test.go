@@ -4,9 +4,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
-	"testing"
 
 	"github.com/fulminate-io/knowledge-contrib/framework"
 )
@@ -15,68 +15,70 @@ import (
 // nodes by id in both directions, edges as multisets carrying every field that
 // rides the wire.
 
-// compareNodes checks every node of the answer key against the walk's, by id.
-func compareNodes(t *testing.T, want []goldenNode, got []framework.Node) {
-	t.Helper()
+// checkNodes checks every node of the answer key against the walk's, by id.
+func checkNodes(want []goldenNode, got []framework.Node) error {
+	var errs []error
 	byID := make(map[string]framework.Node, len(got))
 	for _, n := range got {
 		if prior, dup := byID[n.ID]; dup {
-			t.Errorf("the walk emitted node id %q twice, as %s and %s", n.ID, prior.Type, n.Type)
+			errs = append(errs, fmt.Errorf("the walk emitted node id %q twice, as %s and %s", n.ID, prior.Type, n.Type))
 		}
 		byID[n.ID] = n
 	}
 	for _, w := range want {
 		g, ok := byID[w.ID]
 		if !ok {
-			t.Errorf("the walk emitted no node %q (%s %q), which the built-in path produced",
-				w.ID, w.Type, w.SymbolName)
+			errs = append(errs, fmt.Errorf("the walk emitted no node %q (%s %q), which the built-in path produced",
+				w.ID, w.Type, w.SymbolName))
 			continue
 		}
 		delete(byID, w.ID)
 		if g.Type != w.Type {
-			t.Errorf("node %q: type %q, want %q", w.ID, g.Type, w.Type)
+			errs = append(errs, fmt.Errorf("node %q: type %q, want %q", w.ID, g.Type, w.Type))
 		}
 		if g.SymbolName != w.SymbolName {
-			t.Errorf("node %q: symbol name %q, want %q", w.ID, g.SymbolName, w.SymbolName)
+			errs = append(errs, fmt.Errorf("node %q: symbol name %q, want %q", w.ID, g.SymbolName, w.SymbolName))
 		}
 		if g.Source != w.Source {
-			t.Errorf("node %q: source %q, want %q", w.ID, g.Source, w.Source)
+			errs = append(errs, fmt.Errorf("node %q: source %q, want %q", w.ID, g.Source, w.Source))
 		}
 		if g.Description != w.Description {
-			t.Errorf("node %q: description %q, want %q", w.ID, g.Description, w.Description)
+			errs = append(errs, fmt.Errorf("node %q: description %q, want %q", w.ID, g.Description, w.Description))
 		}
-		compareMetadata(t, w.ID, w.Metadata, g.Metadata)
+		errs = append(errs, checkMetadata(w.ID, w.Metadata, g.Metadata))
 		if !w.ContentOmit && g.Content != "" {
-			t.Errorf("node %q carries content the built-in path did not produce", w.ID)
+			errs = append(errs, fmt.Errorf("node %q carries content the built-in path did not produce", w.ID))
 		}
 		if w.ContentOmit && g.Content == "" {
-			t.Errorf("chunk node %q carries no content; the entry block is this collector's chunk payload", w.ID)
+			errs = append(errs, fmt.Errorf("chunk node %q carries no content; the entry block is this collector's chunk payload", w.ID))
 		}
 	}
 	for id, n := range byID {
-		t.Errorf("the walk emitted node %q (%s %q), which the built-in path did not produce", id, n.Type, n.SymbolName)
+		errs = append(errs, fmt.Errorf("the walk emitted node %q (%s %q), which the built-in path did not produce", id, n.Type, n.SymbolName))
 	}
+	return errors.Join(errs...)
 }
 
-// compareMetadata checks one node's metadata map exactly, in both directions.
-func compareMetadata(t *testing.T, id string, want, got map[string]string) {
-	t.Helper()
+// checkMetadata checks one node's metadata map exactly, in both directions.
+func checkMetadata(id string, want, got map[string]string) error {
+	var errs []error
 	for k, v := range want {
 		if got[k] != v {
-			t.Errorf("node %q metadata[%q] = %q, want %q", id, k, got[k], v)
+			errs = append(errs, fmt.Errorf("node %q metadata[%q] = %q, want %q", id, k, got[k], v))
 		}
 	}
 	for k, v := range got {
 		if _, expected := want[k]; !expected {
-			t.Errorf("node %q carries metadata[%q] = %q, which the built-in path did not produce", id, k, v)
+			errs = append(errs, fmt.Errorf("node %q carries metadata[%q] = %q, which the built-in path did not produce", id, k, v))
 		}
 	}
+	return errors.Join(errs...)
 }
 
-// compareEdges checks the edge sets as multisets, since an edge has no id and
+// checkEdges checks the edge sets as multisets, since an edge has no id and
 // EMITTED_BY is deliberately not deduplicated.
-func compareEdges(t *testing.T, want []goldenEdge, got []framework.Edge) {
-	t.Helper()
+func checkEdges(want []goldenEdge, got []framework.Edge) error {
+	var errs []error
 	wantKeys := make([]string, 0, len(want))
 	for _, e := range want {
 		wantKeys = append(wantKeys, edgeKeyGolden(e))
@@ -90,11 +92,12 @@ func compareEdges(t *testing.T, want []goldenEdge, got []framework.Edge) {
 
 	missing, extra := diffSorted(wantKeys, gotKeys)
 	for _, m := range missing {
-		t.Errorf("the walk emitted no edge %s, which the built-in path produced", m)
+		errs = append(errs, fmt.Errorf("the walk emitted no edge %s, which the built-in path produced", m))
 	}
 	for _, e := range extra {
-		t.Errorf("the walk emitted edge %s, which the built-in path did not produce", e)
+		errs = append(errs, fmt.Errorf("the walk emitted edge %s, which the built-in path did not produce", e))
 	}
+	return errors.Join(errs...)
 }
 
 // edgeKey renders an edge as a comparable string carrying every field that

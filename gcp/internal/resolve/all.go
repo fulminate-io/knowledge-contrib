@@ -52,9 +52,5 @@ func All(projectID string, in gcpgraph.Result) (gcpgraph.Result, error) {
 		out.Add(derived)
 	}
 
-	rewritten, err := IAMBindingGroups(out)
-	if err != nil {
-		return gcpgraph.Result{}, fmt.Errorf("gcp walk: resolving iam group bindings: %w", err)
-	}
-	return rewritten, nil
+	return IAMBindingGroups(out), nil
 }

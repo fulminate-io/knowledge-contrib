@@ -65,7 +65,7 @@ var envDispositions = map[string]string{
 //     as absent. They are driven through resolveCredential and the proxy resolver
 //     in both states, with a same-run non-empty control per arm.
 //   - KUBERNETES_MASTER is inert STRUCTURALLY: nothing on this path reads it in
-//     any state. client-go reads it once at package initialisation into a
+//     any state. client-go reads it once at package initialization into a
 //     package-level default that reaches a client only through a caller's own
 //     ConfigOverrides, and this collector passes a fresh one. No control that
 //     moved the result is available for it, and one that did would mean the module

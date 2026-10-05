@@ -111,10 +111,8 @@ func TestEveryCollectorModuleDeclaresItself(t *testing.T) {
 			"and this census would pass over an empty walk", root)
 	}
 	if !slices.Equal(modules, generated) {
-		t.Fatalf("this census walks %v and the installer table generator's own discovery finds %v.\n"+
-			"They are two implementations of one question — which directories under cmd/collectors are the "+
-			"collector modules — and a module only one of them sees is a module whose declaration one of the two "+
-			"gates never checks.", modules, generated)
+		t.Fatalf(`this census walks %v and the installer table generator's own discovery finds %v.
+They are two implementations of one question — which directories under cmd/collectors are the collector modules — and a module only one of them sees is a module whose declaration one of the two gates never checks.`, modules, generated)
 	}
 	for _, module := range modules {
 		if !declaresItself(t, filepath.Join(root, module)) {

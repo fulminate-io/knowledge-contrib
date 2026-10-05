@@ -39,8 +39,8 @@ func TestTheWorkedEntryCarriesBothCredentialsAsReferencesAndNoValue(t *testing.T
 		}
 		value, ok := entry.Env[name]
 		if !ok {
-			t.Errorf("the worked entry does not carry %q, so an operator copying it installs a "+
-				"collector that cannot authenticate: both halves are required together:\n%s",
+			t.Errorf(`the worked entry does not carry %q, so an operator copying it installs a collector that cannot authenticate: both halves are required together:
+%s`,
 				name, rendered)
 			continue
 		}
@@ -49,8 +49,8 @@ func TestTheWorkedEntryCarriesBothCredentialsAsReferencesAndNoValue(t *testing.T
 		}
 	}
 	if strings.Contains(rendered, ":-") {
-		t.Errorf("the worked entry carries a DEFAULTED reference, which reaches this collector "+
-			"present and empty:\n%s", rendered)
+		t.Errorf(`the worked entry carries a DEFAULTED reference, which reaches this collector present and empty:
+%s`, rendered)
 	}
 
 	// The known positive for the matcher: the same document DOES carry the keys
@@ -80,8 +80,8 @@ func TestTheWorkedEntrysBlockCarriesTheCredentialsAndNotTheSelector(t *testing.T
 			rendered)
 	}
 	if strings.Contains(rendered, enventry.HistoryDepthVariable) {
-		t.Errorf("the worked entry names the selector, which is written only when the installing "+
-			"shell has it set:\n%s", rendered)
+		t.Errorf(`the worked entry names the selector, which is written only when the installing shell has it set:
+%s`, rendered)
 	}
 }
 

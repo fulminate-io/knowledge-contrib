@@ -51,10 +51,10 @@ func TestMetadataTimestampLayout(t *testing.T) {
 		ts   time.Time
 		want string
 	}{
-		{"utc", time.Date(2026, 9, 7, 12, 4, 5, 0, time.UTC), "2026-09-07T12:04:05.000000000Z"},
-		{"non-utc normalizes", time.Date(2026, 9, 7, 21, 4, 5, 0, tokyo), "2026-09-07T12:04:05.000000000Z"},
-		{"sub-millisecond survives", time.Date(2026, 9, 7, 12, 4, 5, 123456, time.UTC), "2026-09-07T12:04:05.000123456Z"},
-		{"nanosecond survives", time.Date(2026, 9, 7, 12, 4, 5, 1, time.UTC), "2026-09-07T12:04:05.000000001Z"},
+		{name: "utc", ts: time.Date(2026, 9, 7, 12, 4, 5, 0, time.UTC), want: "2026-09-07T12:04:05.000000000Z"},
+		{name: "non-utc normalizes", ts: time.Date(2026, 9, 7, 21, 4, 5, 0, tokyo), want: "2026-09-07T12:04:05.000000000Z"},
+		{name: "sub-millisecond survives", ts: time.Date(2026, 9, 7, 12, 4, 5, 123456, time.UTC), want: "2026-09-07T12:04:05.000123456Z"},
+		{name: "nanosecond survives", ts: time.Date(2026, 9, 7, 12, 4, 5, 1, time.UTC), want: "2026-09-07T12:04:05.000000001Z"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -35,6 +35,11 @@ const STUB_MODE_ENV = "FUL1776_STUB_MODE";
 const STUB_TOOL_ENV = "FUL1776_STUB_TOOL";
 
 const DEFAULT_STUB_TOOL = "collect_graph";
+/**
+ * The reason the incomplete-walk mode sends as walk_incomplete_reason: the client
+ * stub's own, which its completeness test asserts.
+ */
+export const INCOMPLETE_WALK_REASON = "the stub asserts a partial walk";
 
 /**
  * The modes, in the order the client's own const block declares them. NO COUNT IS
@@ -247,7 +252,12 @@ export function stubPayload(
         walk_complete: true,
       };
     case "incomplete-walk":
-      return { nodes: [{ id: "n1", type: "issue" }], edges: [], walk_complete: false };
+      return {
+        nodes: [{ id: "n1", type: "issue" }],
+        edges: [],
+        walk_complete: false,
+        walk_incomplete_reason: INCOMPLETE_WALK_REASON,
+      };
     case "empty-graph":
       return { nodes: [], edges: [], walk_complete: true };
     case "over-former-cap":

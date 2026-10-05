@@ -14,12 +14,19 @@ import "fmt"
 // no walk_complete at all and the whole collect fails with a missing-property
 // error. A walk asserting COMPLETE emits `true` and the defect is invisible,
 // which is why the test that pins this rides the incomplete arm.
+//
+// walk_incomplete_reason IS THE ONE OPTIONAL FIELD, and it carries omitempty
+// deliberately: it is present only on the incomplete arm, where the reason is
+// never empty (encodeResult refuses an empty one), and absent on a complete
+// walk. The client refuses the key beside walk_complete true, and a client that
+// predates the key keeps reading this collector's complete walks.
 
 // collectOutput is the served tool's Out type: the contract envelope, exactly.
 type collectOutput struct {
-	Nodes        []Node `json:"nodes"`
-	Edges        []Edge `json:"edges"`
-	WalkComplete bool   `json:"walk_complete"`
+	Nodes                []Node `json:"nodes"`
+	Edges                []Edge `json:"edges"`
+	WalkComplete         bool   `json:"walk_complete"`
+	WalkIncompleteReason string `json:"walk_incomplete_reason,omitempty"`
 }
 
 // encodeResult turns one walk's Result into the envelope, refusing the two
@@ -66,5 +73,9 @@ func encodeResult(collector string, r Result) (collectOutput, error) {
 	if edges == nil {
 		edges = []Edge{}
 	}
-	return collectOutput{Nodes: nodes, Edges: edges, WalkComplete: r.Complete.IsComplete()}, nil
+	out := collectOutput{Nodes: nodes, Edges: edges, WalkComplete: r.Complete.IsComplete()}
+	if !out.WalkComplete {
+		out.WalkIncompleteReason = r.Complete.Reason()
+	}
+	return out, nil
 }

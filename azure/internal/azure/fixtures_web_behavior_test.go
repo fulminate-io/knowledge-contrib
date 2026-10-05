@@ -20,12 +20,12 @@ func TestIsFunctionApp_ReadsTheKindTags(t *testing.T) {
 		kind string
 		want bool
 	}{
-		{"functionapp", true},
-		{"functionapp,linux", true},
-		{"FunctionApp,Linux", true},
-		{"app,linux,container", false},
-		{"app", false},
-		{"", false},
+		{kind: "functionapp", want: true},
+		{kind: "functionapp,linux", want: true},
+		{kind: "FunctionApp,Linux", want: true},
+		{kind: "app,linux,container", want: false},
+		{kind: "app", want: false},
+		{kind: "", want: false},
 	} {
 		if got := isFunctionApp(new(tc.kind)); got != tc.want {
 			t.Errorf("kind %q read as functionApp=%v, expected %v", tc.kind, got, tc.want)

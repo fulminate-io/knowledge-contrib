@@ -43,10 +43,10 @@ func TestProjectResourceName(t *testing.T) {
 
 func TestLastSegment(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"projects/p/zones/us-central1-a", "us-central1-a"},
-		{"us-central1-a", "us-central1-a"},
-		{"", ""},
-		{"trailing/", ""},
+		{in: "projects/p/zones/us-central1-a", want: "us-central1-a"},
+		{in: "us-central1-a", want: "us-central1-a"},
+		{in: "", want: ""},
+		{in: "trailing/", want: ""},
 	} {
 		if got := gcpgraph.LastSegment(tc.in); got != tc.want {
 			t.Errorf("LastSegment(%q): got %q, want %q", tc.in, got, tc.want)
@@ -56,10 +56,10 @@ func TestLastSegment(t *testing.T) {
 
 func TestProjectFromSelfLink(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"https://www.googleapis.com/compute/v1/projects/host-proj/global/networks/vpc", "host-proj"},
-		{"https://www.googleapis.com/compute/v1/projects/host-proj", "host-proj"},
-		{"gs://bucket", ""},
-		{"", ""},
+		{in: "https://www.googleapis.com/compute/v1/projects/host-proj/global/networks/vpc", want: "host-proj"},
+		{in: "https://www.googleapis.com/compute/v1/projects/host-proj", want: "host-proj"},
+		{in: "gs://bucket", want: ""},
+		{in: "", want: ""},
 	} {
 		if got := gcpgraph.ProjectFromSelfLink(tc.in); got != tc.want {
 			t.Errorf("ProjectFromSelfLink(%q): got %q, want %q", tc.in, got, tc.want)
@@ -69,11 +69,11 @@ func TestProjectFromSelfLink(t *testing.T) {
 
 func TestProjectFromServiceAccountEmail(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"svc@proj-a.iam.gserviceaccount.com", "proj-a"},
-		{"svc@proj-a.iam.gserviceaccount.com.evil.example", "proj-a"},
-		{"someone@example.com", ""},
-		{"no-at-sign", ""},
-		{"", ""},
+		{in: "svc@proj-a.iam.gserviceaccount.com", want: "proj-a"},
+		{in: "svc@proj-a.iam.gserviceaccount.com.evil.example", want: "proj-a"},
+		{in: "someone@example.com", want: ""},
+		{in: "no-at-sign", want: ""},
+		{in: "", want: ""},
 	} {
 		if got := gcpgraph.ProjectFromServiceAccountEmail(tc.in); got != tc.want {
 			t.Errorf("ProjectFromServiceAccountEmail(%q): got %q, want %q", tc.in, got, tc.want)
@@ -83,10 +83,10 @@ func TestProjectFromServiceAccountEmail(t *testing.T) {
 
 func TestProjectFromServiceAccountResourceName(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"projects/proj-a/serviceAccounts/svc@proj-a.iam.gserviceaccount.com", "proj-a"},
-		{"projects/proj-a", ""}, // no trailing segment: nothing to cut
-		{"organizations/1/serviceAccounts/x", ""},
-		{"", ""},
+		{in: "projects/proj-a/serviceAccounts/svc@proj-a.iam.gserviceaccount.com", want: "proj-a"},
+		{in: "projects/proj-a", want: ""}, // no trailing segment: nothing to cut
+		{in: "organizations/1/serviceAccounts/x", want: ""},
+		{in: "", want: ""},
 	} {
 		if got := gcpgraph.ProjectFromServiceAccountResourceName(tc.in); got != tc.want {
 			t.Errorf("ProjectFromServiceAccountResourceName(%q): got %q, want %q", tc.in, got, tc.want)

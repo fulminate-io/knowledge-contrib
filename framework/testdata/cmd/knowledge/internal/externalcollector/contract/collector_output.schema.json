@@ -41,6 +41,10 @@
     "walk_complete": {
       "type": "boolean",
       "description": "The completeness assertion: true when this walk enumerated the whole source. A result asserting false disables the deletion phase for this collect, exactly as an incomplete code walk does."
+    },
+    "walk_incomplete_reason": {
+      "type": "string",
+      "description": "OPTIONAL. Why this walk did not enumerate the whole source, in the collector's own words; the client prints it on the deletion refusal it reports to the operator. It is present only when walk_complete is false, and then it is non-empty: a result carrying it beside walk_complete true, or carrying an empty string, fails the collect. A result asserting walk_complete false without it is admitted."
     }
   }
 }

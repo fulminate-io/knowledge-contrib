@@ -72,11 +72,11 @@ func TestADocumentOfOnlyReservedKeysYieldsNoJobs(t *testing.T) {
 
 func TestTheEnvironmentIsReadInBothShapesAndNeitherIsInvented(t *testing.T) {
 	for _, row := range []struct{ name, document, want string }{
-		{"a bare name", "deploy:\n  environment: production\n", "production"},
-		{"a mapping", "deploy:\n  environment:\n    name: production\n    url: https://x\n", "production"},
-		{"a mapping with no name", "deploy:\n  environment:\n    url: https://x\n", ""},
-		{"a list, which is neither", "deploy:\n  environment:\n    - production\n", ""},
-		{"absent", "deploy:\n  script: echo ok\n", ""},
+		{name: "a bare name", document: "deploy:\n  environment: production\n", want: "production"},
+		{name: "a mapping", document: "deploy:\n  environment:\n    name: production\n    url: https://x\n", want: "production"},
+		{name: "a mapping with no name", document: "deploy:\n  environment:\n    url: https://x\n", want: ""},
+		{name: "a list, which is neither", document: "deploy:\n  environment:\n    - production\n", want: ""},
+		{name: "absent", document: "deploy:\n  script: echo ok\n", want: ""},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			config, err := parseGitLabCI([]byte(row.document))
@@ -98,14 +98,14 @@ func TestTheScriptIsReadInBothShapesAndANonStringEntryIsDropped(t *testing.T) {
 		name, document string
 		want           []string
 	}{
-		{"a bare string", "build:\n  script: echo one\n", []string{"echo one"}},
-		{"a list", "build:\n  script:\n    - echo one\n    - echo two\n", []string{"echo one", "echo two"}},
+		{name: "a bare string", document: "build:\n  script: echo one\n", want: []string{"echo one"}},
+		{name: "a list", document: "build:\n  script:\n    - echo one\n    - echo two\n", want: []string{"echo one", "echo two"}},
 		{
-			"a list carrying a nested list",
-			"build:\n  script:\n    - echo one\n    - - echo nested\n",
-			[]string{"echo one"},
+			name:     "a list carrying a nested list",
+			document: "build:\n  script:\n    - echo one\n    - - echo nested\n",
+			want:     []string{"echo one"},
 		},
-		{"a mapping, which is neither", "build:\n  script:\n    run: echo one\n", nil},
+		{name: "a mapping, which is neither", document: "build:\n  script:\n    run: echo one\n", want: nil},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			config, err := parseGitLabCI([]byte(row.document))
@@ -128,27 +128,27 @@ func TestTheVariableReferencesAreDeduplicatedAndThePredefinedOnesAreDropped(t *t
 		script []string
 		want   []string
 	}{
-		{"none", []string{"echo hello"}, nil},
-		{"one", []string{"echo $DEPLOY_KEY"}, []string{"DEPLOY_KEY"}},
+		{name: "none", script: []string{"echo hello"}, want: nil},
+		{name: "one", script: []string{"echo $DEPLOY_KEY"}, want: []string{"DEPLOY_KEY"}},
 		{
-			"the same name twice, in both spellings",
-			[]string{"echo $DEPLOY_KEY", "echo ${DEPLOY_KEY}"},
-			[]string{"DEPLOY_KEY"},
+			name:   "the same name twice, in both spellings",
+			script: []string{"echo $DEPLOY_KEY", "echo ${DEPLOY_KEY}"},
+			want:   []string{"DEPLOY_KEY"},
 		},
 		{
-			"two names on one line",
-			[]string{"curl -H $AUTH ${ENDPOINT}"},
-			[]string{"AUTH", "ENDPOINT"},
+			name:   "two names on one line",
+			script: []string{"curl -H $AUTH ${ENDPOINT}"},
+			want:   []string{"AUTH", "ENDPOINT"},
 		},
 		{
-			"only predefined names",
-			[]string{"echo $CI_JOB_TOKEN $CI_COMMIT_SHA $HOME $PATH $PWD $SHELL"},
-			nil,
+			name:   "only predefined names",
+			script: []string{"echo $CI_JOB_TOKEN $CI_COMMIT_SHA $HOME $PATH $PWD $SHELL"},
+			want:   nil,
 		},
 		{
-			"a predefined name beside a declared one",
-			[]string{"echo $CI_COMMIT_SHA $DEPLOY_KEY"},
-			[]string{"DEPLOY_KEY"},
+			name:   "a predefined name beside a declared one",
+			script: []string{"echo $CI_COMMIT_SHA $DEPLOY_KEY"},
+			want:   []string{"DEPLOY_KEY"},
 		},
 	} {
 		t.Run(row.name, func(t *testing.T) {
@@ -164,13 +164,13 @@ func TestTheIncludesAreCountedInEveryShape(t *testing.T) {
 		name, document string
 		want           int
 	}{
-		{"absent", "build:\n  script: echo ok\n", 0},
-		{"a bare string", "include: /templates/base.yml\n", 1},
-		{"a mapping", "include:\n  local: /templates/base.yml\n", 1},
+		{name: "absent", document: "build:\n  script: echo ok\n", want: 0},
+		{name: "a bare string", document: "include: /templates/base.yml\n", want: 1},
+		{name: "a mapping", document: "include:\n  local: /templates/base.yml\n", want: 1},
 		{
-			"a list",
-			"include:\n  - local: /a.yml\n  - remote: https://example.com/b.yml\n",
-			2,
+			name:     "a list",
+			document: "include:\n  - local: /a.yml\n  - remote: https://example.com/b.yml\n",
+			want:     2,
 		},
 	} {
 		t.Run(row.name, func(t *testing.T) {

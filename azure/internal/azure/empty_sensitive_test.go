@@ -91,9 +91,9 @@ func TestEveryDeclaredNameEmptyVersusAbsent(t *testing.T) {
 	slices.Sort(got)
 
 	if !slices.Equal(got, want) {
-		t.Errorf("on %s, the names that tell present-and-empty apart from absent are %v, but the declaration marks %v\n"+
-			"a name measured here and not marked ships a README the installer gate will admit and a collect that then fails;\n"+
-			"a name marked here and not measured refuses a worked entry for no reason", emptySensitiveTargetOS, got, want)
+		t.Errorf(`on %s, the names that tell present-and-empty apart from absent are %v, but the declaration marks %v
+a name measured here and not marked ships a README the installer gate will admit and a collect that then fails;
+a name marked here and not measured refuses a worked entry for no reason`, emptySensitiveTargetOS, got, want)
 	}
 
 	// THE SAME-RUN KNOWN POSITIVE, through the same instrument: a NON-EMPTY value
@@ -136,8 +136,9 @@ func TestTheSubscriptionNameTreatsEmptyAsAbsent(t *testing.T) {
 		t.Fatal("naming no subscription resolved one; this driver cannot observe the guard")
 	}
 	if absentErr.Error() != emptyErr.Error() {
-		t.Errorf("%s present-and-empty produced a different refusal from absent, so it discriminates and is unmarked\n"+
-			"absent: %v\nempty:  %v", envSubscriptionID, absentErr, emptyErr)
+		t.Errorf(`%s present-and-empty produced a different refusal from absent, so it discriminates and is unmarked
+absent: %v
+empty:  %v`, envSubscriptionID, absentErr, emptyErr)
 	}
 	// The same-run known positive: a real value DOES move the result, so the row
 	// above is not passing on a resolver that reads nothing.

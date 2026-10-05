@@ -4,6 +4,7 @@ package framework
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -71,11 +72,11 @@ func readmeSection(t *testing.T, doc, heading string) string {
 }
 
 func sectionOf(doc, heading string) (string, error) {
-	start := strings.Index(doc, heading+"\n")
-	if start < 0 {
+	_, rest, found := strings.Cut(doc, heading+"\n")
+	if !found {
 		return "", fmt.Errorf("README.md carries no %q section; this gate reads a section that no longer exists", heading)
 	}
-	rest := doc[start+len(heading):]
+	rest = "\n" + rest
 	level := len(heading) - len(strings.TrimLeft(heading, "#"))
 	for depth := level; depth >= 2; depth-- {
 		next := "\n" + strings.Repeat("#", depth) + " "
@@ -116,11 +117,12 @@ func missingClaims(text string, claims []claim) []claim {
 // flat collapses every run of whitespace to one space.
 func flat(s string) string { return strings.Join(strings.Fields(s), " ") }
 
-func assertClaims(t *testing.T, text string, claims []claim) {
-	t.Helper()
+func checkClaims(text string, claims []claim) error {
+	var errs []error
 	for _, c := range missingClaims(text, claims) {
-		t.Errorf("the README never says %q: %s", c.phrase, c.why)
+		errs = append(errs, fmt.Errorf("the README never says %q: %s", c.phrase, c.why))
 	}
+	return errors.Join(errs...)
 }
 
 // TestREADMEGateReportsAMissingClaimAndAMissingSection is THE CONTROL for the
@@ -128,7 +130,14 @@ func assertClaims(t *testing.T, text string, claims []claim) {
 // always returned nothing and a section reader that always returned the whole
 // document would leave every assertion in this file green and empty.
 func TestREADMEGateReportsAMissingClaimAndAMissingSection(t *testing.T) {
-	const doc = "# a document\n\nIt says one thing.\n\n## A section\n\nwith a body.\n"
+	const doc = `# a document
+
+It says one thing.
+
+## A section
+
+with a body.
+`
 
 	missing := missingClaims(doc, []claim{
 		{"It says one thing.", "present, so the matcher must not report it"},
@@ -158,7 +167,7 @@ func TestREADMEStatesTheContractTheClientEnforces(t *testing.T) {
 	doc := readmeDoc(t)
 	contract := readmeSection(t, doc, "## The wire contract")
 
-	assertClaims(t, contract, []claim{
+	if err := checkClaims(contract, []claim{
 		{"2025-06-18", "the MCP revision floor: outputSchema and structuredContent exist only from it, " +
 			"so a provider that speaks only the earlier revision cannot satisfy this contract at all"},
 		{"outputSchema", "the property whose absence is the most common refusal at registration"},
@@ -169,7 +178,9 @@ func TestREADMEStatesTheContractTheClientEnforces(t *testing.T) {
 		{"target_graph", "and the one for an edge whose foreign endpoint is the destination"},
 		{"metadata", "where everything outside the node vocabulary rides"},
 		{"stderr", "the stream a collector's diagnostics go to, because stdout is the protocol stream"},
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 
 	// THE REQUIRED PROPERTY NAMES ARE READ OUT OF THE CONTRACT DOCUMENTS, not
 	// typed here: this is what makes the assertion a comparison against the
@@ -207,7 +218,7 @@ func TestREADMEStatesTheContractTheClientEnforces(t *testing.T) {
 func TestREADMEDeclarationSectionStatesTheRequiredTool(t *testing.T) {
 	section := readmeSection(t, readmeDoc(t), "## Declaring what your collector is")
 
-	assertClaims(t, section, []claim{
+	if err := checkClaims(section, []claim{
 		{"required", "the tool is required rather than optional; that is the fact a port author most needs"},
 		{"refused", "a collector that does not serve it, or serves a bad declaration, is refused by name " +
 			"and nothing is written"},
@@ -218,15 +229,19 @@ func TestREADMEDeclarationSectionStatesTheRequiredTool(t *testing.T) {
 		{"operator flags", "summarize and embed do not come from the declaration"},
 		{"default OFF", "and both default off, which is the spend ruling this paragraph carries"},
 		{"never applied", "the collector's suggestion is printed and not acted on"},
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 
 	// The environment half of the credential rule, asserted as a claim rather
 	// than left to the absence gate: a section that documented declaring a
 	// secret's VALUE would be caught by nothing else, because no real value
 	// would appear in it.
-	assertClaims(t, section, []claim{
+	if err := checkClaims(section, []claim{
 		{"names and never their values", "the declaration carries environment names, not values"},
-	})
+	}); err != nil {
+		t.Error(err)
+	}
 }
 
 // TestREADMECountsAreTheMeasuredOnes computes every number the document states
@@ -314,8 +329,8 @@ func TestREADMEWorkedEntryIsCopyable(t *testing.T) {
 	decoder := json.NewDecoder(strings.NewReader(fence))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&entry); err != nil {
-		t.Fatalf("the README's worked entry does not decode: %v\nAn operator copying it would get a "+
-			"refusal rather than a collector.", err)
+		t.Fatalf(`the README's worked entry does not decode: %v
+An operator copying it would get a refusal rather than a collector.`, err)
 	}
 	if len(entry.Collectors) != 1 {
 		t.Fatalf("the worked entry declares %d collectors; it teaches one", len(entry.Collectors))

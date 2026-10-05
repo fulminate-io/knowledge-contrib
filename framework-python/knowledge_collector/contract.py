@@ -111,21 +111,23 @@ def validate_result_payload(tool, raw):
 
 
 class DecodedResult:
-    """A result decoded into the envelope's own shape: the two lists and the
-    completeness assertion, with every field named by the contract."""
+    """A result decoded into the envelope's own shape: the two lists, the
+    completeness assertion and the incomplete walk's reason (None when the result
+    carries none), with every field named by the contract."""
 
-    __slots__ = ("nodes", "edges", "walk_complete")
+    __slots__ = ("nodes", "edges", "walk_complete", "walk_incomplete_reason")
 
-    def __init__(self, nodes, edges, walk_complete):
+    def __init__(self, nodes, edges, walk_complete, walk_incomplete_reason=None):
         self.nodes = nodes
         self.edges = edges
         self.walk_complete = walk_complete
+        self.walk_incomplete_reason = walk_incomplete_reason
 
     def __repr__(self):
         return "DecodedResult(nodes=%d, edges=%d, walk_complete=%r)" % (len(self.nodes), len(self.edges), self.walk_complete)
 
 
-_ENVELOPE_WIRE_FIELDS = ("nodes", "edges", "walk_complete")
+_ENVELOPE_WIRE_FIELDS = ("nodes", "edges", "walk_complete", "walk_incomplete_reason")
 
 
 def decode_result(tool, structured):
@@ -154,7 +156,29 @@ def decode_result(tool, structured):
     for index, edge in enumerate(structured["edges"]):
         _refuse_undefined(tool, edge, EDGE_WIRE_FIELDS, "edge[%d]" % index)
 
-    return DecodedResult(structured["nodes"], structured["edges"], structured["walk_complete"])
+    _refuse_contradictory_reason(tool, structured)
+    return DecodedResult(
+        structured["nodes"], structured["edges"], structured["walk_complete"], structured.get("walk_incomplete_reason")
+    )
+
+
+def _refuse_contradictory_reason(tool, structured):
+    """Refuse the two walk_incomplete_reason shapes that contradict the key's
+    contract: a reason beside a walk asserting completeness, and an empty reason.
+    An incomplete walk with no reason key is admitted, because the key is
+    optional."""
+    if "walk_incomplete_reason" not in structured:
+        return
+    if structured["walk_complete"]:
+        raise ContractError(
+            "custom collector: tool %r result carries walk_incomplete_reason beside walk_complete true; "
+            "the reason is sent only on an incomplete walk" % tool
+        )
+    if structured["walk_incomplete_reason"] == "":
+        raise ContractError(
+            "custom collector: tool %r result carries an empty walk_incomplete_reason beside walk_complete false; "
+            "an incomplete walk sends a non-empty reason or omits the key" % tool
+        )
 
 
 def _refuse_undefined(tool, doc, known, where):

@@ -72,8 +72,8 @@ func jsonFence(t *testing.T, doc string) string {
 func TestTheReadmeEntryDecodesThroughTheLoadersOwnShape(t *testing.T) {
 	got, err := installentry.Decode([]byte(jsonFence(t, readme(t))))
 	if err != nil {
-		t.Fatalf("the README's worked entry does not decode against the loader's shape: %v\n"+
-			"An operator copying it would get a refusal rather than a collector.", err)
+		t.Fatalf(`the README's worked entry does not decode against the loader's shape: %v
+An operator copying it would get a refusal rather than a collector.`, err)
 	}
 	entry, ok := got.Collectors[installentry.FamilyName]
 	if !ok {
@@ -166,8 +166,8 @@ func TestTheReadmeEntryCarriesTheTokenReferenceAndNoValue(t *testing.T) {
 	fence := jsonFence(t, doc)
 
 	if !strings.Contains(fence, `"env"`) {
-		t.Errorf("the README's worked entry carries no env block, so an operator copying it "+
-			"installs a collector with no way to receive its token:\n%s", fence)
+		t.Errorf(`the README's worked entry carries no env block, so an operator copying it installs a collector with no way to receive its token:
+%s`, fence)
 	}
 	want := fmt.Sprintf("%q: %q", enventry.PrimaryTokenVariable,
 		"${"+enventry.PrimaryTokenVariable+"}")
@@ -175,12 +175,12 @@ func TestTheReadmeEntryCarriesTheTokenReferenceAndNoValue(t *testing.T) {
 		t.Errorf("the README's worked entry does not carry %s:\n%s", want, fence)
 	}
 	if strings.Contains(fence, ":-") {
-		t.Errorf("the README's worked entry carries a DEFAULTED reference, which arrives at this "+
-			"collector present and empty:\n%s", fence)
+		t.Errorf(`the README's worked entry carries a DEFAULTED reference, which arrives at this collector present and empty:
+%s`, fence)
 	}
 	if strings.Contains(fence, enventry.FallbackTokenVariable) {
-		t.Errorf("the README's worked entry names the fallback %q beside the primary; the two are "+
-			"alternatives:\n%s", enventry.FallbackTokenVariable, fence)
+		t.Errorf(`the README's worked entry names the fallback %q beside the primary; the two are alternatives:
+%s`, enventry.FallbackTokenVariable, fence)
 	}
 	for _, name := range enventry.Names() {
 		// THE PROSE NAMES BOTH, which is the known positive for the assertion
@@ -365,8 +365,8 @@ func TestTheReadmeCapTableCarriesTheRealDefaults(t *testing.T) {
 		parameter string
 		value     int
 	}{
-		{"max_runs", collect.DefaultMaxRuns},
-		{"max_deployments", collect.DefaultMaxDeployments},
+		{parameter: "max_runs", value: collect.DefaultMaxRuns},
+		{parameter: "max_deployments", value: collect.DefaultMaxDeployments},
 	} {
 		// The row as the table writes it: the parameter in backticks, then the
 		// default, then the ceiling.

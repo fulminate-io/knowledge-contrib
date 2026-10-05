@@ -22,11 +22,11 @@ func TestTemplateAliasDerivesFromPatternAndSeverity(t *testing.T) {
 		severity string
 		want     string
 	}{
-		{"wildcards become word breaks", "Node <*> is not ready", SeverityWarn, "node-not-ready@warn"},
-		{"a reason prefix is stripped", "NodeNotReady: Node is not ready", SeverityError, "node-not-ready@err"},
-		{"more than five tokens is cut at five", "one two three four five six seven", SeverityDebug, "one-two-three-four-five@debug"},
-		{"stopwords are dropped", "the disk is out of space and on fire", SeverityInfo, "disk-out-space-fire@info"},
-		{"digits survive as tokens", "worker 7 restarted", SeverityInfo, "worker-7-restarted@info"},
+		{name: "wildcards become word breaks", pattern: "Node <*> is not ready", severity: SeverityWarn, want: "node-not-ready@warn"},
+		{name: "a reason prefix is stripped", pattern: "NodeNotReady: Node is not ready", severity: SeverityError, want: "node-not-ready@err"},
+		{name: "more than five tokens is cut at five", pattern: "one two three four five six seven", severity: SeverityDebug, want: "one-two-three-four-five@debug"},
+		{name: "stopwords are dropped", pattern: "the disk is out of space and on fire", severity: SeverityInfo, want: "disk-out-space-fire@info"},
+		{name: "digits survive as tokens", pattern: "worker 7 restarted", severity: SeverityInfo, want: "worker-7-restarted@info"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -47,14 +47,14 @@ func TestReasonPrefixIsStrippedOnlyWhenItIsOne(t *testing.T) {
 		pattern string
 		want    string
 	}{
-		{"single uppercase all-letter token is stripped", "NodeNotReady: disk failed", "disk-failed"},
-		{"lowercase prefix is kept", "nodeNotReady: disk failed", "nodenotready-disk-failed"},
-		{"a prefix with a digit is kept", "Node2Ready: disk failed", "node2ready-disk-failed"},
+		{name: "single uppercase all-letter token is stripped", pattern: "NodeNotReady: disk failed", want: "disk-failed"},
+		{name: "lowercase prefix is kept", pattern: "nodeNotReady: disk failed", want: "nodenotready-disk-failed"},
+		{name: "a prefix with a digit is kept", pattern: "Node2Ready: disk failed", want: "node2ready-disk-failed"},
 		// Kept, so all five of its tokens survive the cap: node, not, ready,
 		// disk, failed. "not" is not in the twelve-word stopword set.
-		{"a multi-word prefix is kept", "Node Not Ready: disk failed", "node-not-ready-disk-failed"},
-		{"a one-character prefix is kept", "N: disk failed", "n-disk-failed"},
-		{"a colon with no space is not a prefix", "NodeNotReady:disk failed", "nodenotready-disk-failed"},
+		{name: "a multi-word prefix is kept", pattern: "Node Not Ready: disk failed", want: "node-not-ready-disk-failed"},
+		{name: "a one-character prefix is kept", pattern: "N: disk failed", want: "n-disk-failed"},
+		{name: "a colon with no space is not a prefix", pattern: "NodeNotReady:disk failed", want: "nodenotready-disk-failed"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

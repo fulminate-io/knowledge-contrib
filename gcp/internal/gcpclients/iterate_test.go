@@ -217,7 +217,7 @@ func TestDrainScopedWithEveryScopeReachableIsClean(t *testing.T) {
 		t.Fatalf("a fully reachable aggregated list reported %v", err)
 	}
 	if len(got) != 2 {
-		t.Errorf("got %d items, want 2", len(got))
+		t.Errorf("drainScoped(two reachable zones) = %d items, want 2", len(got))
 	}
 }
 

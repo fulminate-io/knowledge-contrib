@@ -340,8 +340,9 @@ func TestTheREADMEShipsTheGeneratedEntry(t *testing.T) {
 		t.Fatalf("this module's README could not be read: %v", err)
 	}
 	if !strings.Contains(string(readme), generated) {
-		t.Fatalf("the README's config entry is not the one ExampleEntry generates. Paste this in place of "+
-			"the fenced block:\n\n%s", generated)
+		t.Fatalf(`the README's config entry is not the one ExampleEntry generates. Paste this in place of the fenced block:
+
+%s`, generated)
 	}
 }
 

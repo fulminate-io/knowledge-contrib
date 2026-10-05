@@ -120,15 +120,15 @@ func TestMatrix_AnyServiceFailingIsolatesToThatService(t *testing.T) {
 		service string
 		break_  func(*Clients)
 	}{
-		{"vpc", func(c *Clients) { failEC2Vpcs(c, boom) }},
-		{"ec2", func(c *Clients) { failEC2Instances(c, boom) }},
-		{"iam-role", func(c *Clients) { failIAMRoles(c, boom) }},
-		{"lambda", func(c *Clients) { failLambda(c, boom) }},
-		{"s3", func(c *Clients) { failS3(c, boom) }},
-		{"eks", func(c *Clients) { failEKS(c, boom) }},
-		{"dynamodb", func(c *Clients) { failDynamoTables(c, boom) }},
-		{"cloudtrail", func(c *Clients) { failCloudTrail(c, boom) }},
-		{"opensearch", func(c *Clients) { failOpenSearch(c, boom) }},
+		{service: "vpc", break_: func(c *Clients) { failEC2Vpcs(c, boom) }},
+		{service: "ec2", break_: func(c *Clients) { failEC2Instances(c, boom) }},
+		{service: "iam-role", break_: func(c *Clients) { failIAMRoles(c, boom) }},
+		{service: "lambda", break_: func(c *Clients) { failLambda(c, boom) }},
+		{service: "s3", break_: func(c *Clients) { failS3(c, boom) }},
+		{service: "eks", break_: func(c *Clients) { failEKS(c, boom) }},
+		{service: "dynamodb", break_: func(c *Clients) { failDynamoTables(c, boom) }},
+		{service: "cloudtrail", break_: func(c *Clients) { failCloudTrail(c, boom) }},
+		{service: "opensearch", break_: func(c *Clients) { failOpenSearch(c, boom) }},
 	} {
 		t.Run(tc.service, func(t *testing.T) {
 			clients := fixtureClients()
@@ -164,7 +164,7 @@ func TestMatrix_ConverterShapes(t *testing.T) {
 	t.Run("an SQS queue url becomes an ARN", func(t *testing.T) {
 		arn, name := sqsARNFromURL("https://sqs.us-east-1.amazonaws.com/123456789012/jobs", "us-east-1")
 		if arn != "arn:aws:sqs:us-east-1:123456789012:jobs" || name != "jobs" {
-			t.Errorf("got %q / %q; every other service names a queue by ARN, so the URL cannot be the node id",
+			t.Errorf("sqsARNFromURL(jobs queue URL) = %q / %q; every other service names a queue by ARN, so the URL cannot be the node id",
 				arn, name)
 		}
 		// A URL WITH TOO FEW SEGMENTS names no queue and must yield nothing rather
@@ -176,18 +176,18 @@ func TestMatrix_ConverterShapes(t *testing.T) {
 
 	t.Run("an ECR image reference becomes a repository ARN", func(t *testing.T) {
 		for _, tc := range []struct{ image, want string }{
-			{"123456789012.dkr.ecr.us-east-1.amazonaws.com/api:v3",
-				"arn:aws:ecr:us-east-1:123456789012:repository/api"},
-			{"123456789012.dkr.ecr.us-east-1.amazonaws.com/team/api@sha256:abc",
-				"arn:aws:ecr:us-east-1:123456789012:repository/team/api"},
+			{image: "123456789012.dkr.ecr.us-east-1.amazonaws.com/api:v3",
+				want: "arn:aws:ecr:us-east-1:123456789012:repository/api"},
+			{image: "123456789012.dkr.ecr.us-east-1.amazonaws.com/team/api@sha256:abc",
+				want: "arn:aws:ecr:us-east-1:123456789012:repository/team/api"},
 			// ANOTHER ACCOUNT'S REGISTRY: the ARN names where the image LIVES, not
 			// where the task runs, so it is composed from the reference.
-			{"999999999999.dkr.ecr.eu-west-1.amazonaws.com/shared:latest",
-				"arn:aws:ecr:eu-west-1:999999999999:repository/shared"},
+			{image: "999999999999.dkr.ecr.eu-west-1.amazonaws.com/shared:latest",
+				want: "arn:aws:ecr:eu-west-1:999999999999:repository/shared"},
 			// NOT ECR: a public image names no repository in any account.
-			{"docker.io/library/nginx:1.27", ""},
-			{"nginx", ""},
-			{"", ""},
+			{image: "docker.io/library/nginx:1.27", want: ""},
+			{image: "nginx", want: ""},
+			{image: "", want: ""},
 		} {
 			if got := ecrRepositoryARNForImage(tc.image, fixtureRegion, fixtureAccount); got != tc.want {
 				t.Errorf("image %q mapped to %q, want %q", tc.image, got, tc.want)
@@ -197,14 +197,14 @@ func TestMatrix_ConverterShapes(t *testing.T) {
 
 	t.Run("an API Gateway v2 protocol chooses the resource type", func(t *testing.T) {
 		for _, tc := range []struct{ protocol, want string }{
-			{"HTTP", ResourceTypeAPIGWHTTPAPI},
-			{"WEBSOCKET", ResourceTypeAPIGWWSAPI},
+			{protocol: "HTTP", want: ResourceTypeAPIGWHTTPAPI},
+			{protocol: "WEBSOCKET", want: ResourceTypeAPIGWWSAPI},
 			// A PROTOCOL THIS COLLECTOR DOES NOT KNOW yields no type rather than a
 			// guess: a consumer's query selects on resource_type, and a future
 			// protocol under the wrong one is worse than an omission the parity
 			// census would catch.
-			{"GRPC", ""},
-			{"", ""},
+			{protocol: "GRPC", want: ""},
+			{protocol: "", want: ""},
 		} {
 			if got := resourceTypeForProtocol(tc.protocol); got != tc.want {
 				t.Errorf("protocol %q mapped to %q, want %q", tc.protocol, got, tc.want)
@@ -217,10 +217,10 @@ func TestMatrix_ConverterShapes(t *testing.T) {
 			domain, want string
 			ok           bool
 		}{
-			{"site-assets.s3.us-east-1.amazonaws.com", "site-assets", true},
-			{"site-assets.s3.amazonaws.com", "site-assets", true},
-			{"api.example.com", "", false},
-			{"d111.cloudfront.net", "", false},
+			{domain: "site-assets.s3.us-east-1.amazonaws.com", want: "site-assets", ok: true},
+			{domain: "site-assets.s3.amazonaws.com", want: "site-assets", ok: true},
+			{domain: "api.example.com", want: "", ok: false},
+			{domain: "d111.cloudfront.net", want: "", ok: false},
 		} {
 			got, ok := s3BucketFromOriginDomain(tc.domain)
 			if got != tc.want || ok != tc.ok {
@@ -233,7 +233,7 @@ func TestMatrix_ConverterShapes(t *testing.T) {
 		res := fixtureResult(t)
 		zones := nodesOfType(res, ResourceTypeRoute53HostedZone)
 		if len(zones) != 1 {
-			t.Fatalf("want one hosted zone, got %d", len(zones))
+			t.Fatalf("got %d, want one hosted zone", len(zones))
 		}
 		if zones[0].ID != fixtureZoneID {
 			t.Errorf("hosted zone id is %q, want %q: the API returns /hostedzone/<id> and the ARN wants the "+
@@ -245,7 +245,7 @@ func TestMatrix_ConverterShapes(t *testing.T) {
 		res := fixtureResult(t)
 		groups := nodesOfType(res, ResourceTypeCloudWatchLogGroup)
 		if len(groups) != 1 {
-			t.Fatalf("want one log group, got %d", len(groups))
+			t.Fatalf("got %d, want one log group", len(groups))
 		}
 		if strings.HasSuffix(groups[0].ID, ":*") {
 			t.Errorf("the log group id %q keeps the API's trailing :*; every other service names a log group "+
@@ -260,13 +260,13 @@ func TestMatrix_ConverterShapes(t *testing.T) {
 			ns, name         string
 			wildcard, wanted bool
 		}{
-			{"system:serviceaccount:payments:api", "payments", "api", false, true},
-			{"system:serviceaccount:batch:*", "batch", "*", true, true},
+			{subject: "system:serviceaccount:payments:api", ns: "payments", name: "api", wildcard: false, wanted: true},
+			{subject: "system:serviceaccount:batch:*", ns: "batch", name: "*", wildcard: true, wanted: true},
 			// NOT AN IRSA SUBJECT: a trust condition on some other claim is a
 			// different mechanism, and reading it as a ServiceAccount binding would
 			// invent one.
-			{"sts.amazonaws.com", "", "", false, false},
-			{"system:serviceaccount:", "", "", false, false},
+			{subject: "sts.amazonaws.com", ns: "", name: "", wildcard: false, wanted: false},
+			{subject: "system:serviceaccount:", ns: "", name: "", wildcard: false, wanted: false},
 		} {
 			ns, name, wildcard := parseIRSASubject(tc.subject)
 			gotAny := ns != ""

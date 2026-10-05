@@ -105,8 +105,8 @@ func TestTheApprovalEdgesResolveToMaterializedReviewers(t *testing.T) {
 
 	const environment = "github:acme/Environment/acme/api/production"
 	for _, reviewer := range []struct{ id, resourceType string }{
-		{"github:acme/User/ada", ghgraph.ResourceTypeUser},
-		{"github:acme/Team/platform", ghgraph.ResourceTypeTeam},
+		{id: "github:acme/User/ada", resourceType: ghgraph.ResourceTypeUser},
+		{id: "github:acme/Team/platform", resourceType: ghgraph.ResourceTypeTeam},
 	} {
 		if !hasRelation(got, environment, reviewer.id, ghgraph.EdgeRequiresApproval) {
 			t.Errorf("no REQUIRES_APPROVAL edge from %q to %q", environment, reviewer.id)

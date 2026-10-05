@@ -139,8 +139,8 @@ func TestTheAdvertisedSchemasSatisfyTheContract(t *testing.T) {
 		advertised any
 		contract   []byte
 	}{
-		{"input", tool.InputSchema, framework.InputContractJSON()},
-		{"output", tool.OutputSchema, framework.OutputContractJSON()},
+		{what: "input", advertised: tool.InputSchema, contract: framework.InputContractJSON()},
+		{what: "output", advertised: tool.OutputSchema, contract: framework.OutputContractJSON()},
 	} {
 		for _, required := range requiredNames(t, row.contract) {
 			if !slices.Contains(requiredNames(t, remarshal(t, row.advertised)), required) {

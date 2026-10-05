@@ -77,7 +77,7 @@ func TestWalkReturnsWhatTheEnumerationsFound(t *testing.T) {
 		t.Fatalf("Walk: %v", err)
 	}
 	if len(got.Nodes) != 2 || len(got.Edges) != 1 {
-		t.Fatalf("got %d nodes and %d edges, want 2 and 1", len(got.Nodes), len(got.Edges))
+		t.Fatalf("Walk(gcp-instance) = %d nodes and %d edges, want 2 and 1", len(got.Nodes), len(got.Edges))
 	}
 	if !got.Complete.IsAsserted() || !got.Complete.IsComplete() {
 		t.Errorf("a clean walk did not assert completeness: %+v", got.Complete)
@@ -106,7 +106,7 @@ func TestWalkCompletenessMatrix(t *testing.T) {
 			t.Error("a clean walk asserted an incomplete result")
 		}
 		if len(got.Nodes) != 1 {
-			t.Errorf("got %d nodes, want 1", len(got.Nodes))
+			t.Errorf("Walk(clean) = %d nodes, want 1", len(got.Nodes))
 		}
 	})
 

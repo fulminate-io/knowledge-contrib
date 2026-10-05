@@ -61,7 +61,7 @@ func listRunners(
 	ctx context.Context, client *bbclient.Client, path string,
 ) ([]apiRunner, error) {
 	var runners []apiRunner
-	err := client.GetPaginated(ctx, path, func(raw json.RawMessage) error {
+	err := client.FetchPaginated(ctx, path, func(raw json.RawMessage) error {
 		var page []apiRunner
 		if err := json.Unmarshal(raw, &page); err != nil {
 			return fmt.Errorf("decoding a runners page: %w", err)

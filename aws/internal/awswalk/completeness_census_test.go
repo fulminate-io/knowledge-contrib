@@ -59,12 +59,10 @@ func TestCensus_EverySDKCallsFailureReachesTheVerdict(t *testing.T) {
 
 	if len(offenders) > 0 {
 		sort.Strings(offenders)
-		t.Errorf("%d SDK call(s) sit in a function that neither RETURNS an error nor calls "+
-			"recordSubreadFailure, so a denied or throttled read is invisible to the completeness verdict:\n"+
-			"  %s\n\nThe walk then asserts walk_complete=true over an account it did not fully enumerate, and "+
-			"because a registered custom family is on FULL-REPLACE deletion the server deletes every record "+
-			"the failed read would have named. Either return the error, or record it with "+
-			"recordSubreadFailure(operation, target, err) and keep going.",
+		t.Errorf(`%d SDK call(s) sit in a function that neither RETURNS an error nor calls recordSubreadFailure, so a denied or throttled read is invisible to the completeness verdict:
+  %s
+
+The walk then asserts walk_complete=true over an account it did not fully enumerate, and because a registered custom family is on FULL-REPLACE deletion the server deletes every record the failed read would have named. Either return the error, or record it with recordSubreadFailure(operation, target, err) and keep going.`,
 			len(offenders), strings.Join(offenders, "\n  "))
 	}
 
@@ -126,7 +124,7 @@ func TestCompleteness_ADeniedSubReadMakesTheAccountIncomplete(t *testing.T) {
 	}, {
 		operation: "apigateway.GetBasePathMappings",
 		deny: func(c *Clients) {
-			c.APIGateway.(*fakeApiGateway).getBasePathMappings = func(*apigateway.GetBasePathMappingsInput) (*apigateway.GetBasePathMappingsOutput, error) {
+			c.APIGateway.(*fakeAPIGateway).getBasePathMappings = func(*apigateway.GetBasePathMappingsInput) (*apigateway.GetBasePathMappingsOutput, error) {
 				return nil, deniedRead
 			}
 		},
@@ -185,8 +183,9 @@ func TestCompleteness_ADeniedSubReadMakesTheAccountIncomplete(t *testing.T) {
 			// TWO: the reason names the read, so the operator knows which
 			// permission to look at.
 			if !strings.Contains(res.Complete.Reason(), tc.operation) {
-				t.Errorf("the incomplete reason does not name %s.\nreason: %s\nA reason that does not name the "+
-					"failed read sends the operator to the console with nothing to look up.",
+				t.Errorf(`the incomplete reason does not name %s.
+reason: %s
+A reason that does not name the failed read sends the operator to the console with nothing to look up.`,
 					tc.operation, res.Complete.Reason())
 			}
 

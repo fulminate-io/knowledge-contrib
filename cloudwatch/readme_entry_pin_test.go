@@ -51,8 +51,9 @@ func TestTheREADMEShipsTheGeneratedEntry(t *testing.T) {
 	}
 
 	if !strings.Contains(string(body), generated) {
-		t.Fatalf("the README's config entry is not the one ExampleEntry generates. Paste this in place "+
-			"of the fenced json block:\n\n%s", generated)
+		t.Fatalf(`the README's config entry is not the one ExampleEntry generates. Paste this in place of the fenced json block:
+
+%s`, generated)
 	}
 }
 

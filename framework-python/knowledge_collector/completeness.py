@@ -52,8 +52,8 @@ class Completeness:
         return self._complete
 
     def reason(self):
-        """The reason an incomplete walk carries, empty on a complete one. A
-        collector logs it; the wire does not."""
+        """The reason an incomplete walk carries, empty on a complete one. The
+        envelope carries it as walk_incomplete_reason on the incomplete arm."""
         return self._reason
 
     def __repr__(self):
@@ -84,11 +84,11 @@ def Incomplete(reason):  # noqa: N802 -- mirrors the Go framework's exported nam
     """Assert that this walk did NOT enumerate the whole source, and carry the
     reason it did not.
 
-    The reason is not sent on the wire -- the contract carries a boolean -- but it
-    is required all the same, because it is what a collector author writes into
-    their own logs and what a reviewer reads to judge whether the arm is
-    reachable at all. An empty reason is refused when the result is encoded, on
-    the same terms as the unasserted value.
+    The reason travels on the wire as walk_incomplete_reason beside
+    walk_complete=false, and the client prints it on the deletion refusal it
+    reports, so it is what tells an operator why the collect deleted nothing. An
+    empty reason is refused when the result is encoded, on the same terms as the
+    unasserted value.
     """
     value = Completeness()
     value._asserted = True

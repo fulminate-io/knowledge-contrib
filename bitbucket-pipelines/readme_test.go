@@ -67,8 +67,8 @@ func jsonFence(t *testing.T, doc string) string {
 func TestTheReadmeEntryDecodesThroughTheLoadersOwnShape(t *testing.T) {
 	got, err := installentry.Decode([]byte(jsonFence(t, readme(t))))
 	if err != nil {
-		t.Fatalf("the README's worked entry does not decode against the loader's shape: %v\n"+
-			"An operator copying it would get a refusal rather than a collector.", err)
+		t.Fatalf(`the README's worked entry does not decode against the loader's shape: %v
+An operator copying it would get a refusal rather than a collector.`, err)
 	}
 	entry, ok := got.Collectors[installentry.FamilyName]
 	if !ok {
@@ -165,16 +165,16 @@ func TestTheReadmeEntryCarriesBothCredentialsByReferenceAndNoValue(t *testing.T)
 	fence := jsonFence(t, doc)
 
 	if !strings.Contains(fence, `"env"`) {
-		t.Errorf("the README's worked entry carries no env block, so it names neither "+
-			"credential:\n%s", fence)
+		t.Errorf(`the README's worked entry carries no env block, so it names neither credential:
+%s`, fence)
 	}
 	if strings.Contains(fence, ":-") {
-		t.Errorf("the README's worked entry carries a DEFAULTED reference, which reaches this "+
-			"collector present and empty:\n%s", fence)
+		t.Errorf(`the README's worked entry carries a DEFAULTED reference, which reaches this collector present and empty:
+%s`, fence)
 	}
 	if strings.Contains(fence, enventry.HistoryDepthVariable) {
-		t.Errorf("the README's worked entry names the selector, which an installer writes only "+
-			"when the installing shell has it set:\n%s", fence)
+		t.Errorf(`the README's worked entry names the selector, which an installer writes only when the installing shell has it set:
+%s`, fence)
 	}
 	decoded, err := installentry.Decode([]byte(fence))
 	if err != nil {
@@ -187,8 +187,8 @@ func TestTheReadmeEntryCarriesBothCredentialsByReferenceAndNoValue(t *testing.T)
 		}
 		value, ok := env[name]
 		if !ok {
-			t.Errorf("the README's worked entry does not carry %q; both halves are required "+
-				"together, so an entry naming one cannot authenticate:\n%s", name, fence)
+			t.Errorf(`the README's worked entry does not carry %q; both halves are required together, so an entry naming one cannot authenticate:
+%s`, name, fence)
 			continue
 		}
 		if want := "${" + name + "}"; value != want {

@@ -4,10 +4,13 @@ package azure
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cdn/armcdn/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/eventhub/armeventhub"
@@ -42,7 +45,8 @@ const censusSubscription = "0000"
 // censusWalk runs every subcollector against the fake plane and returns the
 // merged, resolved outcome. It is one run several rows read, because standing
 // the whole set up is the expensive part and the rows differ only in what they
-// assert about it.
+// assert about it. A subcollector's failure rides the outcome's failures for
+// the Test to judge with subcollectorFailures.
 func censusWalk(t *testing.T) walkOutcome {
 	t.Helper()
 	fake := newARMFake(censusRoutes(t))
@@ -53,11 +57,18 @@ func censusWalk(t *testing.T) walkOutcome {
 	}
 
 	outcome := runSubCollectors(context.Background(), subs, 4)
-	for _, f := range outcome.failures {
-		t.Errorf("%s failed against the fake management plane: %v", f.name, f.err)
-	}
 	fake.assertEveryRouteFired(t)
 	return runResolvers(outcome)
+}
+
+// subcollectorFailures returns one error naming every subcollector that failed
+// against the fake management plane, or nil when every one ran clean.
+func subcollectorFailures(failures []subFailure) error {
+	var errs []error
+	for _, f := range failures {
+		errs = append(errs, fmt.Errorf("%s failed against the fake management plane: %w", f.name, f.err))
+	}
+	return errors.Join(errs...)
 }
 
 // TestCensus_EverySubcollectorRunsAndEveryDeclaredTypeIsEmitted.
@@ -68,6 +79,9 @@ func censusWalk(t *testing.T) walkOutcome {
 // is for, and the two together are what the parity floor actually needs.
 func TestCensus_EverySubcollectorRunsAndEveryDeclaredTypeIsEmitted(t *testing.T) {
 	outcome := censusWalk(t)
+	if err := subcollectorFailures(outcome.failures); err != nil {
+		t.Error(err)
+	}
 
 	// EVERY DECLARED RELATIONSHIP, produced by an emitter rather than a literal.
 	produced := relationsOf(outcome.edges)
@@ -113,6 +127,9 @@ func TestCensus_EverySubcollectorRunsAndEveryDeclaredTypeIsEmitted(t *testing.T)
 // than a count that moved.
 func TestCensus_ElidedEmissionSitesAreEachObserved(t *testing.T) {
 	outcome := censusWalk(t)
+	if err := subcollectorFailures(outcome.failures); err != nil {
+		t.Error(err)
+	}
 
 	for _, site := range []struct {
 		site     string
@@ -120,14 +137,14 @@ func TestCensus_ElidedEmissionSitesAreEachObserved(t *testing.T) {
 		to       string
 		relation string
 	}{
-		{"sub_servicebus.go subscriptionEdges", sbSubID, sbTopicID, edgeSubscribesTo},
-		{"sub_eventing.go consumerGroupEdges", ehGroupID, ehID, edgeSubscribesTo},
-		{"sub_data.go collectPrivateEndpoints", sqlServerID, peID, edgeUsesSubnet},
-		{"sub_dns.go zoneLinkEdges", privZoneID, vnetID, edgeUsesNetwork},
-		{"sub_eventing.go collectNetworkRules", ehNamespaceID, subnetID, edgeUsesSubnet},
-		{"sub_eventing.go collectEventSubscriptions", egSubID, functionAppID, edgeTargets},
-		{"sub_monitor.go collectComponents", componentID, workspaceID, edgeSinksTo},
-		{"sub_servicebus.go collectNetworkRules", sbNamespaceID, subnetID, edgeUsesSubnet},
+		{site: "sub_servicebus.go subscriptionEdges", from: sbSubID, to: sbTopicID, relation: edgeSubscribesTo},
+		{site: "sub_eventing.go consumerGroupEdges", from: ehGroupID, to: ehID, relation: edgeSubscribesTo},
+		{site: "sub_data.go collectPrivateEndpoints", from: sqlServerID, to: peID, relation: edgeUsesSubnet},
+		{site: "sub_dns.go zoneLinkEdges", from: privZoneID, to: vnetID, relation: edgeUsesNetwork},
+		{site: "sub_eventing.go collectNetworkRules", from: ehNamespaceID, to: subnetID, relation: edgeUsesSubnet},
+		{site: "sub_eventing.go collectEventSubscriptions", from: egSubID, to: functionAppID, relation: edgeTargets},
+		{site: "sub_monitor.go collectComponents", from: componentID, to: workspaceID, relation: edgeSinksTo},
+		{site: "sub_servicebus.go collectNetworkRules", from: sbNamespaceID, to: subnetID, relation: edgeUsesSubnet},
 	} {
 		t.Run(site.site+" "+site.relation, func(t *testing.T) {
 			if _, ok := edgeBetween(outcome.edges, site.from, site.to, site.relation); !ok {
@@ -145,8 +162,8 @@ func TestCensus_ElidedEmissionSitesAreEachObserved(t *testing.T) {
 func TestCensus_TheWalkAssertsCompleteOverTheFakePlane(t *testing.T) {
 	fake := newARMFake(censusRoutes(t))
 	c := &Collector{
-		newCredential: func(context.Context) (azureCredential, error) { return fakeCredential{}, nil },
-		buildSubs: func(cred azureCredential, subscriptionID string) []subCollector {
+		newCredential: func(context.Context) (azcore.TokenCredential, error) { return fakeCredential{}, nil },
+		buildSubs: func(cred azcore.TokenCredential, subscriptionID string) []subCollector {
 			return censusSubCollectors(t, fake)
 		},
 		lookupEnv: func(string) (string, bool) { return "", false },

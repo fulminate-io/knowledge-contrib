@@ -173,6 +173,7 @@ class PayloadModeTest(unittest.TestCase):
     def test_incomplete_walk_asserts_walk_complete_false(self):
         payload = self._payload(stub.MODE_INCOMPLETE_WALK)["structuredContent"]
         self.assertIs(payload["walk_complete"], False)
+        self.assertEqual(payload["walk_incomplete_reason"], stub.INCOMPLETE_WALK_REASON)
         self.assertEqual(payload["nodes"], [{"id": "n1", "type": "issue"}])
 
     def test_empty_graph_is_both_arrays_empty_and_a_complete_walk(self):

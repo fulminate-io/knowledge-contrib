@@ -77,9 +77,9 @@ func TestEveryDeclaredNameEmptyVersusAbsent(t *testing.T) {
 	slices.Sort(got)
 
 	if !slices.Equal(got, want) {
-		t.Errorf("the names that tell present-and-empty apart from absent are %v, but the declaration marks %v\n"+
-			"a name measured here and not marked ships a README the installer gate will admit and a collect that then fails;\n"+
-			"a name marked here and not measured refuses a worked entry for no reason", got, want)
+		t.Errorf(`the names that tell present-and-empty apart from absent are %v, but the declaration marks %v
+a name measured here and not marked ships a README the installer gate will admit and a collect that then fails;
+a name marked here and not measured refuses a worked entry for no reason`, got, want)
 	}
 
 	// THE ANTI-VACUITY CONTROL, in the same run and through the same driver: a

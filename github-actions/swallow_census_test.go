@@ -209,10 +209,9 @@ func TestNoErrorIsSwallowedAnywhereInThisModule(t *testing.T) {
 		}
 	}
 	if len(hits) > 0 {
-		t.Errorf("%d error(s) are discarded in this module:\n  %s\n"+
-			"A read whose failure is dropped loses whatever it carried while the walk still "+
-			"reports a complete collect, which is what lets the server delete what the collect "+
-			"could not see. Return the error and let the caller classify it.",
+		t.Errorf(`%d error(s) are discarded in this module:
+  %s
+A read whose failure is dropped loses whatever it carried while the walk still reports a complete collect, which is what lets the server delete what the collect could not see. Return the error and let the caller classify it.`,
 			len(hits), strings.Join(hits, "\n  "))
 	}
 }

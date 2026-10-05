@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/google/jsonschema-go/jsonschema"
 
@@ -117,13 +118,13 @@ func TestEmbeddedContractCopiesMatchTheClientsFiles(t *testing.T) {
 		file     string
 		embedded []byte
 	}{
-		{"collector_input.schema.json", InputContractJSON()},
-		{"collector_output.schema.json", OutputContractJSON()},
+		{file: "collector_input.schema.json", embedded: InputContractJSON()},
+		{file: "collector_output.schema.json", embedded: OutputContractJSON()},
 		// THE THIRD FILE JOINS BOTH DIRECTORIES OR THIS ROW REDS. The describe
 		// tool is required of every collector and advertises this document
 		// verbatim, so a copy that drifted would have every collector advertising
 		// a schema the client's comparator refuses.
-		{"collector_describe.schema.json", DescribeContractJSON()},
+		{file: "collector_describe.schema.json", embedded: DescribeContractJSON()},
 	} {
 		t.Run(tc.file, func(t *testing.T) {
 			// Compared as strings rather than with bytes.Equal: the corpus check
@@ -154,7 +155,7 @@ func TestAdvertisedSchemasAreTheContract(t *testing.T) {
 
 	wantOut := decode(t, clientContract(t, "collector_output.schema.json"))
 	gotOut := decode(t, []byte(mustJSON(t, tool.OutputSchema)))
-	if !reflect.DeepEqual(gotOut, wantOut) {
+	if !cmp.Equal(gotOut, wantOut) {
 		t.Errorf("the advertised OUTPUT schema is not the contract's:\n want: %s\n  got: %s",
 			mustJSON(t, wantOut), mustJSON(t, gotOut))
 	}
@@ -163,7 +164,7 @@ func TestAdvertisedSchemasAreTheContract(t *testing.T) {
 	gotIn := decode(t, []byte(mustJSON(t, tool.InputSchema)))
 
 	wantParams, gotParams := propertyOf(t, wantIn, "params"), propertyOf(t, gotIn, "params")
-	if reflect.DeepEqual(gotParams, wantParams) {
+	if cmp.Equal(gotParams, wantParams) {
 		t.Errorf("the advertised input schema still carries the contract's placeholder params sub-schema; "+
 			"the collector's own params schema is what has to be spliced in: %s", mustJSON(t, gotParams))
 	}
@@ -177,7 +178,7 @@ func TestAdvertisedSchemasAreTheContract(t *testing.T) {
 	// Everything OUTSIDE properties.params is the contract document verbatim.
 	stripParams(t, wantIn)
 	stripParams(t, gotIn)
-	if !reflect.DeepEqual(gotIn, wantIn) {
+	if !cmp.Equal(gotIn, wantIn) {
 		t.Errorf("the advertised INPUT schema differs from the contract outside properties.params:\n want: %s\n  got: %s",
 			mustJSON(t, wantIn), mustJSON(t, gotIn))
 	}
@@ -284,7 +285,7 @@ func TestInferredOutputSchemaWouldNotDeclareAnArrayType(t *testing.T) {
 			"the reason this framework advertises the checked-in file has changed and the doc comment needs re-deriving",
 			nodes.Type)
 	}
-	if !reflect.DeepEqual(nodes.Types, []string{"null", "array"}) {
+	if !cmp.Equal(nodes.Types, []string{"null", "array"}) {
 		t.Errorf("the inferred nodes schema declares types %v, want the [null array] union this row is about", nodes.Types)
 	}
 

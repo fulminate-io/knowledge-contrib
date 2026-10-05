@@ -40,9 +40,8 @@ func TestEveryDeclaredResourceTypeIsEmitted(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("%d declared resource types are never emitted: %s\n"+
-			"A type in the declared vocabulary that nothing produces is a promise this collector "+
-			"does not keep.", len(missing), strings.Join(missing, ", "))
+		t.Errorf(`%d declared resource types are never emitted: %s
+A type in the declared vocabulary that nothing produces is a promise this collector does not keep.`, len(missing), strings.Join(missing, ", "))
 	}
 
 	// The control: the assertion above would pass just as well against a
@@ -203,11 +202,11 @@ func TestEveryEmittedNodeCarriesASummary(t *testing.T) {
 // the second walk is run with the enumerations SHUFFLED, which is what makes the
 // two inputs genuinely different orders rather than the same one twice.
 func TestTwoCollectsOfAnUnchangedWorkspaceAreIdentical(t *testing.T) {
-	first, err := walkTheFixtureAllowingError(t, newFixture(t), func([]collect.Subcollector) {})
+	first, err := walkTheFixtureAllowingError(newFixture(t), func([]collect.Subcollector) {})
 	if err != nil {
 		t.Fatalf("the first collect: %v", err)
 	}
-	second, err := walkTheFixtureAllowingError(t, newFixture(t), shuffled)
+	second, err := walkTheFixtureAllowingError(newFixture(t), shuffled)
 	if err != nil {
 		t.Fatalf("the second collect: %v", err)
 	}

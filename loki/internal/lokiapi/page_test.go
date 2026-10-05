@@ -298,16 +298,16 @@ func TestErrorArms(t *testing.T) {
 		status int
 		want   string
 	}{
-		{"a 4xx names the status", "no such tenant", http.StatusNotFound, "404"},
-		{"a 5xx names the status", "boom", http.StatusInternalServerError, "500"},
-		{"a body that is not JSON says so", "<html>not json</html>", http.StatusOK, "not the expected JSON"},
-		{"a JSON body that is not the envelope says so", map[string]any{"status": "error"}, http.StatusOK, `status "error"`},
-		{"a value that is not a timestamp-line pair says so", map[string]any{
+		{name: "a 4xx names the status", body: "no such tenant", status: http.StatusNotFound, want: "404"},
+		{name: "a 5xx names the status", body: "boom", status: http.StatusInternalServerError, want: "500"},
+		{name: "a body that is not JSON says so", body: "<html>not json</html>", status: http.StatusOK, want: "not the expected JSON"},
+		{name: "a JSON body that is not the envelope says so", body: map[string]any{"status": "error"}, status: http.StatusOK, want: `status "error"`},
+		{name: "a value that is not a timestamp-line pair says so", body: map[string]any{
 			"status": "success",
 			"data": map[string]any{"result": []map[string]any{
 				{"stream": map[string]string{"app": "c"}, "values": [][]string{{"only-one-field"}}},
 			}},
-		}, http.StatusOK, "[timestamp, line] pair"},
+		}, status: http.StatusOK, want: "[timestamp, line] pair"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -372,8 +372,8 @@ func TestAnInvertedWindowIsRefusedBeforeAnyRequest(t *testing.T) {
 		name       string
 		start, end time.Time
 	}{
-		{"end before start", windowEndAt, windowStartAt},
-		{"an instantaneous window", windowStartAt, windowStartAt},
+		{name: "end before start", start: windowEndAt, end: windowStartAt},
+		{name: "an instantaneous window", start: windowStartAt, end: windowStartAt},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if _, err := c.Walk(context.Background(), Query{}, tc.start, tc.end); err == nil {

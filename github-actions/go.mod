@@ -19,6 +19,7 @@ toolchain go1.26.8
 // binary this project exists to take it out of.
 require (
 	github.com/fulminate-io/knowledge-contrib/framework v0.0.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v68 v68.0.0
 	golang.org/x/oauth2 v0.36.0
 )

@@ -76,4 +76,10 @@ def encode_result(collector, result):
     # It emits an empty ARRAY, never a fabricated node: an empty complete collect
     # lands an empty generation, and the server's deletion phase declines to
     # derive anything from a collect that named nothing.
-    return {"nodes": wire_nodes, "edges": wire_edges, "walk_complete": complete.is_complete()}
+    out = {"nodes": wire_nodes, "edges": wire_edges, "walk_complete": complete.is_complete()}
+    # THE REASON RIDES ONLY THE INCOMPLETE ARM, where the refusal above has
+    # already made it non-empty. A complete walk sends no key at all, so a client
+    # that predates the key keeps reading this collector's complete walks.
+    if not complete.is_complete():
+        out["walk_incomplete_reason"] = complete.reason()
+    return out

@@ -103,13 +103,13 @@ func (d *DrainEngine) Templates() []*LogTemplate {
 
 // walkTree descends to the leaf node for these tokens, creating the path.
 func (d *DrainEngine) walkTree(tokens []string) *drainNode {
-	node := d.getOrCreateChild(d.root, tokenCountBucket(len(tokens)))
+	node := d.ensureChild(d.root, tokenCountBucket(len(tokens)))
 	for depth := 0; depth < d.config.MaxDepth-1 && depth < len(tokens); depth++ {
 		token := tokens[depth]
 		if isWildcard(token) {
 			token = Wildcard
 		}
-		node = d.getOrCreateChild(node, token)
+		node = d.ensureChild(node, token)
 	}
 	return node
 }
@@ -169,9 +169,9 @@ func (d *DrainEngine) updateCluster(c *drainCluster, tokens []string, entry LogE
 	}
 }
 
-// getOrCreateChild returns the child for key, collapsing onto the wildcard
+// ensureChild returns the child for key, collapsing onto the wildcard
 // child once the node is at MaxChildren.
-func (d *DrainEngine) getOrCreateChild(parent *drainNode, key string) *drainNode {
+func (d *DrainEngine) ensureChild(parent *drainNode, key string) *drainNode {
 	if child, ok := parent.children[key]; ok {
 		return child
 	}

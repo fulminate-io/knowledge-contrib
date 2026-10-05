@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/fulminate-io/knowledge-contrib/framework"
@@ -74,8 +75,8 @@ func TestParams_AWrongTypedValueIsRefused(t *testing.T) {
 func TestParams_SubscriptionOverrideReachesTheWalk(t *testing.T) {
 	var walked string
 	c := &Collector{
-		newCredential: func(context.Context) (azureCredential, error) { return fakeCredential{}, nil },
-		buildSubs: func(_ azureCredential, subscriptionID string) []subCollector {
+		newCredential: func(context.Context) (azcore.TokenCredential, error) { return fakeCredential{}, nil },
+		buildSubs: func(_ azcore.TokenCredential, subscriptionID string) []subCollector {
 			walked = subscriptionID
 			return []subCollector{staticSub{name: "azure-vms"}}
 		},

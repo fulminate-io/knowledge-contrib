@@ -63,9 +63,9 @@ func TestNoFileClaimsTheBuiltInFamilyName(t *testing.T) {
 		}
 	}
 	if len(hits) > 0 {
-		t.Errorf("%d site(s) carry the literal %q outside the declared exemptions:\n  %s\n"+
-			"That name is a built-in graph type and the client refuses to register it; this "+
-			"collector's family is %q.",
+		t.Errorf(`%d site(s) carry the literal %q outside the declared exemptions:
+  %s
+That name is a built-in graph type and the client refuses to register it; this collector's family is %q.`,
 			len(hits), "cicd", strings.Join(hits, "\n  "), installentry.FamilyName)
 	}
 }

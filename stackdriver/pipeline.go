@@ -187,8 +187,9 @@ func buildResult(out pipelineOutput, truncated bool, bound int) (framework.Resul
 	return framework.Result{Nodes: nodes, Edges: edges, Complete: complete}, nil
 }
 
-// incompleteReason names why a walk stopped short, for the collector's own logs
-// and for a reviewer judging whether the arm is reachable.
+// incompleteReason names why a walk stopped short. It rides the envelope as
+// walk_incomplete_reason, and the client prints it when it refuses the collect's
+// deletion phase, so it names the lever the operator can pull.
 func incompleteReason(bound int) string {
 	return fmt.Sprintf(
 		"the entry bound of %d stopped the read before Cloud Logging was exhausted; "+

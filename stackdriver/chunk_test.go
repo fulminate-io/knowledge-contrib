@@ -102,9 +102,9 @@ func TestChunkIDDependsOnAllThreeOfItsInputs(t *testing.T) {
 		name string
 		got  string
 	}{
-		{"stream", chunkID("s2", "t", baseTime)},
-		{"template", chunkID("s", "t2", baseTime)},
-		{"window", chunkID("s", "t", baseTime.Add(time.Minute))},
+		{name: "stream", got: chunkID("s2", "t", baseTime)},
+		{name: "template", got: chunkID("s", "t2", baseTime)},
+		{name: "window", got: chunkID("s", "t", baseTime.Add(time.Minute))},
 	} {
 		if tc.got == base {
 			t.Errorf("changing the %s left the chunk id unchanged", tc.name)
@@ -189,7 +189,7 @@ func TestChunkAssemblySkipsEntriesWithNoStreamOrTemplate(t *testing.T) {
 		t.Fatalf("assembling: %v", err)
 	}
 	if len(chunks) != 1 {
-		t.Fatalf("got %d chunks, want 1: the entry with no template must be skipped", len(chunks))
+		t.Fatalf("assembleChunks(entry with no template) = %d chunks, want 1: the entry with no template must be skipped", len(chunks))
 	}
 	if chunks[0].EntryCount != 1 {
 		t.Errorf("the chunk holds %d entries, want 1", chunks[0].EntryCount)

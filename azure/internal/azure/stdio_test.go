@@ -181,10 +181,10 @@ func TestStdio_ACollectWithNoParamsIsAccepted(t *testing.T) {
 	}
 }
 
-// TestStdio_AnEmptyCollectIdIsRefusedBeforeTheWalk. An empty id names no graph
+// TestStdio_AnEmptyCollectIDIsRefusedBeforeTheWalk. An empty id names no graph
 // instance; the contract's own schema cannot express non-empty, so the refusal
 // is the provider's.
-func TestStdio_AnEmptyCollectIdIsRefusedBeforeTheWalk(t *testing.T) {
+func TestStdio_AnEmptyCollectIDIsRefusedBeforeTheWalk(t *testing.T) {
 	session := dialChild(t)
 	res, err := session.CallTool(context.Background(), &mcp.CallToolParams{
 		Name:      framework.DefaultToolName,

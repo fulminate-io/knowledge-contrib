@@ -109,6 +109,14 @@ class StubFidelityTest(unittest.TestCase):
                 self.assertIn('"%s"' % field, block)
                 self.assertIn(str(value) if not isinstance(value, str) else '"%s"' % value, block)
 
+    def test_the_incomplete_walk_reason_is_the_clients(self):
+        """The client's completeness test asserts the reason its own stub sends,
+        so a dialed port sending any other string reds it."""
+        self.assertEqual(stub.INCOMPLETE_WALK_REASON, self.consts["stubIncompleteWalkReason"])
+        self.assertEqual(
+            stub.stub_payload(stub.MODE_INCOMPLETE_WALK, None)["walk_incomplete_reason"], stub.INCOMPLETE_WALK_REASON
+        )
+
     def test_the_dangling_edge_endpoint_and_the_misspelled_key_are_the_clients(self):
         self.assertIn('"to_id": "absent"', self.source)
         self.assertIn('"summry": "typo\'d key"', self.source)

@@ -68,8 +68,8 @@ func jsonFence(t *testing.T, doc string) string {
 func TestTheReadmeEntryDecodesThroughTheLoadersOwnShape(t *testing.T) {
 	got, err := installentry.Decode([]byte(jsonFence(t, readme(t))))
 	if err != nil {
-		t.Fatalf("the README's worked entry does not decode against the loader's shape: %v\n"+
-			"An operator copying it would get a refusal rather than a collector.", err)
+		t.Fatalf(`the README's worked entry does not decode against the loader's shape: %v
+An operator copying it would get a refusal rather than a collector.`, err)
 	}
 	entry, ok := got.Collectors[installentry.FamilyName]
 	if !ok {
@@ -162,8 +162,8 @@ func TestTheReadmeEntryCarriesTheSelectorAndTheTokenByReference(t *testing.T) {
 	fence := jsonFence(t, doc)
 
 	if !strings.Contains(fence, `"env"`) {
-		t.Errorf("the README's worked entry carries no env block; this collector's selector is "+
-			"the one thing about its entry a reader cannot guess:\n%s", fence)
+		t.Errorf(`the README's worked entry carries no env block; this collector's selector is the one thing about its entry a reader cannot guess:
+%s`, fence)
 	}
 	if !strings.Contains(fence, enventry.BaseURLVariable) {
 		t.Errorf("the env block does not name %q", enventry.BaseURLVariable)
@@ -171,16 +171,16 @@ func TestTheReadmeEntryCarriesTheSelectorAndTheTokenByReference(t *testing.T) {
 	want := fmt.Sprintf("%q: %q", enventry.PrimaryTokenVariable,
 		"${"+enventry.PrimaryTokenVariable+"}")
 	if !strings.Contains(fence, want) {
-		t.Errorf("the README's worked entry does not carry %s, so an operator copying it installs "+
-			"a collector with no way to receive its token:\n%s", want, fence)
+		t.Errorf(`the README's worked entry does not carry %s, so an operator copying it installs a collector with no way to receive its token:
+%s`, want, fence)
 	}
 	if strings.Contains(fence, ":-") {
-		t.Errorf("the README's worked entry carries a DEFAULTED reference, which arrives at this "+
-			"collector present and empty:\n%s", fence)
+		t.Errorf(`the README's worked entry carries a DEFAULTED reference, which arrives at this collector present and empty:
+%s`, fence)
 	}
 	if strings.Contains(fence, enventry.FallbackTokenVariable) {
-		t.Errorf("the README's worked entry names the fallback %q beside the primary; the two are "+
-			"alternatives:\n%s", enventry.FallbackTokenVariable, fence)
+		t.Errorf(`the README's worked entry names the fallback %q beside the primary; the two are alternatives:
+%s`, enventry.FallbackTokenVariable, fence)
 	}
 	for _, name := range enventry.TokenNames() {
 		// THE PROSE NAMES BOTH, which is the known positive for the assertions

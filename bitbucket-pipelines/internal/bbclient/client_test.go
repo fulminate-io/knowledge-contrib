@@ -37,7 +37,7 @@ func serve(t *testing.T, handler http.HandlerFunc) *bbclient.Client {
 func collectPages(t *testing.T, client *bbclient.Client, path string) []string {
 	t.Helper()
 	var pages []string
-	err := client.GetPaginated(context.Background(), path, func(raw json.RawMessage) error {
+	err := client.FetchPaginated(context.Background(), path, func(raw json.RawMessage) error {
 		pages = append(pages, string(raw))
 		return nil
 	})
@@ -152,7 +152,7 @@ func TestAPersistentRateLimitIsFetchedFourTimes(t *testing.T) {
 		fmt.Fprint(w, `{"error":"slow down"}`)
 	})
 
-	err := client.GetPaginated(context.Background(), "things",
+	err := client.FetchPaginated(context.Background(), "things",
 		func(json.RawMessage) error { return nil })
 	if err == nil {
 		t.Fatal("a persistently rate-limited URL produced no error")
@@ -207,7 +207,7 @@ func TestACancelledContextDoesNotWaitOutTheRetry(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() {
-		done <- client.GetPaginated(ctx, "things", func(json.RawMessage) error { return nil })
+		done <- client.FetchPaginated(ctx, "things", func(json.RawMessage) error { return nil })
 	}()
 	time.Sleep(50 * time.Millisecond)
 	cancel()
@@ -245,7 +245,7 @@ func TestACancelledWalkReturnsTheCancellationAndNotAFailedRequest(t *testing.T) 
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	err := client.GetPaginated(ctx, "things", func(json.RawMessage) error {
+	err := client.FetchPaginated(ctx, "things", func(json.RawMessage) error {
 		t.Error("a page handler ran on a cancelled walk")
 		return nil
 	})
@@ -261,7 +261,7 @@ func TestACancelledWalkReturnsTheCancellationAndNotAFailedRequest(t *testing.T) 
 			"the page loop is what returns it plainly; without it a cancelled walk reports a "+
 			"transport failure and carries a request URL for a request that was never sent", err)
 	}
-	if err.Error() != context.Canceled.Error() {
+	if !errors.Is(err, context.Canceled) || errors.Unwrap(err) != nil {
 		t.Errorf("the cancelled walk returned %q, want the bare context error %q",
 			err.Error(), context.Canceled.Error())
 	}
@@ -290,7 +290,7 @@ func TestTheContextIsCheckedBetweenPages(t *testing.T) {
 	client := bbclient.NewAt(server.URL, server.Client(), "user", "app-password")
 
 	ctx, cancel := context.WithCancel(context.Background())
-	err := client.GetPaginated(ctx, "things", func(json.RawMessage) error {
+	err := client.FetchPaginated(ctx, "things", func(json.RawMessage) error {
 		cancel()
 		return nil
 	})
@@ -310,12 +310,12 @@ func TestParseRetryAfterCoversEveryArm(t *testing.T) {
 		want   time.Duration
 		why    string
 	}{
-		{"", 2 * time.Second, "an absent header takes the default"},
-		{"not-a-number", 2 * time.Second, "an unparseable header takes the default"},
-		{"0", 1 * time.Second, "a zero is FLOORED rather than taken literally, or the retry " +
+		{header: "", want: 2 * time.Second, why: "an absent header takes the default"},
+		{header: "not-a-number", want: 2 * time.Second, why: "an unparseable header takes the default"},
+		{header: "0", want: 1 * time.Second, why: "a zero is FLOORED rather than taken literally, or the retry " +
 			"becomes a hot loop against a provider that just asked for less traffic"},
-		{"-5", 1 * time.Second, "a negative is floored on the same terms"},
-		{"7", 7 * time.Second, "a positive integer is honored"},
+		{header: "-5", want: 1 * time.Second, why: "a negative is floored on the same terms"},
+		{header: "7", want: 7 * time.Second, why: "a positive integer is honored"},
 	} {
 		if got := bbclient.ParseRetryAfter(arm.header); got != arm.want {
 			t.Errorf("Retry-After %q parsed to %s, want %s — %s",
@@ -359,7 +359,7 @@ func TestANonSuccessStatusBecomesAnAPIErrorCarryingIt(t *testing.T) {
 			w.WriteHeader(status)
 			fmt.Fprintf(w, `{"error":{"message":"status %d"}}`, status)
 		})
-		err := client.GetPaginated(context.Background(), "things",
+		err := client.FetchPaginated(context.Background(), "things",
 			func(json.RawMessage) error { return nil })
 
 		var apiErr *bbclient.APIError
@@ -386,7 +386,7 @@ func TestAnErrorBodyIsBounded(t *testing.T) {
 		fmt.Fprint(w, strings.Repeat("x", oversized))
 	})
 
-	err := client.GetPaginated(context.Background(), "things",
+	err := client.FetchPaginated(context.Background(), "things",
 		func(json.RawMessage) error { return nil })
 	var apiErr *bbclient.APIError
 	if !errors.As(err, &apiErr) {
@@ -407,7 +407,7 @@ func TestGetRawReturnsTheWholeBodyAndClassifiesItsFailures(t *testing.T) {
 	client := serve(t, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "pipelines:\n  default: []\n")
 	})
-	body, err := client.GetRaw(context.Background(), "repositories/acme/api/src/main/file.yml")
+	body, err := client.FetchRaw(context.Background(), "repositories/acme/api/src/main/file.yml")
 	if err != nil {
 		t.Fatalf("reading a raw endpoint: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestGetRawReturnsTheWholeBodyAndClassifiesItsFailures(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, `{"error":"not found"}`)
 	})
-	_, err = missing.GetRaw(context.Background(), "repositories/acme/api/src/main/file.yml")
+	_, err = missing.FetchRaw(context.Background(), "repositories/acme/api/src/main/file.yml")
 	var apiErr *bbclient.APIError
 	if !errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusNotFound {
 		t.Errorf("a 404 on a raw read produced %v, want an APIError carrying 404", err)

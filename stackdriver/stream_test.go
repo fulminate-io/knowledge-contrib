@@ -66,10 +66,10 @@ func TestCardinalityBoundary(t *testing.T) {
 		unique  int
 		wantLow bool
 	}{
-		{1, true},
-		{defaultCardinalityThreshold - 1, true},
-		{defaultCardinalityThreshold, false},
-		{defaultCardinalityThreshold + 1, false},
+		{unique: 1, wantLow: true},
+		{unique: defaultCardinalityThreshold - 1, wantLow: true},
+		{unique: defaultCardinalityThreshold, wantLow: false},
+		{unique: defaultCardinalityThreshold + 1, wantLow: false},
 	} {
 		t.Run(strconv.Itoa(tc.unique), func(t *testing.T) {
 			tracker := newCardinalityTracker(0)
@@ -99,7 +99,7 @@ func TestCardinalityIsClassifiedOverTheWholeCollectNotPerEntry(t *testing.T) {
 	}
 	streams, _ := buildStreams(entries, 3)
 	if len(streams) != 4 {
-		t.Fatalf("got %d streams, want 4", len(streams))
+		t.Fatalf("buildStreams(4 request ids, cap 3) = %d streams, want 4", len(streams))
 	}
 	for _, s := range streams {
 		if _, low := s.LowCardLabels["request_id"]; low {
@@ -119,7 +119,7 @@ func TestBuildStreamsDeduplicatesAndSortsByID(t *testing.T) {
 	}
 	streams, ids := buildStreams(entries, 0)
 	if len(streams) != 2 {
-		t.Fatalf("got %d streams from two distinct label sets, want 2", len(streams))
+		t.Fatalf("buildStreams(two label sets) = %d streams from two distinct label sets, want 2", len(streams))
 	}
 	if streams[0].ID >= streams[1].ID {
 		t.Errorf("the stream list is not sorted by id")
@@ -137,10 +137,10 @@ func TestBuildStreamsDeduplicatesAndSortsByID(t *testing.T) {
 func TestAnEntryWithNoLabelsStillGetsAStream(t *testing.T) {
 	streams, ids := buildStreams([]logEntry{testEntry(0, severityInfo, "m", nil)}, 0)
 	if len(streams) != 1 || ids[0] == "" {
-		t.Fatalf("an unlabelled entry produced %d streams and the id %q", len(streams), ids[0])
+		t.Fatalf("an unlabeled entry produced %d streams and the id %q", len(streams), ids[0])
 	}
 	if streams[0].Alias != "" {
-		t.Errorf("an unlabelled stream derived the alias %q, want the empty string", streams[0].Alias)
+		t.Errorf("an unlabeled stream derived the alias %q, want the empty string", streams[0].Alias)
 	}
 }
 

@@ -62,7 +62,7 @@ func TestDNSRecordTargetsResolvesEveryResourceHoldingTheAddress(t *testing.T) {
 		}
 	}
 	if len(got.Relations) != 3 {
-		t.Errorf("got %d edges, want 3: %v", len(got.Relations), edgeKeys(got.Relations))
+		t.Errorf("DNSRecordTargets(A record) = %d edges, want 3: %v", len(got.Relations), edgeKeys(got.Relations))
 	}
 	for _, r := range got.Relations {
 		if r.To == "34.1.2.3" {

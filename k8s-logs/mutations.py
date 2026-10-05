@@ -231,7 +231,7 @@ M = [
 
  ("an unlabelled entry is refused", "internal/logpipe/pipeline.go",
   "\t\tif len(e.Labels) == 0 {", "\t\tif len(e.Labels) < 0 {",
-  "./internal/logpipe/", "TestValidateEntriesRefusesAnUnlabelledEntry"),
+  "./internal/logpipe/", "TestValidateEntriesRefusesAnUnlabeledEntry"),
 
  ("the pod key sorts into the alias pair", "internal/k8slogs/labels.go",
   'LabelPod = "container_pod"', 'LabelPod = "pod"',

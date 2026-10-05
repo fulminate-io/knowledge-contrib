@@ -50,6 +50,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sns v1.46.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.51.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.10
+	github.com/google/go-cmp v0.7.0
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 )
 

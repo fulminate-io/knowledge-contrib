@@ -34,11 +34,10 @@ func crossGraphSection(t *testing.T) string {
 	require.NoError(t, err, "reading README.md, the file this gate is about")
 
 	const anchor = "## Cross-graph edges"
-	start := strings.Index(string(raw), anchor)
-	require.GreaterOrEqual(t, start, 0,
+	_, rest, found := strings.Cut(string(raw), anchor)
+	require.True(t, found,
 		"README.md carries no %q section — this gate reads a section that no longer exists", anchor)
 
-	rest := string(raw)[start+len(anchor):]
 	if next := strings.Index(rest, "\n## "); next >= 0 {
 		rest = rest[:next]
 	}
@@ -56,28 +55,28 @@ func TestREADME_CrossGraphSectionDescribesTheEmittedShapes(t *testing.T) {
 	section := crossGraphSection(t)
 
 	for _, want := range []struct{ phrase, why string }{
-		{"All four are emitted",
-			"the Helm shape is emitted now; a reader told three of four would look for a held shape that is not held"},
-		{"source_graph",
-			"and the field it uses, since which field a shape sets is the statement of which end is foreign"},
-		{"target_graph",
-			"beside the field the other three use"},
-		{"is not emitted",
-			"and the workload-to-repository shape that this collector does NOT emit, so a reader " +
+		{phrase: "All four are emitted",
+			why: "the Helm shape is emitted now; a reader told three of four would look for a held shape that is not held"},
+		{phrase: "source_graph",
+			why: "and the field it uses, since which field a shape sets is the statement of which end is foreign"},
+		{phrase: "target_graph",
+			why: "beside the field the other three use"},
+		{phrase: "is not emitted",
+			why: "and the workload-to-repository shape that this collector does NOT emit, so a reader " +
 				"comparing against the built-in linker is told about the gap rather than left to find it"},
 	} {
 		assert.Contains(t, section, want.phrase, want.why)
 	}
 
 	for _, retired := range []struct{ phrase, why string }{
-		{"All five are emitted",
-			"the workload-to-repository shape was dropped, so four shapes remain"},
-		{"Four of the five are emitted",
-			"the held shape was emitted when the source-graph field landed"},
-		{"The fifth is computed and held",
-			"the same paragraph, which described a state that ended with that field"},
-		{"goes red the moment a target-graph field exists",
-			"that pin was retired when the target-graph field landed, a change earlier; the sentence outlived it because nothing read this file"},
+		{phrase: "All five are emitted",
+			why: "the workload-to-repository shape was dropped, so four shapes remain"},
+		{phrase: "Four of the five are emitted",
+			why: "the held shape was emitted when the source-graph field landed"},
+		{phrase: "The fifth is computed and held",
+			why: "the same paragraph, which described a state that ended with that field"},
+		{phrase: "goes red the moment a target-graph field exists",
+			why: "that pin was retired when the target-graph field landed, a change earlier; the sentence outlived it because nothing read this file"},
 	} {
 		assert.NotContains(t, section, retired.phrase,
 			"the cross-graph section still carries the retired claim %q: %s", retired.phrase, retired.why)

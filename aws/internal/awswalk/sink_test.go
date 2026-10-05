@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"maps"
 	"math/rand/v2"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // sink_test.go — THE CONTENT ENCODER, tested DIFFERENTIALLY against
@@ -184,7 +185,7 @@ func TestSink_ResultIsSortedAndCloned(t *testing.T) {
 	}
 	nodes, _ := s.result()
 	if len(nodes) != 3 {
-		t.Fatalf("want 3 nodes, got %d", len(nodes))
+		t.Fatalf("got %d, want 3 nodes", len(nodes))
 	}
 	for i := 1; i < len(nodes); i++ {
 		if nodes[i-1].ID > nodes[i].ID {
@@ -200,7 +201,7 @@ func TestSink_ResultIsSortedAndCloned(t *testing.T) {
 	if again[0].ID != snapshot[0].ID {
 		t.Errorf("mutating a returned node changed the sink's own: got %q, want %q", again[0].ID, snapshot[0].ID)
 	}
-	if reflect.DeepEqual(nodes, again) {
+	if cmp.Equal(nodes, again) {
 		t.Error("the mutation above did not take, so the clone assertion proves nothing")
 	}
 }

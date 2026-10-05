@@ -62,8 +62,8 @@ func TestTheReadmeEntryDecodesThroughTheLoadersOwnShape(t *testing.T) {
 
 	got, err := installentry.Decode([]byte(fence))
 	if err != nil {
-		t.Fatalf("the README's worked entry does not decode against the loader's shape: %v\n"+
-			"An operator copying it would get a refusal rather than a collector.", err)
+		t.Fatalf(`the README's worked entry does not decode against the loader's shape: %v
+An operator copying it would get a refusal rather than a collector.`, err)
 	}
 	entry, ok := got.Collectors[installentry.FamilyName]
 	if !ok {
@@ -247,8 +247,8 @@ func TestTheInstallingSectionPointsAtThePublishedArtifacts(t *testing.T) {
 
 	for _, want := range []string{"knowledge-contrib", "install script"} {
 		if !strings.Contains(rest, want) {
-			t.Errorf("the %q section does not mention %q, so it does not tell a reader where the "+
-				"released binaries live or how to get one:\n%s", heading, want, rest)
+			t.Errorf(`the %q section does not mention %q, so it does not tell a reader where the released binaries live or how to get one:
+%s`, heading, want, rest)
 		}
 	}
 }

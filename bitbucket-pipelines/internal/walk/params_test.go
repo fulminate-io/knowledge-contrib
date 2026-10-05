@@ -15,33 +15,33 @@ import (
 
 // params_test.go — the collect id and the one parameter, refused loudly.
 
-// TestAMalformedCollectIdIsRefusedNamingWhatIsWrong.
+// TestAMalformedCollectIDIsRefusedNamingWhatIsWrong.
 //
 // THE ID IS THE WORKSPACE AND ALSO THE GRAPH, so a malformed one passed through
 // would reach the caller as six per-enumeration failures, or worse as a walk
 // that matched nothing and looked like an empty workspace.
-func TestAMalformedCollectIdIsRefusedNamingWhatIsWrong(t *testing.T) {
+func TestAMalformedCollectIDIsRefusedNamingWhatIsWrong(t *testing.T) {
 	for _, arm := range []struct {
 		id    string
 		names []string
 		why   string
 	}{
-		{"", []string{"collect id", "workspace"},
-			"an empty id has nothing to quote, so the message names what the id IS instead"},
-		{"   ", []string{"collect id", "workspace"},
-			"whitespace trims to empty and takes the same arm"},
-		{"acme/api", []string{"acme/api", "'/'"},
-			"a repository path is the most likely wrong value and the message says so"},
-		{"https://bitbucket.org/acme", []string{"https://bitbucket.org/acme"},
-			"a URL quotes what was sent"},
-		{"ACME", []string{"ACME"},
-			"a workspace id is lower-case"},
-		{"-acme", []string{"-acme", "hyphen"},
-			"a leading hyphen is refused by its own arm"},
-		{"acme-", []string{"acme-", "hyphen"},
-			"and so is a trailing one"},
-		{strings.Repeat("a", 63), []string{"63", "62"},
-			"an over-length id names both the length and the bound"},
+		{id: "", names: []string{"collect id", "workspace"},
+			why: "an empty id has nothing to quote, so the message names what the id IS instead"},
+		{id: "   ", names: []string{"collect id", "workspace"},
+			why: "whitespace trims to empty and takes the same arm"},
+		{id: "acme/api", names: []string{"acme/api", "'/'"},
+			why: "a repository path is the most likely wrong value and the message says so"},
+		{id: "https://bitbucket.org/acme", names: []string{"https://bitbucket.org/acme"},
+			why: "a URL quotes what was sent"},
+		{id: "ACME", names: []string{"ACME"},
+			why: "a workspace id is lower-case"},
+		{id: "-acme", names: []string{"-acme", "hyphen"},
+			why: "a leading hyphen is refused by its own arm"},
+		{id: "acme-", names: []string{"acme-", "hyphen"},
+			why: "and so is a trailing one"},
+		{id: strings.Repeat("a", 63), names: []string{"63", "62"},
+			why: "an over-length id names both the length and the bound"},
 	} {
 		_, err := offline(t).Walk(context.Background(), arm.id, walk.Params{},
 			framework.ForeignContext{})
@@ -57,11 +57,11 @@ func TestAMalformedCollectIdIsRefusedNamingWhatIsWrong(t *testing.T) {
 	}
 }
 
-// TestTheEmptyIdSaysThereIsNothingToFallBackTo. It is the one arm that quotes
+// TestTheEmptyIDSaysThereIsNothingToFallBackTo. It is the one arm that quotes
 // nothing, because there is nothing to quote; what it names instead is that this
 // collector reads no environment variable and takes no parameter naming a
 // workspace, so a caller who expected one to be picked up is told otherwise.
-func TestTheEmptyIdSaysThereIsNothingToFallBackTo(t *testing.T) {
+func TestTheEmptyIDSaysThereIsNothingToFallBackTo(t *testing.T) {
 	_, err := offline(t).Walk(context.Background(), "", walk.Params{},
 		framework.ForeignContext{})
 	if err == nil {
@@ -74,12 +74,12 @@ func TestTheEmptyIdSaysThereIsNothingToFallBackTo(t *testing.T) {
 	}
 }
 
-// TestAValidWorkspaceIdIsAccepted is the known positive for every arm above: the
+// TestAValidWorkspaceIDIsAccepted is the known positive for every arm above: the
 // validator is refusing malformed ids rather than every id.
 //
 // IT FAILS LATER, ON THE CREDENTIAL, which is the observable that the id passed:
 // the credential is read after the id is validated and before any request.
-func TestAValidWorkspaceIdIsAccepted(t *testing.T) {
+func TestAValidWorkspaceIDIsAccepted(t *testing.T) {
 	t.Setenv("BITBUCKET_USERNAME", "")
 	t.Setenv("BITBUCKET_APP_PASSWORD", "")
 
@@ -106,10 +106,10 @@ func TestMaxConcurrencyIsRefusedOutsideItsBounds(t *testing.T) {
 		value int
 		names []string
 	}{
-		{0, []string{"max_concurrency", "0", "at least 1"}},
-		{-1, []string{"max_concurrency", "-1", "at least 1"}},
-		{33, []string{"max_concurrency", "33", "32"}},
-		{500, []string{"max_concurrency", "500", "32"}},
+		{value: 0, names: []string{"max_concurrency", "0", "at least 1"}},
+		{value: -1, names: []string{"max_concurrency", "-1", "at least 1"}},
+		{value: 33, names: []string{"max_concurrency", "33", "32"}},
+		{value: 500, names: []string{"max_concurrency", "500", "32"}},
 	} {
 		value := arm.value
 		_, err := offline(t).Walk(context.Background(), "acme",

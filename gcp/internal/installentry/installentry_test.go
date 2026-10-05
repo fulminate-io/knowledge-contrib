@@ -232,7 +232,10 @@ func TestRenderIsStableAcrossCalls(t *testing.T) {
 	}
 }
 
-func mustRender(t *testing.T) string { return mustRenderFor(t, "linux") }
+func mustRender(t *testing.T) string {
+	t.Helper()
+	return mustRenderFor(t, "linux")
+}
 
 func mustRenderFor(t *testing.T, goos string) string {
 	t.Helper()

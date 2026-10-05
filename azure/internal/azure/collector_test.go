@@ -5,9 +5,10 @@ package azure
 import (
 	"context"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -31,8 +32,8 @@ func (fakeCredential) GetToken(context.Context, policy.TokenRequestOptions) (azc
 // needs no Azure, and a fixed set of subcollectors.
 func testCollector(subs ...subCollector) *Collector {
 	return &Collector{
-		newCredential: func(context.Context) (azureCredential, error) { return fakeCredential{}, nil },
-		buildSubs:     func(azureCredential, string) []subCollector { return subs },
+		newCredential: func(context.Context) (azcore.TokenCredential, error) { return fakeCredential{}, nil },
+		buildSubs:     func(azcore.TokenCredential, string) []subCollector { return subs },
 		lookupEnv:     func(string) (string, bool) { return "", false },
 	}
 }
@@ -102,7 +103,7 @@ func TestWalk_RefusesWithNoSubscriptionAndWithNoCredential(t *testing.T) {
 
 	t.Run("no credential", func(t *testing.T) {
 		c := testCollector(staticSub{name: "azure-vms"})
-		c.newCredential = func(context.Context) (azureCredential, error) {
+		c.newCredential = func(context.Context) (azcore.TokenCredential, error) {
 			return nil, errors.New("DefaultAzureCredential: failed to acquire a token")
 		}
 		_, err := c.Walk(context.Background(), "sub-1", Params{}, framework.ForeignContext{})
@@ -175,7 +176,7 @@ func TestWrapCredentialError_NamesTheChainAndWhereToFixIt(t *testing.T) {
 // replaced test did observe: whatever produces the credential, its failure
 // reaches the caller rather than becoming a walk with no credential.
 func TestCredential_TheSeamsFailureIsNotSwallowed(t *testing.T) {
-	c := &Collector{newCredential: func(context.Context) (azureCredential, error) {
+	c := &Collector{newCredential: func(context.Context) (azcore.TokenCredential, error) {
 		return nil, errors.New("no credential")
 	}}
 	if _, err := c.credential(context.Background()); err == nil {
@@ -203,9 +204,9 @@ func TestResolveSubscriptionID_EveryArm(t *testing.T) {
 		lookup func(string) (string, bool)
 		want   string
 	}{
-		{"params win over everything", "from-id", Params{SubscriptionID: "from-params"}, env, "from-params"},
-		{"the collect id is the ordinary case", "from-id", Params{}, env, "from-id"},
-		{"the environment is the fallback", "", Params{}, env, "from-environment"},
+		{name: "params win over everything", id: "from-id", params: Params{SubscriptionID: "from-params"}, lookup: env, want: "from-params"},
+		{name: "the collect id is the ordinary case", id: "from-id", params: Params{}, lookup: env, want: "from-id"},
+		{name: "the environment is the fallback", id: "", params: Params{}, lookup: env, want: "from-environment"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := resolveSubscriptionID(tc.id, tc.params, tc.lookup)
@@ -258,10 +259,10 @@ func TestWalk_IsDeterministicAcrossTwoIdenticalCollects(t *testing.T) {
 		if err != nil {
 			t.Fatalf("repeat collect: %v", err)
 		}
-		if !reflect.DeepEqual(first.Nodes, next.Nodes) {
+		if !cmp.Equal(first.Nodes, next.Nodes) {
 			t.Fatalf("two collects of one unchanged subscription produced different nodes")
 		}
-		if !reflect.DeepEqual(first.Edges, next.Edges) {
+		if !cmp.Equal(first.Edges, next.Edges) {
 			t.Fatalf("two collects of one unchanged subscription produced different edges")
 		}
 		if first.Complete.IsComplete() != next.Complete.IsComplete() {

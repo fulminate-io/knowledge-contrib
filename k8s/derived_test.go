@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // derived_test.go — the DERIVED half of R5-h: the nine families that are a
@@ -19,7 +21,7 @@ import (
 // behavior to every assertion without adding coverage of it.
 
 func TestDerived_NamespaceMembership(t *testing.T) {
-	nodes := []Node{
+	nodes := []framework.Node{
 		node("Namespace/prod", "Namespace", nil),
 		namespacedNode("prod", "Pod", "api", nil),
 		// A namespaced node whose Namespace this walk did NOT enumerate.
@@ -37,13 +39,13 @@ func TestDerived_NamespaceMembership(t *testing.T) {
 }
 
 func TestDerived_NamespaceMembership_NamespaceNodeIsNotItsOwnMember(t *testing.T) {
-	edges, skipped := namespaceMembership([]Node{node("Namespace/prod", "Namespace", nil)})
+	edges, skipped := namespaceMembership([]framework.Node{node("Namespace/prod", "Namespace", nil)})
 	assert.Empty(t, edges, "a Namespace is not in a namespace")
 	assert.Zero(t, skipped, "and it is not counted as a skip either")
 }
 
 func TestDerived_Selects(t *testing.T) {
-	nodes := []Node{
+	nodes := []framework.Node{
 		namespacedNode("prod", "Service", "api", map[string]string{"selector": `{"app":"api"}`}),
 		namespacedNode("prod", "Pod", "api-1", map[string]string{"label/app": "api"}),
 		namespacedNode("prod", "Pod", "other", map[string]string{"label/app": "worker"}),
@@ -60,7 +62,7 @@ func TestDerived_Selects(t *testing.T) {
 }
 
 func TestDerived_Selects_EmptySelectorSelectsNothing(t *testing.T) {
-	nodes := []Node{
+	nodes := []framework.Node{
 		namespacedNode("prod", "Service", "headless", nil),
 		namespacedNode("prod", "Pod", "api-1", map[string]string{"label/app": "api"}),
 	}
@@ -113,7 +115,7 @@ func TestDerived_PolicyDirections(t *testing.T) {
 }
 
 func TestDerived_NetworkPolicyRestrictions(t *testing.T) {
-	nodes := []Node{
+	nodes := []framework.Node{
 		namespacedNode("prod", "NetworkPolicy", "deny-api", map[string]string{
 			"pod_selector": `{"app":"api"}`,
 			"policy_types": "Ingress,Egress",
@@ -131,7 +133,7 @@ func TestDerived_NetworkPolicyRestrictions(t *testing.T) {
 }
 
 func TestDerived_NetworkPolicyRestrictions_IngressOnlyWhenPolicyTypesAbsent(t *testing.T) {
-	nodes := []Node{
+	nodes := []framework.Node{
 		namespacedNode("prod", "NetworkPolicy", "default-deny", map[string]string{
 			"pod_selector": `{"app":"api"}`,
 		}),
@@ -144,7 +146,7 @@ func TestDerived_NetworkPolicyRestrictions_IngressOnlyWhenPolicyTypesAbsent(t *t
 
 // netpolNode builds a NetworkPolicy node whose CONTENT is a real policy body,
 // which is what the reachability derivation reads.
-func netpolNode(name, body string, meta map[string]string) Node {
+func netpolNode(name, body string, meta map[string]string) framework.Node {
 	n := namespacedNode("prod", "NetworkPolicy", name, meta)
 	n.Content = body
 	return n
@@ -156,7 +158,7 @@ func TestDerived_Reachability_PodToPod(t *testing.T) {
 		"policyTypes":["Ingress"],
 		"ingress":[{"from":[{"podSelector":{"matchLabels":{"app":"web"}}}]}]
 	}}`
-	nodes := []Node{
+	nodes := []framework.Node{
 		node("Namespace/prod", "Namespace", nil),
 		netpolNode("allow-web", body, map[string]string{"policy_types": "Ingress"}),
 		namespacedNode("prod", "Pod", "api-1", map[string]string{"label/app": "api"}),
@@ -182,7 +184,7 @@ func TestDerived_Reachability_EmptyPeerListEmitsNothing(t *testing.T) {
 		"policyTypes":["Ingress"],
 		"ingress":[{"from":[]}]
 	}}`
-	nodes := []Node{
+	nodes := []framework.Node{
 		netpolNode("allow-all", body, map[string]string{"policy_types": "Ingress"}),
 		namespacedNode("prod", "Pod", "api-1", map[string]string{"label/app": "api"}),
 		namespacedNode("prod", "Pod", "web-1", map[string]string{"label/app": "web"}),
@@ -196,7 +198,7 @@ func TestDerived_Reachability_IPBlockPeerIsSkipped(t *testing.T) {
 		"policyTypes":["Egress"],
 		"egress":[{"to":[{"ipBlock":{"cidr":"10.0.0.0/8"}}]}]
 	}}`
-	nodes := []Node{
+	nodes := []framework.Node{
 		netpolNode("egress-cidr", body, map[string]string{"policy_types": "Egress"}),
 		namespacedNode("prod", "Pod", "api-1", map[string]string{"label/app": "api"}),
 		// A SECOND POD THAT IS NOT THE TARGET, and it is what makes this row
@@ -218,7 +220,7 @@ func TestDerived_Reachability_SelfPairIsDropped(t *testing.T) {
 		"policyTypes":["Ingress"],
 		"ingress":[{"from":[{"podSelector":{"matchLabels":{"app":"api"}}}]}]
 	}}`
-	nodes := []Node{
+	nodes := []framework.Node{
 		netpolNode("self", body, map[string]string{"policy_types": "Ingress"}),
 		namespacedNode("prod", "Pod", "api-1", map[string]string{"label/app": "api"}),
 	}
@@ -236,7 +238,7 @@ func TestDerived_AdminNetworkPolicy_BothKinds(t *testing.T) {
 		t.Run(kind, func(t *testing.T) {
 			anp := node(resourceID("", kind, "cluster-wide"), kind, nil)
 			anp.Content = body
-			nodes := []Node{
+			nodes := []framework.Node{
 				anp,
 				node("Namespace/prod", "Namespace", nil),
 				node("Namespace/web", "Namespace", nil),
@@ -254,7 +256,7 @@ func TestDerived_AdminNetworkPolicy_BothKinds(t *testing.T) {
 // well-known label every namespace carries in a real cluster and a hand-built
 // fixture usually omits. Policies routinely select on it.
 func TestDerived_AdminNetworkPolicy_NamespaceNameLabelIsSynthesized(t *testing.T) {
-	index := namespaceLabelIndex([]Node{node("Namespace/prod", "Namespace", nil)})
+	index := namespaceLabelIndex([]framework.Node{node("Namespace/prod", "Namespace", nil)})
 	assert.Equal(t, "prod", index["prod"]["label/kubernetes.io/metadata.name"])
 }
 

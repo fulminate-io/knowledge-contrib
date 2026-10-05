@@ -5,9 +5,10 @@ package awswalk
 import (
 	"context"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -33,12 +34,13 @@ func TestWalk_TwoCollectsOfAnUnchangedAccountAreIdentical(t *testing.T) {
 	first := runWalk(t, fixtureClients(), Params{})
 	second := runWalk(t, fixtureClients(), Params{})
 
-	if !reflect.DeepEqual(first.Nodes, second.Nodes) {
-		t.Errorf("two collects of one unchanged account produced different NODE slices; the carry-forward diff "+
-			"would write a row for every difference.\nfirst=%d nodes second=%d nodes\n%s",
+	if !cmp.Equal(first.Nodes, second.Nodes) {
+		t.Errorf(`two collects of one unchanged account produced different NODE slices; the carry-forward diff would write a row for every difference.
+first=%d nodes second=%d nodes
+%s`,
 			len(first.Nodes), len(second.Nodes), firstNodeDifference(first, second))
 	}
-	if !reflect.DeepEqual(first.Edges, second.Edges) {
+	if !cmp.Equal(first.Edges, second.Edges) {
 		t.Errorf("two collects of one unchanged account produced different EDGE slices; first=%d second=%d",
 			len(first.Edges), len(second.Edges))
 	}
@@ -59,7 +61,7 @@ func TestWalk_NodeIDsAreByteStableAcrossRuns(t *testing.T) {
 	}
 	for i := range 4 {
 		got := nodeIDs(runWalk(t, fixtureClients(), Params{}))
-		if !reflect.DeepEqual(base, got) {
+		if !cmp.Equal(base, got) {
 			t.Fatalf("run %d produced a different node id set than the first run; a node id must be "+
 				"byte-identical across collects or carry-forward writes a row for it every time", i+2)
 		}
@@ -73,7 +75,7 @@ func firstNodeDifference(a, b framework.Result) string {
 		if i >= len(b.Nodes) {
 			return "the second walk is shorter, first missing node: " + a.Nodes[i].ID
 		}
-		if !reflect.DeepEqual(a.Nodes[i], b.Nodes[i]) {
+		if !cmp.Equal(a.Nodes[i], b.Nodes[i]) {
 			return "first differing node at index " + a.Nodes[i].ID
 		}
 	}
@@ -192,7 +194,7 @@ func TestWalk_AnEmptyAccountIsCompleteAndEmpty(t *testing.T) {
 // which is what each fake does by default.
 func emptyClients() *Clients {
 	return &Clients{
-		ACM: &fakeAcm{}, APIGateway: &fakeApiGateway{}, APIGatewayV2: &fakeApiGatewayV2{},
+		ACM: &fakeAcm{}, APIGateway: &fakeAPIGateway{}, APIGatewayV2: &fakeAPIGatewayV2{},
 		CloudFront: &fakeCloudFront{}, CloudTrail: &fakeCloudTrail{}, CloudWatch: &fakeCloudWatch{},
 		CloudWatchLogs: &fakeCloudWatchLogs{}, DynamoDB: &fakeDynamoDB{}, EC2: &fakeEC2{},
 		ECR: &fakeEcr{}, ECS: &fakeEcs{}, EFS: &fakeEfs{}, EKS: &fakeEks{},

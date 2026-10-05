@@ -71,9 +71,9 @@ func TestTemplateSeverityIsTheMaximumOverTheCluster(t *testing.T) {
 		severities []string
 		want       string
 	}{
-		{"the most severe arrives FIRST", []string{SeverityError, SeverityInfo, SeverityInfo}, SeverityError},
-		{"the most severe arrives LAST", []string{SeverityInfo, SeverityInfo, SeverityError}, SeverityError},
-		{"a uniform cluster keeps its level", []string{SeverityWarn, SeverityWarn}, SeverityWarn},
+		{name: "the most severe arrives FIRST", severities: []string{SeverityError, SeverityInfo, SeverityInfo}, want: SeverityError},
+		{name: "the most severe arrives LAST", severities: []string{SeverityInfo, SeverityInfo, SeverityError}, want: SeverityError},
+		{name: "a uniform cluster keeps its level", severities: []string{SeverityWarn, SeverityWarn}, want: SeverityWarn},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			d := NewDrainEngine(DefaultDrainConfig())

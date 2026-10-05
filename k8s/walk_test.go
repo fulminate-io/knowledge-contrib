@@ -31,7 +31,7 @@ import (
 // worked emits nothing on the emitting one. One arm alone cannot tell those
 // apart.
 
-func runWalk(t *testing.T, c clientBundle) ([]Node, []Edge, string) {
+func runWalk(t *testing.T, c clientBundle) ([]framework.Node, []framework.Edge, string) {
 	t.Helper()
 	res, err := walkCluster(context.Background(), c, framework.ForeignContext{})
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func runWalk(t *testing.T, c clientBundle) ([]Node, []Edge, string) {
 	return res.Nodes, res.Edges, complete
 }
 
-func nodeByID(t *testing.T, nodes []Node, id string) Node {
+func nodeByID(t *testing.T, nodes []framework.Node, id string) framework.Node {
 	t.Helper()
 	for _, n := range nodes {
 		if n.ID == id {
@@ -50,10 +50,10 @@ func nodeByID(t *testing.T, nodes []Node, id string) Node {
 		}
 	}
 	t.Fatalf("no node with id %q; got %d nodes", id, len(nodes))
-	return Node{}
+	return framework.Node{}
 }
 
-func hasEdge(edges []Edge, from, to, typ string) bool {
+func hasEdge(edges []framework.Edge, from, to, typ string) bool {
 	for _, e := range edges {
 		if e.FromID == from && e.ToID == to && e.Type == typ {
 			return true
@@ -62,7 +62,7 @@ func hasEdge(edges []Edge, from, to, typ string) bool {
 	return false
 }
 
-func countEdges(edges []Edge, typ string) int {
+func countEdges(edges []framework.Edge, typ string) int {
 	n := 0
 	for _, e := range edges {
 		if e.Type == typ {
@@ -209,12 +209,12 @@ func TestWalk_EndpointSliceGates(t *testing.T) {
 			{Addresses: []string{"10.0.0.9"}},
 		},
 	}
-	unlabelled := &discoveryv1.EndpointSlice{
+	unlabeled := &discoveryv1.EndpointSlice{
 		ObjectMeta:  metav1.ObjectMeta{Name: "orphan", Namespace: "prod"},
 		AddressType: discoveryv1.AddressTypeIPv4,
 	}
 
-	_, edges, _ := runWalk(t, newFakeBundle(t, []runtime.Object{labeled, unlabelled}, nil, emptyDynamic()))
+	_, edges, _ := runWalk(t, newFakeBundle(t, []runtime.Object{labeled, unlabeled}, nil, emptyDynamic()))
 
 	assert.True(t, hasEdge(edges, "prod/Service/api", "prod/EndpointSlice/api-xyz", edgeHasEndpointSlice))
 	assert.Equal(t, 1, countEdges(edges, edgeHasEndpointSlice),

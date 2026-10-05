@@ -39,10 +39,10 @@ func TestADeniedEnumerationIsReportedAsDeniedNotAsEmpty(t *testing.T) {
 		name string
 		err  error
 	}{
-		{"grpc permission denied", status.Error(codes.PermissionDenied, "denied")},
-		{"grpc unauthenticated", status.Error(codes.Unauthenticated, "no credential")},
-		{"rest 403", &googleapi.Error{Code: 403, Message: "forbidden"}},
-		{"rest 401", &googleapi.Error{Code: 401, Message: "unauthorized"}},
+		{name: "grpc permission denied", err: status.Error(codes.PermissionDenied, "denied")},
+		{name: "grpc unauthenticated", err: status.Error(codes.Unauthenticated, "no credential")},
+		{name: "rest 403", err: &googleapi.Error{Code: 403, Message: "forbidden"}},
+		{name: "rest 401", err: &googleapi.Error{Code: 401, Message: "unauthorized"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sub := collect.New("test-enum",
@@ -91,9 +91,9 @@ func TestARealFailureDoesNotClassifyAsADenial(t *testing.T) {
 		name string
 		err  error
 	}{
-		{"plain", errors.New("the network went away")},
-		{"grpc unavailable", status.Error(codes.Unavailable, "backend down")},
-		{"rest 500", &googleapi.Error{Code: 500}},
+		{name: "plain", err: errors.New("the network went away")},
+		{name: "grpc unavailable", err: status.Error(codes.Unavailable, "backend down")},
+		{name: "rest 500", err: &googleapi.Error{Code: 500}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sub := collect.New("test-enum",

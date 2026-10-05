@@ -34,19 +34,19 @@ func TestTheWorkedEntryCarriesTheTokenAsAReferenceAndNeverAsAValue(t *testing.T)
 	}
 	want := `"` + enventry.PrimaryTokenVariable + `": "${` + enventry.PrimaryTokenVariable + `}"`
 	if !strings.Contains(rendered, want) {
-		t.Errorf("the worked entry does not carry %s, so an operator copying it installs a "+
-			"collector with no way to receive its token:\n%s", want, rendered)
+		t.Errorf(`the worked entry does not carry %s, so an operator copying it installs a collector with no way to receive its token:
+%s`, want, rendered)
 	}
 	if strings.Contains(rendered, ":-") {
-		t.Errorf("the worked entry carries a DEFAULTED reference, which resolves to the empty "+
-			"string in a serving process that does not hold the name:\n%s", rendered)
+		t.Errorf(`the worked entry carries a DEFAULTED reference, which resolves to the empty string in a serving process that does not hold the name:
+%s`, rendered)
 	}
 	// THE SECOND NAME IS NOT WRITTEN. It is the FALLBACK, consulted only when the
 	// primary is unset, so an entry naming both would refuse every collect on a
 	// machine holding one of the two.
 	if strings.Contains(rendered, enventry.FallbackTokenVariable) {
-		t.Errorf("the worked entry names the fallback variable %q as well as the primary; the two "+
-			"are alternatives, and referencing both demands the operator hold both:\n%s",
+		t.Errorf(`the worked entry names the fallback variable %q as well as the primary; the two are alternatives, and referencing both demands the operator hold both:
+%s`,
 			enventry.FallbackTokenVariable, rendered)
 	}
 

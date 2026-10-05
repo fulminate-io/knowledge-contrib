@@ -2,7 +2,11 @@
 
 package main
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
+)
 
 // derived_images.go — USES_IMAGE, the one family in the 33 that is REACHABLE
 // AND VACUOUS on a Kubernetes graph.
@@ -34,13 +38,13 @@ var registryResourceTypes = map[string]bool{
 // It returns nil whenever the registry index is empty, which on a Kubernetes
 // graph is always: the two gates are the index being non-empty and the derived
 // edge set being non-empty, and the first one closes first.
-func buildImageLineageEdges(nodes []Node) []Edge {
+func buildImageLineageEdges(nodes []framework.Node) []framework.Edge {
 	index := buildRegistryIndex(nodes)
 	if len(index) == 0 {
 		return nil
 	}
 
-	var out []Edge
+	var out []framework.Edge
 	seen := make(map[string]bool)
 	for i := range nodes {
 		n := &nodes[i]
@@ -61,7 +65,7 @@ func buildImageLineageEdges(nodes []Node) []Edge {
 				continue
 			}
 			seen[key] = true
-			out = append(out, Edge{FromID: n.ID, ToID: target, Type: edgeUsesImage})
+			out = append(out, framework.Edge{FromID: n.ID, ToID: target, Type: edgeUsesImage})
 		}
 	}
 	return out
@@ -69,7 +73,7 @@ func buildImageLineageEdges(nodes []Node) []Edge {
 
 // buildRegistryIndex maps a repository basename to the id of the registry-repo
 // node carrying it, over this walk's own nodes.
-func buildRegistryIndex(nodes []Node) map[string]string {
+func buildRegistryIndex(nodes []framework.Node) map[string]string {
 	var index map[string]string
 	for i := range nodes {
 		n := &nodes[i]

@@ -82,9 +82,8 @@ func TestEveryDeclaredResourceTypeIsEmitted(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("%d declared resource types are never emitted: %s\n"+
-			"A type in the declared vocabulary that nothing produces is a promise this "+
-			"collector does not keep.", len(missing), strings.Join(missing, ", "))
+		t.Errorf(`%d declared resource types are never emitted: %s
+A type in the declared vocabulary that nothing produces is a promise this collector does not keep.`, len(missing), strings.Join(missing, ", "))
 	}
 
 	// The control: the assertion above would pass just as well against a
@@ -112,9 +111,8 @@ func TestEveryDeclaredEdgeTypeIsEmitted(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("%d declared edge types are never emitted: %s\n"+
-			"An edge type nothing produces is a relationship a consumer will look for "+
-			"and never find.", len(missing), strings.Join(missing, ", "))
+		t.Errorf(`%d declared edge types are never emitted: %s
+An edge type nothing produces is a relationship a consumer will look for and never find.`, len(missing), strings.Join(missing, ", "))
 	}
 	for emittedType := range emitted {
 		if !slices.Contains(gcpgraph.EdgeTypes(), emittedType) {

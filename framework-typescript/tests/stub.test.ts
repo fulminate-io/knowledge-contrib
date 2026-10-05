@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { test } from "node:test";
 
-import { STUB_MODES, conformingPayload, type StubMode } from "./conformance-stub.js";
+import { INCOMPLETE_WALK_REASON, STUB_MODES, conformingPayload, type StubMode } from "./conformance-stub.js";
 import { compiled, initializeRequest, repoRoot, rpc, runChild, type ChildRun } from "./helpers.js";
 
 type Msg = Record<string, any>;
@@ -236,6 +236,7 @@ test("R2a.3 incomplete-walk: a conforming result asserting walk_complete FALSE",
     nodes: [{ id: "n1", type: "issue" }],
     edges: [],
     walk_complete: false,
+    walk_incomplete_reason: INCOMPLETE_WALK_REASON,
   });
 });
 

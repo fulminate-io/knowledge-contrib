@@ -232,13 +232,15 @@ type envObservation struct {
 }
 
 // TestCredentialChainFailureNamesTheChain is the credential arm, driven through
-// a REAL spawned child with an EMPTY environment block, which is the state an
-// operator who declared no names is in.
+// a REAL spawned child whose environment block leaves it no credential: the
+// state of an operator who declared no credential names. The block is not
+// empty, because an empty one still reaches the operator's shared files on a
+// machine that has them (credentialFreeBlock says how).
 //
 // It is the loud-failure half of the credential requirement: the collect must
 // name the chain rather than return an empty successful graph.
 func TestCredentialChainFailureNamesTheChain(t *testing.T) {
-	p := dialStdioProviderWithEnv(t, modeServe, nil)
+	p := dialStdioProviderWithEnv(t, modeServe, credentialFreeBlock(t))
 	res, err := p.call(t, map[string]any{
 		"id":     "instance-1",
 		"params": map[string]any{"log_groups": []any{"/aws/lambda/absent"}},

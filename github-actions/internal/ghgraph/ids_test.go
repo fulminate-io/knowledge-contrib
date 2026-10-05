@@ -22,51 +22,51 @@ func TestEveryIDSpelling(t *testing.T) {
 		got  string
 		want string
 	}{
-		{"organization", ghgraph.OrganizationID("acme"), "github:acme/Organization/acme"},
-		{"repository", ghgraph.RepositoryID("acme", "acme/api"), "github:acme/Repository/acme/api"},
+		{name: "organization", got: ghgraph.OrganizationID("acme"), want: "github:acme/Organization/acme"},
+		{name: "repository", got: ghgraph.RepositoryID("acme", "acme/api"), want: "github:acme/Repository/acme/api"},
 		{
-			"workflow",
-			ghgraph.WorkflowID("acme", "acme/api", ".github/workflows/ci.yml"),
-			"github:acme/Workflow/acme/api/.github/workflows/ci.yml",
+			name: "workflow",
+			got:  ghgraph.WorkflowID("acme", "acme/api", ".github/workflows/ci.yml"),
+			want: "github:acme/Workflow/acme/api/.github/workflows/ci.yml",
 		},
 		{
-			"workflow run",
-			ghgraph.WorkflowRunID("acme", "acme/api", 100),
-			"github:acme/WorkflowRun/acme/api/100",
+			name: "workflow run",
+			got:  ghgraph.WorkflowRunID("acme", "acme/api", 100),
+			want: "github:acme/WorkflowRun/acme/api/100",
 		},
-		{"runner", ghgraph.RunnerID("acme", 7), "github:acme/Runner/7"},
+		{name: "runner", got: ghgraph.RunnerID("acme", 7), want: "github:acme/Runner/7"},
 		{
-			"environment",
-			ghgraph.EnvironmentID("acme", "acme/api", "production"),
-			"github:acme/Environment/acme/api/production",
-		},
-		{
-			"deployment",
-			ghgraph.DeploymentID("acme", "acme/api", 500),
-			"github:acme/Deployment/acme/api/500",
+			name: "environment",
+			got:  ghgraph.EnvironmentID("acme", "acme/api", "production"),
+			want: "github:acme/Environment/acme/api/production",
 		},
 		{
-			"repository-scoped secret",
-			ghgraph.SecretID("acme", "acme/api", "repo", "API_KEY"),
-			"github:acme/Secret/acme/api/repo/API_KEY",
+			name: "deployment",
+			got:  ghgraph.DeploymentID("acme", "acme/api", 500),
+			want: "github:acme/Deployment/acme/api/500",
 		},
 		{
-			"environment-scoped secret",
-			ghgraph.SecretID("acme", "acme/api", "env/production", "PROD_DB_PASS"),
-			"github:acme/Secret/acme/api/env/production/PROD_DB_PASS",
+			name: "repository-scoped secret",
+			got:  ghgraph.SecretID("acme", "acme/api", "repo", "API_KEY"),
+			want: "github:acme/Secret/acme/api/repo/API_KEY",
 		},
 		{
-			"organization-scoped secret, one segment shorter",
-			ghgraph.OrgSecretID("acme", "org", "ORG_TOKEN"),
-			"github:acme/Secret/org/ORG_TOKEN",
+			name: "environment-scoped secret",
+			got:  ghgraph.SecretID("acme", "acme/api", "env/production", "PROD_DB_PASS"),
+			want: "github:acme/Secret/acme/api/env/production/PROD_DB_PASS",
 		},
-		{"label", ghgraph.LabelID("acme", "self-hosted"), "github:acme/Label/self-hosted"},
-		{"reviewer user", ghgraph.UserID("acme", "ada"), "github:acme/User/ada"},
-		{"reviewer team", ghgraph.TeamID("acme", "platform"), "github:acme/Team/platform"},
+		{
+			name: "organization-scoped secret, one segment shorter",
+			got:  ghgraph.OrgSecretID("acme", "org", "ORG_TOKEN"),
+			want: "github:acme/Secret/org/ORG_TOKEN",
+		},
+		{name: "label", got: ghgraph.LabelID("acme", "self-hosted"), want: "github:acme/Label/self-hosted"},
+		{name: "reviewer user", got: ghgraph.UserID("acme", "ada"), want: "github:acme/User/ada"},
+		{name: "reviewer team", got: ghgraph.TeamID("acme", "platform"), want: "github:acme/Team/platform"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			if row.got != row.want {
-				t.Errorf("got %q, want %q", row.got, row.want)
+				t.Errorf("%s ID = %q, want %q", row.name, row.got, row.want)
 			}
 		})
 	}

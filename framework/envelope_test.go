@@ -32,8 +32,12 @@ func TestEmptyWalkIsASuccessfulCollect(t *testing.T) {
 				t.Fatalf("a walk that found nothing was refused: %s", resultText(res))
 			}
 			doc := envelopeOf(t, res)
-			assertArray(t, doc, "nodes", 0)
-			assertArray(t, doc, "edges", 0)
+			if err := checkArray(doc, "nodes", 0); err != nil {
+				t.Fatal(err)
+			}
+			if err := checkArray(doc, "edges", 0); err != nil {
+				t.Fatal(err)
+			}
 			if doc["walk_complete"] != true {
 				t.Errorf("walk_complete is %v, want true", doc["walk_complete"])
 			}
@@ -140,9 +144,9 @@ func TestZeroCompletenessIsRefused(t *testing.T) {
 }
 
 // TestIncompleteWithNoReasonIsRefused covers the other unusable value the
-// constructors admit. The reason is not sent on the wire, and it is required
-// anyway: it is what the collector logs and what a reviewer reads to judge
-// whether the incomplete arm is reachable at all.
+// constructors admit. The reason is what the envelope's walk_incomplete_reason
+// carries to the operator, so an incomplete walk without one is refused rather
+// than sent with nothing to say.
 func TestIncompleteWithNoReasonIsRefused(t *testing.T) {
 	p := dial(t, overHTTP, fixtureIncompleteNoReason, "")
 	res, err := p.call(t, map[string]any{"id": "inst-7"})
@@ -194,8 +198,12 @@ func TestDanglingEdgePassesThrough(t *testing.T) {
 				t.Fatalf("a dangling edge was REFUSED: %s", resultText(res))
 			}
 			doc := envelopeOf(t, res)
-			assertArray(t, doc, "nodes", 1)
-			assertArray(t, doc, "edges", 1)
+			if err := checkArray(doc, "nodes", 1); err != nil {
+				t.Fatal(err)
+			}
+			if err := checkArray(doc, "edges", 1); err != nil {
+				t.Fatal(err)
+			}
 			edges, _ := doc["edges"].([]any)
 			edge, ok := edges[0].(map[string]any)
 			if !ok {

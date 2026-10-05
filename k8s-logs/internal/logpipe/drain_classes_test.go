@@ -81,12 +81,12 @@ func TestDrainSimilarity(t *testing.T) {
 		a, b []string
 		want float64
 	}{
-		{"identical", []string{"GET", "/api", "200"}, []string{"GET", "/api", "200"}, 1.0},
-		{"one position differs", []string{"GET", "/api", "200"}, []string{"GET", "/api", "404"}, 2.0 / 3.0},
-		{"every position differs", []string{"GET", "/api", "200"}, []string{"POST", "/users", "500"}, 0.0},
-		{"a wildcard counts as agreement", []string{"GET", Wildcard, "200"}, []string{"GET", "/api", "200"}, 1.0},
-		{"different lengths score zero", []string{"GET", "/api"}, []string{"GET", "/api", "200"}, 0.0},
-		{"two empties score zero", []string{}, []string{}, 0.0},
+		{name: "identical", a: []string{"GET", "/api", "200"}, b: []string{"GET", "/api", "200"}, want: 1.0},
+		{name: "one position differs", a: []string{"GET", "/api", "200"}, b: []string{"GET", "/api", "404"}, want: 2.0 / 3.0},
+		{name: "every position differs", a: []string{"GET", "/api", "200"}, b: []string{"POST", "/users", "500"}, want: 0.0},
+		{name: "a wildcard counts as agreement", a: []string{"GET", Wildcard, "200"}, b: []string{"GET", "/api", "200"}, want: 1.0},
+		{name: "different lengths score zero", a: []string{"GET", "/api"}, b: []string{"GET", "/api", "200"}, want: 0.0},
+		{name: "two empties score zero", a: []string{}, b: []string{}, want: 0.0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := similarity(tc.a, tc.b); got != tc.want {

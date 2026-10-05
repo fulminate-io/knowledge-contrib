@@ -191,19 +191,19 @@ func TestTheDetectorRefusesThisModulesMalformedOutput(t *testing.T) {
 		chunks    []*LogChunk
 		streams   []*LogStream
 	}{
-		{"a template with an empty id", []*LogTemplate{{ID: "", Severity: SeverityError}}, nil, nil},
-		{"a nil template", []*LogTemplate{nil}, nil, nil},
+		{name: "a template with an empty id", templates: []*LogTemplate{{ID: "", Severity: SeverityError}}, chunks: nil, streams: nil},
+		{name: "a nil template", templates: []*LogTemplate{nil}, chunks: nil, streams: nil},
 		{
-			"a nil chunk",
-			[]*LogTemplate{{ID: "t1", Severity: SeverityError}},
-			[]*LogChunk{nil},
-			[]*LogStream{{ID: "s1", Labels: map[string]string{"service": "a"}}},
+			name:      "a nil chunk",
+			templates: []*LogTemplate{{ID: "t1", Severity: SeverityError}},
+			chunks:    []*LogChunk{nil},
+			streams:   []*LogStream{{ID: "s1", Labels: map[string]string{"service": "a"}}},
 		},
 		{
-			"a stream with an empty id",
-			[]*LogTemplate{{ID: "t1", Severity: SeverityError}},
-			nil,
-			[]*LogStream{{ID: "", Labels: map[string]string{"service": "a"}}},
+			name:      "a stream with an empty id",
+			templates: []*LogTemplate{{ID: "t1", Severity: SeverityError}},
+			chunks:    nil,
+			streams:   []*LogStream{{ID: "", Labels: map[string]string{"service": "a"}}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

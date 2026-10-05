@@ -26,10 +26,10 @@ func TestBothCredentialHalvesAreRequiredAndAMissingOneNamesBoth(t *testing.T) {
 		username, appPassword string
 		why                   string
 	}{
-		{"", "", "neither is set"},
-		{"user", "", "the app password is missing"},
-		{"", "password", "the username is missing"},
-		{"", "password", "present-and-empty is the state an entry writing ${NAME:-} produces"},
+		{username: "", appPassword: "", why: "neither is set"},
+		{username: "user", appPassword: "", why: "the app password is missing"},
+		{username: "", appPassword: "password", why: "the username is missing"},
+		{username: "", appPassword: "password", why: "present-and-empty is the state an entry writing ${NAME:-} produces"},
 	} {
 		t.Setenv(enventry.UsernameVariable, arm.username)
 		t.Setenv(enventry.AppPasswordVariable, arm.appPassword)
@@ -105,12 +105,12 @@ func TestTheHistoryDepthIsRefusedWhenItIsPresentAndUnusable(t *testing.T) {
 		value string
 		names []string
 	}{
-		{"abc", []string{enventry.HistoryDepthVariable, `"abc"`, "whole number"}},
-		{"10O", []string{enventry.HistoryDepthVariable, `"10O"`, "whole number"}},
-		{"0", []string{enventry.HistoryDepthVariable, "0", "at least 1"}},
-		{"-5", []string{enventry.HistoryDepthVariable, "-5", "at least 1"}},
-		{"", []string{enventry.HistoryDepthVariable, "empty string"}},
-		{"12.5", []string{enventry.HistoryDepthVariable, `"12.5"`}},
+		{value: "abc", names: []string{enventry.HistoryDepthVariable, `"abc"`, "whole number"}},
+		{value: "10O", names: []string{enventry.HistoryDepthVariable, `"10O"`, "whole number"}},
+		{value: "0", names: []string{enventry.HistoryDepthVariable, "0", "at least 1"}},
+		{value: "-5", names: []string{enventry.HistoryDepthVariable, "-5", "at least 1"}},
+		{value: "", names: []string{enventry.HistoryDepthVariable, "empty string"}},
+		{value: "12.5", names: []string{enventry.HistoryDepthVariable, `"12.5"`}},
 	} {
 		t.Setenv(enventry.HistoryDepthVariable, arm.value)
 

@@ -168,10 +168,10 @@ func cloudIdentitiesByClientID(fc framework.ForeignContext) map[string]framework
 // SourceGraph. Both fields are copied across rather than one, so a shape's
 // direction is decided where the shape is computed and this loop stays a
 // pass-through.
-func buildLinkageEdges(nodes []Node, fc framework.ForeignContext) []Edge {
-	var out []Edge
+func buildLinkageEdges(nodes []framework.Node, fc framework.ForeignContext) []framework.Edge {
+	var out []framework.Edge
 	for _, e := range computeLinkageEdges(nodes, fc) {
-		out = append(out, Edge{
+		out = append(out, framework.Edge{
 			FromID:      e.FromID,
 			ToID:        e.ToID,
 			Type:        e.Type,
@@ -201,7 +201,7 @@ type linkageEdge struct {
 // computeLinkageEdges runs all four shapes. It is kept separate from
 // buildLinkageEdges so the predicate rows can assert what each shape DECIDES
 // without going through the contract-edge conversion.
-func computeLinkageEdges(nodes []Node, fc framework.ForeignContext) []linkageEdge {
+func computeLinkageEdges(nodes []framework.Node, fc framework.ForeignContext) []linkageEdge {
 	var out []linkageEdge
 	out = append(out, deploysEdges(nodes, fc)...)
 	out = append(out, workloadIdentityEdges(nodes, fc)...)
@@ -221,7 +221,7 @@ func computeLinkageEdges(nodes []Node, fc framework.ForeignContext) []linkageEdg
 // TWO LABELS, AND THE SECOND NEEDS STRIPPING. app.kubernetes.io/name is the
 // chart name directly; helm.sh/chart is "<name>-<version>" and matches only
 // after the version suffix is removed.
-func deploysEdges(nodes []Node, fc framework.ForeignContext) []linkageEdge {
+func deploysEdges(nodes []framework.Node, fc framework.ForeignContext) []linkageEdge {
 	charts := chartFileNodes(fc)
 	if len(charts) == 0 {
 		return nil
@@ -262,7 +262,7 @@ func deploysEdges(nodes []Node, fc framework.ForeignContext) []linkageEdge {
 
 // helmChartCandidates returns the charts a node's labels name, mapped to the
 // evidence naming which label matched.
-func helmChartCandidates(n *Node, charts map[string]framework.ForeignNode) map[string]string {
+func helmChartCandidates(n *framework.Node, charts map[string]framework.ForeignNode) map[string]string {
 	candidates := map[string]string{}
 	if name := n.Metadata["label/app.kubernetes.io/name"]; name != "" {
 		if _, ok := charts[name]; ok {
@@ -304,7 +304,7 @@ func stripChartVersion(chart string) string {
 //
 // ALL THREE FIT THE CONTRACT'S DIRECTION: the ServiceAccount is the FROM and
 // the cloud identity is the TO.
-func workloadIdentityEdges(nodes []Node, fc framework.ForeignContext) []linkageEdge {
+func workloadIdentityEdges(nodes []framework.Node, fc framework.ForeignContext) []linkageEdge {
 	identities := cloudIdentitiesByClientID(fc)
 
 	var out []linkageEdge

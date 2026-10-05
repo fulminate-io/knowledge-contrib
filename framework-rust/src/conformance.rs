@@ -324,7 +324,8 @@ impl Mode {
             Mode::IncompleteWalk => json!({
                 "nodes": [{"id": "n1", "type": "issue"}],
                 "edges": [],
-                "walk_complete": false
+                "walk_complete": false,
+                "walk_incomplete_reason": INCOMPLETE_WALK_REASON
             }),
             Mode::EmptyGraph => json!({"nodes": [], "edges": [], "walk_complete": true}),
             Mode::OverFormerCap => over_former_cap_payload(),
@@ -410,6 +411,11 @@ pub const DECLARED_ENV: &str = "FUL1776_DECLARED";
 /// TOOL_ERROR_TEXT is the literal a refused collect carries. The client's own
 /// test asserts this string.
 pub const TOOL_ERROR_TEXT: &str = "the stub provider refused this collect";
+
+/// INCOMPLETE_WALK_REASON is the reason the incomplete-walk mode sends as
+/// `walk_incomplete_reason`: the client stub's own, which its completeness test
+/// asserts.
+pub const INCOMPLETE_WALK_REASON: &str = "the stub asserts a partial walk";
 
 /// env_report_payload answers the environment probe. It reports ONLY the names
 /// the caller asked about, one node each, carrying whether the variable is

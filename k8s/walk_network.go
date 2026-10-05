@@ -12,6 +12,8 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // walk_network.go — Services, EndpointSlices, Ingresses and NetworkPolicies.
@@ -92,7 +94,7 @@ func walkEndpointSlices(ctx context.Context, c clientBundle, w *walkResult) erro
 		// belongs to no Service and gets no edge; that is the gate, and a
 		// fixture omitting the label must produce nothing.
 		if svc := es.Labels[discoveryv1.LabelServiceName]; svc != "" {
-			w.addEdges(Edge{
+			w.addEdges(framework.Edge{
 				FromID: resourceID(es.Namespace, "Service", svc),
 				ToID:   id,
 				Type:   edgeHasEndpointSlice,
@@ -111,7 +113,7 @@ func walkEndpointSlices(ctx context.Context, c clientBundle, w *walkResult) erro
 			if ns == "" {
 				ns = es.Namespace
 			}
-			w.addEdges(Edge{
+			w.addEdges(framework.Edge{
 				FromID: id,
 				ToID:   resourceID(ns, "Pod", ep.TargetRef.Name),
 				Type:   edgeBacks,
@@ -158,7 +160,7 @@ func walkIngresses(ctx context.Context, c clientBundle, w *walkResult) error {
 		}
 		id := resourceID(ing.Namespace, "Ingress", ing.Name)
 		for _, backend := range ingressBackends(ing) {
-			w.addEdges(Edge{
+			w.addEdges(framework.Edge{
 				FromID: id,
 				ToID:   resourceID(ing.Namespace, "Service", backend),
 				Type:   edgeRoutesTo,

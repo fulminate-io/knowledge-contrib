@@ -191,7 +191,7 @@ var AllResourceTypes = []string{
 // floor used to be a list of resource_type STRINGS with nothing tying a string to
 // the API operation that legitimately produces it, so the floor could be met by
 // emitting an object of a different kind under the right label — which is exactly
-// what happened for ses-receipt-rule, where SES EMAIL TEMPLATES were relabelled as
+// what happened for ses-receipt-rule, where SES EMAIL TEMPLATES were relabeled as
 // receipt rules. Deleting the type and quietly moving the count to 53 would fix
 // the lie and lose the information. Declaring the gap keeps the shortfall in the
 // source, keeps it in the census's failure text, and gives the closing condition

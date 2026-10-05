@@ -88,11 +88,11 @@ func TestTemplateAliasStripsACapitalisedPrefix(t *testing.T) {
 		severity string
 		want     string
 	}{
-		{"capitalised prefix is stripped", "ERROR: connection refused to " + Wildcard, SeverityError, "connection-refused@err"},
-		{"a reason prefix is stripped too", "NodeNotReady: Node is not ready", SeverityError, "node-not-ready@err"},
-		{"a lowercase prefix survives", "http: TLS handshake error", SeverityError, "http-tls-handshake-error@err"},
-		{"no prefix at all", "Node " + Wildcard + " is not ready", SeverityWarn, "node-not-ready@warn"},
-		{"an empty severity drops the suffix", "Node is not ready", "", "node-not-ready"},
+		{name: "capitalised prefix is stripped", pattern: "ERROR: connection refused to " + Wildcard, severity: SeverityError, want: "connection-refused@err"},
+		{name: "a reason prefix is stripped too", pattern: "NodeNotReady: Node is not ready", severity: SeverityError, want: "node-not-ready@err"},
+		{name: "a lowercase prefix survives", pattern: "http: TLS handshake error", severity: SeverityError, want: "http-tls-handshake-error@err"},
+		{name: "no prefix at all", pattern: "Node " + Wildcard + " is not ready", severity: SeverityWarn, want: "node-not-ready@warn"},
+		{name: "an empty severity drops the suffix", pattern: "Node is not ready", severity: "", want: "node-not-ready"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := TemplateAliasFor(&Template{Pattern: tc.pattern, Severity: tc.severity})
@@ -155,11 +155,11 @@ func TestEmptyMessageProducesNoTemplate(t *testing.T) {
 // converge; without it every line with an id is its own template.
 func TestPreProcessReplacesHighCardinalityTokens(t *testing.T) {
 	for _, tc := range []struct{ name, in, want string }{
-		{"uuid", "req 550e8400-e29b-41d4-a716-446655440000 done", "req " + Wildcard + " done"},
-		{"ipv4", "dial 10.1.2.3 failed", "dial " + Wildcard + " failed"},
-		{"long number", "processed 123456 rows", "processed " + Wildcard + " rows"},
-		{"short number survives", "processed 12 rows", "processed 12 rows"},
-		{"rfc3339 timestamp", "at 2026-09-07T10:00:00Z ok", "at " + Wildcard + " ok"},
+		{name: "uuid", in: "req 550e8400-e29b-41d4-a716-446655440000 done", want: "req " + Wildcard + " done"},
+		{name: "ipv4", in: "dial 10.1.2.3 failed", want: "dial " + Wildcard + " failed"},
+		{name: "long number", in: "processed 123456 rows", want: "processed " + Wildcard + " rows"},
+		{name: "short number survives", in: "processed 12 rows", want: "processed 12 rows"},
+		{name: "rfc3339 timestamp", in: "at 2026-09-07T10:00:00Z ok", want: "at " + Wildcard + " ok"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := PreProcess(tc.in); got != tc.want {

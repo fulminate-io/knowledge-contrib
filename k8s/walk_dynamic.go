@@ -13,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // walk_dynamic.go — the SIX FIXED KINDS THAT ARE THEMSELVES CUSTOM RESOURCES:
@@ -49,7 +51,7 @@ func enumerateDynamic(ctx context.Context, c clientBundle, w *walkResult) error 
 		gvr           schema.GroupVersionResource
 		kind          string
 		clusterScoped bool
-		edges         func(*unstructured.Unstructured, string) []Edge
+		edges         func(*unstructured.Unstructured, string) []framework.Edge
 	}{
 		{gatewayClassGVR, "GatewayClass", true, nil},
 		{gatewayGVR, "Gateway", false, nil},
@@ -77,7 +79,7 @@ func walkDynamicKind(
 	gvr schema.GroupVersionResource,
 	kind string,
 	clusterScoped bool,
-	edges func(*unstructured.Unstructured, string) []Edge,
+	edges func(*unstructured.Unstructured, string) []framework.Edge,
 ) error {
 	var ri dynamic.ResourceInterface = client.Resource(gvr)
 	if !clusterScoped {
@@ -139,14 +141,14 @@ func addUnstructured(w *walkResult, item *unstructured.Unstructured, kind string
 // kind that is not Service names something this graph does not hold and gets no
 // edge; a backendRef with its own namespace crosses namespaces legally and the
 // edge follows it.
-func routeBackendEdges(item *unstructured.Unstructured, kind string) []Edge {
+func routeBackendEdges(item *unstructured.Unstructured, kind string) []framework.Edge {
 	routeID := resourceID(item.GetNamespace(), kind, item.GetName())
 	rules, ok := nestedSlice(item.Object, "spec", "rules")
 	if !ok {
 		return nil
 	}
 
-	var out []Edge
+	var out []framework.Edge
 	seen := map[string]bool{}
 	for _, rule := range rules {
 		ruleMap, ok := rule.(map[string]any)
@@ -179,7 +181,7 @@ func routeBackendEdges(item *unstructured.Unstructured, kind string) []Edge {
 				continue
 			}
 			seen[target] = true
-			out = append(out, Edge{FromID: routeID, ToID: target, Type: edgeRoutesTo})
+			out = append(out, framework.Edge{FromID: routeID, ToID: target, Type: edgeRoutesTo})
 		}
 	}
 	return out

@@ -23,8 +23,7 @@ import (
 // THE BANNER IS MULTI-TOKEN ON PURPOSE and the assertions below read its LAST
 // FIELD. The install script extracts the version the same way (first line, last
 // field), so a banner of one bare token would let any extraction pass and hide
-// a broken comparison — the reason scripts/install_test.sh makes its client stub
-// emit the production shape rather than a bare tag.
+// a broken comparison.
 
 // runFixtureBinary re-execs this test binary in fixture mode with args and
 // returns its stdout, its stderr and its exit error. Stdin is closed, so a child

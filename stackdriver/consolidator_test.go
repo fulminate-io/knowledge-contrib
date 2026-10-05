@@ -80,7 +80,7 @@ func TestATwoFragmentGroupPassesThroughUnmerged(t *testing.T) {
 		t.Errorf("two fragments were merged: %s", patternsOf(folded))
 	}
 	if len(folded) != 2 {
-		t.Errorf("got %d templates from two fragments, want 2: %s", len(folded), patternsOf(folded))
+		t.Errorf("processEntries(two fragments) = %d templates from two fragments, want 2: %s", len(folded), patternsOf(folded))
 	}
 	for i, id := range ids {
 		if id == "" {
@@ -219,11 +219,11 @@ func TestTwoSeparateCrashesFoldToOneTemplateRatherThanTwoNodesUnderOneID(t *test
 // control: the shapes the detector rejects before its permissive arms.
 func TestOrdinaryOutputIsNotEatenByTheStackDetector(t *testing.T) {
 	for _, tc := range []struct{ name, msg string }{
-		{"json object", `{"level":"info","msg":"main.serve(0x1)"}`},
-		{"json array", `[1,2,3]`},
-		{"timestamped line", "2026-09-07T12:00:00Z main.serve(0x1)"},
-		{"logfmt line", "time=2026-09-07 msg=main.serve(0x1)"},
-		{"prose mentioning a file", "the handler in main.go:88 was slow but recovered fine"},
+		{name: "json object", msg: `{"level":"info","msg":"main.serve(0x1)"}`},
+		{name: "json array", msg: `[1,2,3]`},
+		{name: "timestamped line", msg: "2026-09-07T12:00:00Z main.serve(0x1)"},
+		{name: "logfmt line", msg: "time=2026-09-07 msg=main.serve(0x1)"},
+		{name: "prose mentioning a file", msg: "the handler in main.go:88 was slow but recovered fine"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if matchesGoStackPattern(tc.msg) {

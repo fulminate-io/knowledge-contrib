@@ -85,7 +85,7 @@ func TestBuildSerializesRelationMetadataAsEvidence(t *testing.T) {
 		t.Fatalf("Build: %v", err)
 	}
 	if len(edges) != 1 {
-		t.Fatalf("got %d edges, want 1", len(edges))
+		t.Fatalf("Build(relation with metadata) = %d edges, want 1", len(edges))
 	}
 	if edges[0].Evidence != `{"role_name":"roles/viewer"}` {
 		t.Errorf("edge evidence: got %q", edges[0].Evidence)
@@ -200,8 +200,8 @@ func TestBuildDedupesNodesByIDKeepingTheResourceThatWasRead(t *testing.T) {
 		name      string
 		resources []gcpgraph.Resource
 	}{
-		{"read first", []gcpgraph.Resource{read, referenced}},
-		{"referenced first", []gcpgraph.Resource{referenced, read}},
+		{name: "read first", resources: []gcpgraph.Resource{read, referenced}},
+		{name: "referenced first", resources: []gcpgraph.Resource{referenced, read}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			nodes, _, err := gcpgraph.Build(gcpgraph.Result{Resources: tc.resources})
@@ -209,7 +209,7 @@ func TestBuildDedupesNodesByIDKeepingTheResourceThatWasRead(t *testing.T) {
 				t.Fatalf("Build: %v", err)
 			}
 			if len(nodes) != 1 {
-				t.Fatalf("got %d nodes for one id, want 1", len(nodes))
+				t.Fatalf("Build(one id) = %d nodes for one id, want 1", len(nodes))
 			}
 			if nodes[0].Metadata["collected"] == "false" {
 				t.Errorf("the placeholder won over the resource that was actually read; " +
@@ -258,8 +258,8 @@ func TestBuildPrefersTheResourceThatWasReadEvenWhenThePlaceholderIsLarger(t *tes
 		name      string
 		resources []gcpgraph.Resource
 	}{
-		{"read first", []gcpgraph.Resource{read, fatPlaceholder}},
-		{"placeholder first", []gcpgraph.Resource{fatPlaceholder, read}},
+		{name: "read first", resources: []gcpgraph.Resource{read, fatPlaceholder}},
+		{name: "placeholder first", resources: []gcpgraph.Resource{fatPlaceholder, read}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			nodes, _, err := gcpgraph.Build(gcpgraph.Result{Resources: tc.resources})
@@ -267,7 +267,7 @@ func TestBuildPrefersTheResourceThatWasReadEvenWhenThePlaceholderIsLarger(t *tes
 				t.Fatalf("Build: %v", err)
 			}
 			if len(nodes) != 1 {
-				t.Fatalf("got %d nodes for one id, want 1", len(nodes))
+				t.Fatalf("Build(one id) = %d nodes for one id, want 1", len(nodes))
 			}
 			if nodes[0].Metadata[gcpgraph.MetadataCollected] == "false" {
 				t.Error("the larger placeholder won over the resource that was actually read; " +
@@ -301,7 +301,7 @@ func TestBuildDedupesTwoPlaceholdersForOneID(t *testing.T) {
 		t.Fatalf("Build: %v", err)
 	}
 	if len(forward) != 1 || len(reverse) != 1 {
-		t.Fatalf("got %d and %d nodes for one id, want 1 each", len(forward), len(reverse))
+		t.Fatalf("Build(forward, reverse) = %d and %d nodes for one id, want 1 each", len(forward), len(reverse))
 	}
 	if forward[0].Metadata["why"] != reverse[0].Metadata["why"] {
 		t.Errorf("which placeholder survives depends on arrival order: %q vs %q",
@@ -318,12 +318,12 @@ func TestBuildRefusesBadResources(t *testing.T) {
 		resource gcpgraph.Resource
 		wantIn   string
 	}{
-		{"no id", gcpgraph.Resource{ResourceType: gcpgraph.ResourceTypeDisk}, "empty id"},
-		{"no type", gcpgraph.Resource{ID: "x"}, "empty resource type"},
+		{name: "no id", resource: gcpgraph.Resource{ResourceType: gcpgraph.ResourceTypeDisk}, wantIn: "empty id"},
+		{name: "no type", resource: gcpgraph.Resource{ID: "x"}, wantIn: "empty resource type"},
 		{
-			"type outside the floor",
-			gcpgraph.Resource{ID: "x", ResourceType: "gcp:invented:thing"},
-			"not in the resource-type floor",
+			name:     "type outside the floor",
+			resource: gcpgraph.Resource{ID: "x", ResourceType: "gcp:invented:thing"},
+			wantIn:   "not in the resource-type floor",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -344,13 +344,13 @@ func TestBuildRefusesBadRelations(t *testing.T) {
 		relation gcpgraph.Relation
 		wantIn   string
 	}{
-		{"no from", gcpgraph.Relation{To: "b", Type: gcpgraph.EdgeBoundTo}, "empty from_id"},
-		{"no to", gcpgraph.Relation{From: "a", Type: gcpgraph.EdgeBoundTo}, "empty to_id"},
-		{"no type", gcpgraph.Relation{From: "a", To: "b"}, "empty edge type"},
+		{name: "no from", relation: gcpgraph.Relation{To: "b", Type: gcpgraph.EdgeBoundTo}, wantIn: "empty from_id"},
+		{name: "no to", relation: gcpgraph.Relation{From: "a", Type: gcpgraph.EdgeBoundTo}, wantIn: "empty to_id"},
+		{name: "no type", relation: gcpgraph.Relation{From: "a", To: "b"}, wantIn: "empty edge type"},
 		{
-			"type outside the floor",
-			gcpgraph.Relation{From: "a", To: "b", Type: "INVENTED_EDGE"},
-			"not in the edge-type floor",
+			name:     "type outside the floor",
+			relation: gcpgraph.Relation{From: "a", To: "b", Type: "INVENTED_EDGE"},
+			wantIn:   "not in the edge-type floor",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

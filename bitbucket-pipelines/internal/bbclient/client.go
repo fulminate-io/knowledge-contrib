@@ -92,13 +92,13 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("bitbucket API %d: %s", e.StatusCode, e.Body)
 }
 
-// GetPaginated iterates every page of a paginated endpoint. A Bitbucket page is
+// FetchPaginated iterates every page of a paginated endpoint. A Bitbucket page is
 // `{"values": [...], "next": "url"}`; handler is called once per page with the
 // raw `values` array.
 //
 // THE CONTEXT IS CHECKED AT THE TOP OF EVERY PAGE, so a cancelled walk stops
 // following `next` rather than draining a large enumeration it will discard.
-func (c *Client) GetPaginated(
+func (c *Client) FetchPaginated(
 	ctx context.Context,
 	path string,
 	handler func(raw json.RawMessage) error,
@@ -157,10 +157,10 @@ func (c *Client) fetchPage(
 	return page.Values, page.Next, nil
 }
 
-// GetRaw performs one GET and returns the whole body. It is for the endpoints
+// FetchRaw performs one GET and returns the whole body. It is for the endpoints
 // that answer with something other than a pagination envelope — a repository's
 // bitbucket-pipelines.yml is fetched through it.
-func (c *Client) GetRaw(ctx context.Context, path string) ([]byte, error) {
+func (c *Client) FetchRaw(ctx context.Context, path string) ([]byte, error) {
 	resp, err := c.doWithRetry(ctx, c.resolveURL(path))
 	if err != nil {
 		return nil, err

@@ -30,7 +30,7 @@ func TestSubcollectorConvertsEveryListedItem(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 	if len(got.Resources) != 2 {
-		t.Fatalf("got %d resources, want 2", len(got.Resources))
+		t.Fatalf("Run(proj-a) = %d resources, want 2", len(got.Resources))
 	}
 	if sub.Name != "test-enum" {
 		t.Errorf("Name: got %q", sub.Name)
@@ -65,7 +65,7 @@ func TestSubcollectorReturnsEveryOtherListError(t *testing.T) {
 		name string
 		err  error
 	}{
-		{"plain", errors.New("the network went away")},
+		{name: "plain", err: errors.New("the network went away")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sub := collect.New("test-enum",

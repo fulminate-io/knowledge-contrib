@@ -20,6 +20,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 v6.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 v6.2.0
 	github.com/fulminate-io/knowledge-contrib/framework v0.0.0
+	github.com/google/go-cmp v0.7.0
 )
 
 require (

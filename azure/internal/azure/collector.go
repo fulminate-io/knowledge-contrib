@@ -16,12 +16,6 @@ import (
 // collector.go — the framework-facing surface: the tool this collector serves,
 // its params, and the walk the framework calls.
 
-// azureCredential is what every subcollector authenticates with. It is an
-// ALIAS rather than a new interface so an SDK client takes it directly; the
-// name exists because "the credential this collector holds" is what the seams
-// below are about, and the SDK's own name for it says nothing about that.
-type azureCredential = azcore.TokenCredential
-
 // toolDescription is what an operator reads in an MCP tool listing.
 const toolDescription = "Walk an Azure subscription and return its resources and relationships as a knowledge graph."
 
@@ -60,8 +54,8 @@ type Params struct {
 // subscription, and no test hook is reachable from a collector an operator
 // installs.
 type Collector struct {
-	newCredential    func(ctx context.Context) (azureCredential, error)
-	buildSubs        func(cred azureCredential, subscriptionID string) []subCollector
+	newCredential    func(ctx context.Context) (azcore.TokenCredential, error)
+	buildSubs        func(cred azcore.TokenCredential, subscriptionID string) []subCollector
 	lookupEnv        func(string) (string, bool)
 	concurrencyFloor int
 }
@@ -154,7 +148,7 @@ func resolveSubscriptionID(id string, params Params, lookupEnv func(string) (str
 // wrapping it with the chain's name and the fact that this collector supplies
 // nothing itself is what turns "DefaultAzureCredential: failed to acquire a
 // token" into something an operator can act on in their config entry.
-func (c *Collector) credential(ctx context.Context) (azureCredential, error) {
+func (c *Collector) credential(ctx context.Context) (azcore.TokenCredential, error) {
 	if c.newCredential != nil {
 		return c.newCredential(ctx)
 	}
@@ -190,7 +184,7 @@ func wrapCredentialError(cause error) error {
 }
 
 // subCollectors returns the walk's subcollectors, or the test seam's.
-func (c *Collector) subCollectors(cred azureCredential, subscriptionID string) []subCollector {
+func (c *Collector) subCollectors(cred azcore.TokenCredential, subscriptionID string) []subCollector {
 	if c.buildSubs != nil {
 		return c.buildSubs(cred, subscriptionID)
 	}

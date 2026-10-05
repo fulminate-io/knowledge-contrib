@@ -97,22 +97,22 @@ func TestEachUserBearingFieldCarriesItsOwnEdgeClass(t *testing.T) {
 		what, from, to, edgeType string
 	}{
 		{
-			"the run's actor",
-			"github:acme/WorkflowRun/acme/api/100",
-			"github:acme/User/ada",
-			ghgraph.EdgeAttributedTo,
+			what:     "the run's actor",
+			from:     "github:acme/WorkflowRun/acme/api/100",
+			to:       "github:acme/User/ada",
+			edgeType: ghgraph.EdgeAttributedTo,
 		},
 		{
-			"the run's triggering actor",
-			"github:acme/WorkflowRun/acme/api/100",
-			"github:acme/User/dependabot[bot]",
-			ghgraph.EdgeInitiatedBy,
+			what:     "the run's triggering actor",
+			from:     "github:acme/WorkflowRun/acme/api/100",
+			to:       "github:acme/User/dependabot[bot]",
+			edgeType: ghgraph.EdgeInitiatedBy,
 		},
 		{
-			"the deployment's creator",
-			"github:acme/Deployment/acme/api/500",
-			"github:acme/User/grace",
-			ghgraph.EdgeCreatedBy,
+			what:     "the deployment's creator",
+			from:     "github:acme/Deployment/acme/api/500",
+			to:       "github:acme/User/grace",
+			edgeType: ghgraph.EdgeCreatedBy,
 		},
 	} {
 		if !hasRelation(got, want.from, want.to, want.edgeType) {
@@ -274,9 +274,9 @@ func TestNoUserEmailReachesAnyByteOfTheResult(t *testing.T) {
 		payload string
 	}{
 		{
-			"a field on a user's detail document",
-			escapedAddressTells(),
-			marshal(t, map[string]any{
+			door:  "a field on a user's detail document",
+			tells: escapedAddressTells(),
+			payload: marshal(t, map[string]any{
 				"nodes": withPlantedDetail(nodes,
 					`{"kind":"User","name":"planted","email":"`+fixtureActorEmail+
 						`","Email":"`+fixtureActorEmail+`"}`),
@@ -284,9 +284,9 @@ func TestNoUserEmailReachesAnyByteOfTheResult(t *testing.T) {
 			}),
 		},
 		{
-			"a contract field named for an address",
-			plainAddressTells(),
-			marshal(t, map[string]any{
+			door:  "a contract field named for an address",
+			tells: plainAddressTells(),
+			payload: marshal(t, map[string]any{
 				"nodes": nodes, "edges": edges,
 				"email": fixtureActorEmail, "Email": fixtureActorEmail,
 			}),

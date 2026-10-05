@@ -10,7 +10,7 @@ of a second class -- one that is built, tested and run under a declaration of it
 own rather than under the Go toolchain's.
 
 THE NAME AND THE KEY SET ARE NOT THIS PORT'S TO CHOOSE. They are declared once, in
-`scripts/testdata/collector-port-contract.tsv`, and read from there by four
+`scripts/testdata/collector-port-contract.tsv`, and read from there by three
 scripts in two languages. This suite reads that file too: the rows below take the
 manifest's expected NAME and its required KEY SET out of the contract rather than
 out of a literal here, so a contract that moves reds this port instead of leaving
@@ -21,9 +21,9 @@ distinction is the whole point and it was learned the expensive way: a guard
 written as `does any script mention <the name I chose>` never fires when the
 sibling lands under a different name, and a skip nobody reads is indistinguishable
 from a pin that will never run. Every pin below detects that the PORT
-INFRASTRUCTURE EXISTS AT ALL -- the contract file, a scripts/ file naming this
-port, or a census emitting a ports banner -- and then FAILS BY NAME, quoting what
-it actually found, when the shape disagrees. It skips only while nothing has
+INFRASTRUCTURE EXISTS AT ALL -- the contract file, or a scripts/ file naming
+this port -- and then FAILS BY NAME, quoting what it actually found, when the
+shape disagrees. It skips only while nothing has
 landed.
 """
 
@@ -92,13 +92,12 @@ def port_infrastructure_evidence():
     """Every sign that the port-infrastructure work has landed, as a list of
     human-readable strings. EMPTY means nothing has landed yet.
 
-    THE DETECTORS ARE ABOUT EXISTENCE, NEVER ABOUT A NAME THIS PORT CHOSE. Three
+    THE DETECTORS ARE ABOUT EXISTENCE, NEVER ABOUT A NAME THIS PORT CHOSE. Two
     independent ones, so a sibling that lands the arms under a spelling nobody
     here anticipated still activates every pin:
 
       1. the contract file exists at all;
-      2. some script under scripts/ names this port's directory;
-      3. the membership census emits a ports banner.
+      2. some script under scripts/ names this port's directory.
     """
     root = support.repo_root()
     if root is None:
@@ -119,11 +118,6 @@ def port_infrastructure_evidence():
             if "framework-python" in source:
                 evidence.append("scripts/%s names this port" % name)
 
-    census = os.path.join(root, "scripts", "collectors-membership-census.sh")
-    if os.path.isfile(census):
-        completed = subprocess.run(["bash", census], cwd=root, capture_output=True)
-        if b"ports=" in completed.stdout:
-            evidence.append("the membership census emits a ports banner")
     return evidence
 
 
@@ -325,21 +319,6 @@ class ContractAgreementPinTest(unittest.TestCase):
             ".py",
             declared,
             "the contract's source-extension set is %s and this port's sources are Python" % sorted(declared),
-        )
-
-    def test_the_membership_census_exits_zero_naming_this_port(self):
-        """THE CONTRACT IS THE GATE HERE TOO, because the readers and their shared
-        declaration land together: a contract with no reader is a shape the port
-        infrastructure never ships, and gating on the census's own output instead
-        would let a landed contract with a broken reader read as 'not yet'."""
-        require_contract(self, "that the membership census exits 0 naming this port")
-        root = support.require_repo_root(self)
-        census = os.path.join(root, "scripts", "collectors-membership-census.sh")
-        completed = subprocess.run(["bash", census], cwd=root, capture_output=True)
-        banner = (completed.stdout + completed.stderr).decode("utf-8", "replace")
-        self.assertEqual(completed.returncode, 0, banner)
-        self.assertIn(
-            "framework-python", banner, "the contract has landed and the census does not name this port: %s" % banner
         )
 
     def test_port_arms_that_land_without_the_contract_are_a_failure_not_a_skip(self):

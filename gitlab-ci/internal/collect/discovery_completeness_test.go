@@ -33,7 +33,7 @@ func TestAFailureListingTheGroupsProjectsFailsEveryEnumeration(t *testing.T) {
 		fixtureGroup: refusal(http.StatusInternalServerError, "500 Server Error"),
 	}
 
-	_, errs, _ := runAll(t, api)
+	_, errs, _ := runAll(api)
 	for name, err := range errs {
 		if err == nil {
 			t.Errorf("%s survived a failure to list the group's projects", name)
@@ -58,7 +58,7 @@ func TestASubgroupThatCannotBeListedIsAPartialDiscovery(t *testing.T) {
 		fixtureSubgroup: refusal(http.StatusForbidden, "403 Forbidden"),
 	}
 
-	got, errs, listerPartial := runAll(t, api)
+	got, errs, listerPartial := runAll(api)
 	for name, err := range errs {
 		if err != nil {
 			t.Errorf("%s failed over a subgroup this collector could not list: %v", name, err)
@@ -85,7 +85,7 @@ func TestASubgroupThatCannotBeListedIsAPartialDiscovery(t *testing.T) {
 func TestASubgroupTreeDeeperThanTheLimitIsReportedRatherThanTruncatedSilently(t *testing.T) {
 	api := deepSubgroupAPI(12)
 
-	_, errs, listerPartial := runAll(t, api)
+	_, errs, listerPartial := runAll(api)
 	for name, err := range errs {
 		if err != nil {
 			t.Errorf("%s failed over a deep subgroup tree: %v", name, err)
@@ -101,7 +101,7 @@ func TestASubgroupTreeDeeperThanTheLimitIsReportedRatherThanTruncatedSilently(t 
 		t.Errorf("the gap does not say the tree was too deep: %q", joined)
 	}
 	// The known positive: a tree WITHIN the limit reports nothing.
-	if _, _, shallow := runAll(t, deepSubgroupAPI(3)); len(shallow) != 0 {
+	if _, _, shallow := runAll(deepSubgroupAPI(3)); len(shallow) != 0 {
 		t.Errorf("a subgroup tree within the limit also reported gaps (%v), so the row above is "+
 			"not measuring the limit", shallow)
 	}

@@ -21,7 +21,7 @@ import (
 //   - KUBERNETES_MASTER is inert STRUCTURALLY. Nothing on this path reads it in
 //     any state, so no control that moved the result exists, and the instrument
 //     has to be a child process because the read happens at package
-//     initialisation.
+//     initialization.
 //   - SEVEN NAMES have no live control on the hosts this suite runs on. Their row
 //     states what the source establishes and no more, and refuses a mark for them,
 //     because a mark would be a claim no run here can carry.
@@ -32,7 +32,7 @@ import (
 //
 // THE OTHER NAMES ARE INERT BECAUSE A READER ON THIS PATH TREATS EMPTY AS ABSENT.
 // KUBERNETES_MASTER is inert because NOTHING ON THIS PATH READS IT IN ANY STATE.
-// client-go reads it exactly once, at PACKAGE INITIALISATION, into the
+// client-go reads it exactly once, at PACKAGE INITIALIZATION, into the
 // package-level clientcmd.ClusterDefaults variable, in a function the library
 // marks deprecated; that value reaches a client only through a caller's own
 // ConfigOverrides.ClusterDefaults, and this collector passes a fresh
@@ -42,7 +42,7 @@ import (
 // is itself the red this row exists to produce.
 //
 // THE INSTRUMENT IS A RE-EXEC, and it has to be. The read happens at package
-// initialisation, so a t.Setenv inside the running process is too late by
+// initialization, so a t.Setenv inside the running process is too late by
 // construction and would yield a vacuous zero: the variable would never be read
 // in any arm and every state would agree for the wrong reason. The child below is
 // this test binary re-executed with the variable in its environment, and it
@@ -81,9 +81,9 @@ func TestKubernetesMasterIsInertSTRUCTURALLY(t *testing.T) {
 		value string
 		set   bool
 	}{
-		{"absent", "", false},
-		{"empty", "", true},
-		{"set", "https://master.example.invalid:6443", true},
+		{label: "absent", value: "", set: false},
+		{label: "empty", value: "", set: true},
+		{label: "set", value: "https://master.example.invalid:6443", set: true},
 	} {
 		results[a.label] = runKubernetesMasterProbe(t, home, a.value, a.set)
 	}
@@ -94,7 +94,7 @@ func TestKubernetesMasterIsInertSTRUCTURALLY(t *testing.T) {
 	// only possible if getDefaultServer ran and saw it.
 	if results["set"].ClusterDefault == results["absent"].ClusterDefault {
 		t.Fatalf("the probe's own control failed: clientcmd.ClusterDefaults.Server is %q with the variable set and "+
-			"%q with it absent, so the child's package initialisation did not read it and every arm below is vacuous",
+			"%q with it absent, so the child's package initialization did not read it and every arm below is vacuous",
 			results["set"].ClusterDefault, results["absent"].ClusterDefault)
 	}
 

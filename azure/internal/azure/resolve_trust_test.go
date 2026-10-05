@@ -52,8 +52,8 @@ func TestResolveCrossTenantTrust_FederatedHalf(t *testing.T) {
 		source string
 		issuer string
 	}{
-		{"kubernetes", "apps/ServiceAccount/api", aksIssuer},
-		{"github", "github:acme/service", githubIssuer},
+		{name: "kubernetes", source: "apps/ServiceAccount/api", issuer: aksIssuer},
+		{name: "github", source: "github:acme/service", issuer: githubIssuer},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := resolveCrossTenantTrust([]resource{identity}, []edge{{

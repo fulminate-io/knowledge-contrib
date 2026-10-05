@@ -34,9 +34,8 @@ func TestParity_EveryResourceTypeIsEmitted(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("the walk over the fully-populated fake account emitted no node for %d of the %d resource types "+
-			"the parity floor names: %v.\nA service walk that stopped emitting one, or a fixture that stopped "+
-			"carrying one, both land here — open the named walk and its fixture.",
+		t.Errorf(`the walk over the fully-populated fake account emitted no node for %d of the %d resource types the parity floor names: %v.
+A service walk that stopped emitting one, or a fixture that stopped carrying one, both land here — open the named walk and its fixture.`,
 			len(missing), len(AllResourceTypes), missing)
 	}
 
@@ -132,9 +131,8 @@ func TestParity_SyntheticNodeIDForms(t *testing.T) {
 		}
 	}
 	if len(unknown) > 0 {
-		t.Errorf("node ids that are neither a real ARN nor one of the two composed forms: %v.\n"+
-			"A node id is the carry-forward diff key and the endpoint every edge names, so a new composed form "+
-			"is a deliberate change to node identity rather than a detail of one service walk.", unknown)
+		t.Errorf(`node ids that are neither a real ARN nor one of the two composed forms: %v.
+A node id is the carry-forward diff key and the endpoint every edge names, so a new composed form is a deliberate change to node identity rather than a detail of one service walk.`, unknown)
 	}
 }
 
@@ -244,31 +242,31 @@ func TestParity_KnownPositiveForTheEndpointEnumeration(t *testing.T) {
 		id   string
 		near string
 	}{
-		{"not-an-arn-at-all", "nothing at all"},
-		{"arn:aws:s3:::a-bucket-this-walk-never-emitted", "nothing at all"},
-		{"arn:aws:lambda:us-east-1:123456789012:function:typo", "nothing at all"},
+		{id: "not-an-arn-at-all", near: "nothing at all"},
+		{id: "arn:aws:s3:::a-bucket-this-walk-never-emitted", near: "nothing at all"},
+		{id: "arn:aws:lambda:us-east-1:123456789012:function:typo", near: "nothing at all"},
 
 		// cidr-sentinel: the sentinel prefix is aws:cidr:, not aws:cidrs:.
-		{"aws:cidrs:10.0.0.0/8", "cidr-sentinel"},
+		{id: "aws:cidrs:10.0.0.0/8", near: "cidr-sentinel"},
 		// irsa-wildcard-subject: same idea one character out.
-		{"aws:eks:irsa-wildcards/cluster", "irsa-wildcard-subject"},
+		{id: "aws:eks:irsa-wildcards/cluster", near: "irsa-wildcard-subject"},
 		// kubernetes-service-account: the marker is /ServiceAccount/, capital S.
-		{"cluster/namespace/serviceaccount/name", "kubernetes-service-account"},
+		{id: "cluster/namespace/serviceaccount/name", near: "kubernetes-service-account"},
 		// cross-account-iam-principal: an iam ARN in THIS account is not external.
-		{"arn:aws:iam::" + fixtureAccount + ":role/a-role-this-walk-never-emitted", "cross-account-iam-principal"},
+		{id: "arn:aws:iam::" + fixtureAccount + ":role/a-role-this-walk-never-emitted", near: "cross-account-iam-principal"},
 		// peer-account-ec2-resource: an ec2 ARN in THIS account is not external.
-		{"arn:aws:ec2:us-east-1:" + fixtureAccount + ":security-group/sg-typo", "peer-account-ec2-resource"},
+		{id: "arn:aws:ec2:us-east-1:" + fixtureAccount + ":security-group/sg-typo", near: "peer-account-ec2-resource"},
 		// instance-profile: right namespace and account, empty profile name.
-		{"arn:aws:iam::" + fixtureAccount + ":instance-profile/", "instance-profile"},
+		{id: "arn:aws:iam::" + fixtureAccount + ":instance-profile/", near: "instance-profile"},
 		// instance-profile: right text, wrong resource — a ROLE, not a profile.
-		{"arn:aws:iam::" + fixtureAccount + ":role/instance-profile/x", "instance-profile"},
+		{id: "arn:aws:iam::" + fixtureAccount + ":role/instance-profile/x", near: "instance-profile"},
 
 		// THE TWO CLASSES THAT WERE REMOVED. Both namespaces are enumerated by
 		// this walk, so an unresolvable id in either is a defect rather than an
 		// external endpoint. These two entries are what keep the classes from
 		// being reinstated without this control going red first.
-		{"arn:aws:rds:us-east-1:" + fixtureAccount + ":db:a-replica-this-walk-never-emitted", "rds-read-replica"},
-		{"arn:aws:elasticache:us-east-1:" + fixtureAccount + ":cluster:never-emitted", "elasticache-member-cluster"},
+		{id: "arn:aws:rds:us-east-1:" + fixtureAccount + ":db:a-replica-this-walk-never-emitted", near: "rds-read-replica"},
+		{id: "arn:aws:elasticache:us-east-1:" + fixtureAccount + ":cluster:never-emitted", near: "elasticache-member-cluster"},
 	} {
 		if class := externalEndpointClass(tc.id); class != "" {
 			t.Errorf("the endpoint classifier admitted %q as %q. It is a near miss of the %s class and must be "+

@@ -55,14 +55,14 @@ func repoPipelines(
 	path := fmt.Sprintf("repositories/%s/%s/src/%s/bitbucket-pipelines.yml",
 		workspace, repo.Slug, branch)
 
-	data, err := client.GetRaw(ctx, path)
+	data, err := client.FetchRaw(ctx, path)
+	if IsNotFound(err) {
+		// NO PIPELINE IS CONFIGURED FOR THIS REPOSITORY. The provider answers
+		// 404 for a file that is not there, which is a true reading of the
+		// repository rather than a read this walk failed to make.
+		return bbgraph.Result{}, nil
+	}
 	if err != nil {
-		if IsNotFound(err) {
-			// NO PIPELINE IS CONFIGURED FOR THIS REPOSITORY. The provider answers
-			// 404 for a file that is not there, which is a true reading of the
-			// repository rather than a read this walk failed to make.
-			return bbgraph.Result{}, nil
-		}
 		return bbgraph.Result{}, fmt.Errorf("reading bitbucket-pipelines.yml on %s: %w", branch, err)
 	}
 

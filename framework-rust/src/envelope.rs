@@ -43,6 +43,12 @@ pub struct CollectOutput {
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
     pub walk_complete: bool,
+    /// walk_incomplete_reason is the reason an incomplete walk carries, sent only
+    /// beside `walk_complete` false and absent on a complete walk. An `Option`,
+    /// because the key's ABSENCE is admitted by a decoder (a collector predating it
+    /// sends none) while an EMPTY value is bad input the decoder refuses.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub walk_incomplete_reason: Option<String>,
 }
 
 /// encode_result turns one walk's [`WalkResult`] into the envelope, refusing the
@@ -73,8 +79,16 @@ pub fn encode_result(collector: &str, result: WalkResult) -> Result<CollectOutpu
             )));
         }
     }
+    // THE REASON RIDES ONLY THE INCOMPLETE ARM, where the refusal above has
+    // already made it non-empty. A complete walk sends no key at all, so a client
+    // that predates the key keeps reading this collector's complete walks.
+    let walk_incomplete_reason = match &result.complete {
+        Completeness::Incomplete { reason } => Some(reason.clone()),
+        Completeness::Complete => None,
+    };
     Ok(CollectOutput {
         walk_complete: result.complete.is_complete(),
+        walk_incomplete_reason,
         nodes: result.nodes,
         edges: result.edges,
     })

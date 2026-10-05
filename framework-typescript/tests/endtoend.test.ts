@@ -350,7 +350,9 @@ test("R3 and R4.4 the sample is registered and COLLECTED by the real client on a
     const added = spawnSync(
       client,
       [
-        "collector", "add", "--tool", "collect",
+        // The daemon was started with its own storage, and it reads its user-scope
+        // collectors.json from there; the registration names the same directory.
+        "collector", "add", "--graph-storage", graphs, "--tool", "collect",
         "-e", `HOME=${home}`,
         "-e", "SAMPLE_TOKEN=kn-t37-planted-secret",
         "sample-ts", "--", process.execPath, script,

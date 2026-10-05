@@ -28,7 +28,7 @@ const groupPlaceholderPrefix = "group:"
 // A placeholder whose email is NOT among the collected groups is LEFT ALONE. It
 // is the only record that the binding exists, and dropping it to tidy the graph
 // would delete information rather than resolve it.
-func IAMBindingGroups(in gcpgraph.Result) (gcpgraph.Result, error) {
+func IAMBindingGroups(in gcpgraph.Result) gcpgraph.Result {
 	byEmail := map[string]string{}
 	for _, res := range in.Resources {
 		if res.ResourceType != gcpgraph.ResourceTypeCloudIdentityGroup {
@@ -44,7 +44,7 @@ func IAMBindingGroups(in gcpgraph.Result) (gcpgraph.Result, error) {
 		// Nothing to resolve against: the walk passes through with its
 		// placeholders intact, which is a smaller claim than resolving them.
 		out.Relations = in.Relations
-		return out, nil
+		return out
 	}
 
 	resolved := map[string]bool{}
@@ -68,5 +68,5 @@ func IAMBindingGroups(in gcpgraph.Result) (gcpgraph.Result, error) {
 			Metadata: rel.Metadata,
 		})
 	}
-	return out, nil
+	return out
 }

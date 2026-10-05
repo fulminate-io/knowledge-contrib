@@ -45,11 +45,11 @@ func Complete() Completeness {
 // Incomplete asserts that this walk did NOT enumerate the whole source, and
 // carries the reason it did not.
 //
-// The reason is not sent on the wire — the contract carries a boolean — but it
-// is required all the same, because it is what a collector author writes into
-// their own logs and what a reviewer reads to judge whether the arm is
-// reachable at all. An empty reason is refused when the result is encoded, on
-// the same terms as the zero value.
+// The reason travels on the wire as walk_incomplete_reason beside
+// walk_complete=false, and the client prints it on the deletion refusal it
+// reports, so it is what tells an operator why the collect deleted nothing.
+// An empty reason is refused when the result is encoded, on the same terms as
+// the zero value.
 func Incomplete(reason string) Completeness {
 	return Completeness{asserted: true, complete: false, reason: reason}
 }
@@ -63,5 +63,5 @@ func (c Completeness) IsComplete() bool { return c.complete }
 func (c Completeness) IsAsserted() bool { return c.asserted }
 
 // Reason is the reason an incomplete walk carries, and is empty on a complete
-// one. A collector logs it; the wire does not.
+// one. The envelope carries it as walk_incomplete_reason on the incomplete arm.
 func (c Completeness) Reason() string { return c.reason }

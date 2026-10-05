@@ -65,66 +65,66 @@ func TestTheSummariesReproduceTheSourceProvidersOwnLines(t *testing.T) {
 		want string
 	}{
 		{
-			"a group, which carries nothing to scope it",
-			glgraph.Resource{Name: "acme", ResourceType: glgraph.ResourceTypeGroup},
-			"GitLab group acme",
+			name: "a group, which carries nothing to scope it",
+			res:  glgraph.Resource{Name: "acme", ResourceType: glgraph.ResourceTypeGroup},
+			want: "GitLab group acme",
 		},
 		{
-			"a project inside its group",
-			glgraph.Resource{
+			name: "a project inside its group",
+			res: glgraph.Resource{
 				Name: "api", ResourceType: glgraph.ResourceTypeProject,
 				Metadata: map[string]string{"path_with_namespace": "acme/api"},
 			},
-			"GitLab project api",
+			want: "GitLab project api",
 		},
 		{
-			"an environment, scoped by its project",
-			glgraph.Resource{
+			name: "an environment, scoped by its project",
+			res: glgraph.Resource{
 				Name: "production", ResourceType: glgraph.ResourceTypeEnvironment,
 				Metadata: map[string]string{"project": "acme/api"},
 			},
-			"GitLab environment production (acme/api)",
+			want: "GitLab environment production (acme/api)",
 		},
 		{
-			"a pipeline run, with its status and ref",
-			glgraph.Resource{
+			name: "a pipeline run, with its status and ref",
+			res: glgraph.Resource{
 				Name: "pipeline #100", ResourceType: glgraph.ResourceTypePipelineRun,
 				Metadata: map[string]string{"status": "success", "ref": "main", "project": "acme/api"},
 			},
-			"GitLab pipeline run pipeline #100 status=success ref=main (acme/api)",
+			want: "GitLab pipeline run pipeline #100 status=success ref=main (acme/api)",
 		},
 		{
-			"a protection rule, with its approval count",
-			glgraph.Resource{
+			name: "a protection rule, with its approval count",
+			res: glgraph.Resource{
 				Name: "production protection", ResourceType: glgraph.ResourceTypeProtectionRule,
 				Metadata: map[string]string{
 					"required_approval_count": "2", "environment": "production", "project": "acme/api",
 				},
 			},
-			"GitLab protection rule production protection approvals=2 env=production (acme/api)",
+			want: "GitLab protection rule production protection approvals=2 env=production (acme/api)",
 		},
 		{
-			"a project-scoped variable with both flags",
-			glgraph.Resource{
+			name: "a project-scoped variable with both flags",
+			res: glgraph.Resource{
 				Name: "API_KEY", ResourceType: glgraph.ResourceTypeVariable,
 				Metadata: map[string]string{
 					"scope": "project", "project": "acme/api", "protected": "true", "masked": "true",
 				},
 			},
-			"GitLab variable API_KEY scope=project protected masked (acme/api)",
+			want: "GitLab variable API_KEY scope=project protected masked (acme/api)",
 		},
 		{
-			"a group-scoped variable, which carries neither flag",
-			glgraph.Resource{
+			name: "a group-scoped variable, which carries neither flag",
+			res: glgraph.Resource{
 				Name: "GROUP_DEPLOY_TOKEN", ResourceType: glgraph.ResourceTypeVariable,
 				Metadata: map[string]string{"scope": "group", "group": "acme"},
 			},
-			"GitLab variable GROUP_DEPLOY_TOKEN scope=group (acme)",
+			want: "GitLab variable GROUP_DEPLOY_TOKEN scope=group (acme)",
 		},
 		{
-			"a runner tag, which carries nothing at all",
-			glgraph.Resource{Name: "docker", ResourceType: glgraph.ResourceTypeRunnerTag},
-			"GitLab runner tag docker",
+			name: "a runner tag, which carries nothing at all",
+			res:  glgraph.Resource{Name: "docker", ResourceType: glgraph.ResourceTypeRunnerTag},
+			want: "GitLab runner tag docker",
 		},
 	} {
 		t.Run(row.name, func(t *testing.T) {

@@ -73,10 +73,8 @@ func TestEdgeDocCommentStatesWhatTheTreeDoes(t *testing.T) {
 		"every built-in collector emits cross-graph edges the same way",
 	} {
 		if strings.Contains(doc, retired) {
-			t.Errorf("the Edge doc comment still carries the retired clause %q, which this tree disproves:\n"+
-				"the server's batch-edge write returns from_id and to_id verbatim with no lookup and no proxy "+
-				"materialization, and the cross-graph edges that exist are emitted by the post-collect linker "+
-				"rather than by any collector's result", retired)
+			t.Errorf(`the Edge doc comment still carries the retired clause %q, which this tree disproves:
+the server's batch-edge write returns from_id and to_id verbatim with no lookup and no proxy materialization, and the cross-graph edges that exist are emitted by the post-collect linker rather than by any collector's result`, retired)
 		}
 	}
 }

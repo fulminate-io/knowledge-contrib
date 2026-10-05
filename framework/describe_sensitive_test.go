@@ -6,10 +6,11 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
-	"reflect"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // describe_sensitive_test.go — the EMPTY-SENSITIVE MARK: the per-name boolean a
@@ -50,7 +51,7 @@ func TestEmptySensitiveNames_CarriesEveryMarkedNameOfEveryClass(t *testing.T) {
 		t.Fatalf("the fixture marks %d names; this row needs at least two, on two classes, to mean anything", len(want))
 	}
 	slices.Sort(want)
-	if got := decl.EmptySensitiveNames(); !reflect.DeepEqual(got, want) {
+	if got := decl.EmptySensitiveNames(); !cmp.Equal(got, want) {
 		t.Errorf("EmptySensitiveNames returned %q, want %q", got, want)
 	}
 	// THE CLASS THAT MAKES THIS A REQUIREMENT AND NOT A CONVENIENCE: at least one
@@ -87,7 +88,7 @@ func TestEmptySensitiveNames_IsSorted(t *testing.T) {
 		{Name: "UNMARKED", Class: EnvClassPath},
 	}
 	want := []string{"ALPHA", "MIDDLE", "ZED"}
-	if got := decl.EmptySensitiveNames(); !reflect.DeepEqual(got, want) {
+	if got := decl.EmptySensitiveNames(); !cmp.Equal(got, want) {
 		t.Errorf("EmptySensitiveNames returned %q, want %q", got, want)
 	}
 }
@@ -128,7 +129,7 @@ func TestDescribeEnvSensitiveArgvQueryAnswersTheInstaller(t *testing.T) {
 	}
 	got := strings.Split(strings.TrimSpace(stdout.String()), "\n")
 	want := fixtureDeclaration().EmptySensitiveNames()
-	if !reflect.DeepEqual(got, want) {
+	if !cmp.Equal(got, want) {
 		t.Errorf("%s printed %q, want %q", describeEnvSensitiveArg, got, want)
 	}
 }

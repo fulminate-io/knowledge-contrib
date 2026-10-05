@@ -8,6 +8,8 @@ import (
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // convert.go — the ONE PLACE a Kubernetes object becomes a contract node.
@@ -49,10 +51,10 @@ func metaOf(m metav1.ObjectMeta) objectMeta {
 // A MARSHAL FAILURE IS RETURNED, NOT SWALLOWED. A node whose content silently
 // became empty reads downstream as a document with no text, and the walk would
 // still assert it enumerated the object.
-func objectNode(meta objectMeta, kind string, extra map[string]string, body any) (Node, error) {
+func objectNode(meta objectMeta, kind string, extra map[string]string, body any) (framework.Node, error) {
 	content, err := marshalJSON(body)
 	if err != nil {
-		return Node{}, fmt.Errorf("%s %s: %w", kind, resourceID(meta.Namespace, kind, meta.Name), err)
+		return framework.Node{}, fmt.Errorf("%s %s: %w", kind, resourceID(meta.Namespace, kind, meta.Name), err)
 	}
 
 	m := labelsToMeta(meta.Labels)
@@ -63,7 +65,7 @@ func objectNode(meta objectMeta, kind string, extra map[string]string, body any)
 	}
 	maps.Copy(m, extra)
 
-	return Node{
+	return framework.Node{
 		ID:         resourceID(meta.Namespace, kind, meta.Name),
 		Type:       nodeTypeCloudResource,
 		SymbolName: meta.Name,
@@ -78,9 +80,9 @@ func objectNode(meta objectMeta, kind string, extra map[string]string, body any)
 // namespace (Kubernetes does not permit a cross-namespace owner), so the target
 // id is built with the child's namespace — except for a cluster-scoped owner,
 // which carries none.
-func ownerEdges(meta objectMeta, kind string) []Edge {
+func ownerEdges(meta objectMeta, kind string) []framework.Edge {
 	childID := resourceID(meta.Namespace, kind, meta.Name)
-	out := make([]Edge, 0, len(meta.OwnerReferences))
+	out := make([]framework.Edge, 0, len(meta.OwnerReferences))
 	for _, ref := range meta.OwnerReferences {
 		if ref.Kind == "" || ref.Name == "" {
 			continue
@@ -89,7 +91,7 @@ func ownerEdges(meta objectMeta, kind string) []Edge {
 		if clusterScopedKinds[ref.Kind] {
 			ownerNamespace = ""
 		}
-		out = append(out, Edge{
+		out = append(out, framework.Edge{
 			FromID: childID,
 			ToID:   resourceID(ownerNamespace, ref.Kind, ref.Name),
 			Type:   edgeOwnedBy,

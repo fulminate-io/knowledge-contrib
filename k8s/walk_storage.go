@@ -7,6 +7,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // walk_storage.go — the storage kinds, the two scaling and availability kinds,
@@ -32,14 +34,14 @@ func walkPersistentVolumeClaims(ctx context.Context, c clientBundle, w *walkResu
 		// BOUND_TO: only a BOUND claim names a volume. A pending claim has no
 		// volume name and gets no edge.
 		if pvc.Spec.VolumeName != "" {
-			w.addEdges(Edge{
+			w.addEdges(framework.Edge{
 				FromID: id,
 				ToID:   resourceID("", "PersistentVolume", pvc.Spec.VolumeName),
 				Type:   edgeBoundTo,
 			})
 		}
 		if sc := deref(pvc.Spec.StorageClassName); sc != "" {
-			w.addEdges(Edge{FromID: id, ToID: resourceID("", "StorageClass", sc), Type: edgeUsesStorageClass})
+			w.addEdges(framework.Edge{FromID: id, ToID: resourceID("", "StorageClass", sc), Type: edgeUsesStorageClass})
 		}
 	}
 	return nil
@@ -68,7 +70,7 @@ func walkPersistentVolumes(ctx context.Context, c clientBundle, w *walkResult) e
 			return err
 		}
 		if pv.Spec.StorageClassName != "" {
-			w.addEdges(Edge{
+			w.addEdges(framework.Edge{
 				FromID: resourceID("", "PersistentVolume", pv.Name),
 				ToID:   resourceID("", "StorageClass", pv.Spec.StorageClassName),
 				Type:   edgeUsesStorageClass,
@@ -135,7 +137,7 @@ func walkHorizontalPodAutoscalers(ctx context.Context, c clientBundle, w *walkRe
 		// SCALES: an autoscaler scales the workload its scaleTargetRef names,
 		// which is always in the autoscaler's own namespace.
 		if ref := h.Spec.ScaleTargetRef; ref.Name != "" && ref.Kind != "" {
-			w.addEdges(Edge{
+			w.addEdges(framework.Edge{
 				FromID: resourceID(h.Namespace, "HorizontalPodAutoscaler", h.Name),
 				ToID:   resourceID(h.Namespace, ref.Kind, ref.Name),
 				Type:   edgeScales,

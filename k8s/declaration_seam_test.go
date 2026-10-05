@@ -131,13 +131,13 @@ func TestSeam_TheIRSAAndGCPShapesAreUnaffectedByTheForeignBlock(t *testing.T) {
 		"control: the Azure workload-identity shape is the one the block feeds")
 }
 
-func countWorkloadIdentityEdges(edges []Edge) int {
+func countWorkloadIdentityEdges(edges []framework.Edge) int {
 	return countEdgesByType(edges)[edgeWorkloadIdentity+"->"+familyAzure]
 }
 
 // countEdgesByType keys on the edge type AND the family its foreign endpoint
 // names, because three distinct shapes share the WORKLOAD_IDENTITY type.
-func countEdgesByType(edges []Edge) map[string]int {
+func countEdgesByType(edges []framework.Edge) map[string]int {
 	out := map[string]int{}
 	for _, e := range edges {
 		family := e.TargetGraph

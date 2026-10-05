@@ -126,20 +126,20 @@ func TestFindCorrelations_AcceptsTheMeaningfulZeroes(t *testing.T) {
 		name string
 		in   Input
 	}{
-		{"an empty input", Input{}},
-		{"a nil resolver and a nil oracle", Input{
+		{name: "an empty input", in: Input{}},
+		{name: "a nil resolver and a nil oracle", in: Input{
 			Templates: []*Template{a, b},
 			Chunks:    []*Chunk{chunkFor(api, a), chunkFor(db, b)},
 			Streams:   []*Stream{api, db},
 		}},
-		{"a nil proxy map", Input{
+		{name: "a nil proxy map", in: Input{
 			Templates: []*Template{a, b},
 			Chunks:    []*Chunk{chunkFor(api, a), chunkFor(db, b)},
 			Streams:   []*Stream{api, db},
 			Resolver:  newResolver(map[string]string{"api": "arn:api", "db": "arn:db"}),
 			Oracle:    newOracle(),
 		}},
-		{"a template with unset timestamps", Input{
+		{name: "a template with unset timestamps", in: Input{
 			Templates: []*Template{a, unset},
 			Chunks:    []*Chunk{chunkFor(api, a), chunkFor(db, unset)},
 			Streams:   []*Stream{api, db},
@@ -148,17 +148,17 @@ func TestFindCorrelations_AcceptsTheMeaningfulZeroes(t *testing.T) {
 		// two IsZero guards in rangeRunsBackwards load-bearing: without them an
 		// unset LastSeen precedes any known FirstSeen and every half-known range
 		// would be refused.
-		{"a template with a known start and an unknown end", Input{
+		{name: "a template with a known start and an unknown end", in: Input{
 			Templates: []*Template{a, {ID: "tpl-half", Severity: SeverityError, FirstSeen: base}},
 			Chunks:    []*Chunk{chunkFor(api, a), {StreamID: db.ID, TemplateID: "tpl-half"}},
 			Streams:   []*Stream{api, db},
 		}},
-		{"a template with an unknown start and a known end", Input{
+		{name: "a template with an unknown start and a known end", in: Input{
 			Templates: []*Template{a, {ID: "tpl-half2", Severity: SeverityError, LastSeen: base}},
 			Chunks:    []*Chunk{chunkFor(api, a), {StreamID: db.ID, TemplateID: "tpl-half2"}},
 			Streams:   []*Stream{api, db},
 		}},
-		{"a stream with no labels at all", Input{
+		{name: "a stream with no labels at all", in: Input{
 			Templates: []*Template{a, b},
 			Chunks:    []*Chunk{chunkFor(api, a), {StreamID: "stream-bare", TemplateID: b.ID}},
 			Streams:   []*Stream{api, {ID: "stream-bare"}},

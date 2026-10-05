@@ -57,8 +57,8 @@ func TestEmittedProxyAndCorrelationValues(t *testing.T) {
 		}
 	}
 	for _, want := range []struct{ id, account, foreignID, symbol string }{
-		{"proxy:cloud:acct:r-api", "acct", "r-api", "namespace=dev"},
-		{"proxy:cloud:acct:r-db", "acct", "r-db", "namespace=data"},
+		{id: "proxy:cloud:acct:r-api", account: "acct", foreignID: "r-api", symbol: "namespace=dev"},
+		{id: "proxy:cloud:acct:r-db", account: "acct", foreignID: "r-db", symbol: "namespace=data"},
 	} {
 		n, ok := proxies[want.id]
 		if !ok {

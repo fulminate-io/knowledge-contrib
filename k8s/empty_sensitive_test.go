@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -39,11 +40,29 @@ import (
 // this suite runs on. A test that reported all three on the same ground would be
 // asserting something it did not measure, so the grounds are kept apart.
 
-// resolutionOutcome drives this collector's own credential resolution and reduces
-// the result to a comparable value.
+// resolutionOutcome drives this collector's own credential resolution against the
+// process environment and reduces the result to a comparable value. The
+// KUBERNETES_MASTER child probe uses it, because that child's environment is
+// built by its parent.
 func resolutionOutcome(t *testing.T) string {
 	t.Helper()
-	cred, err := resolveCredential("", defaultCredentialSources())
+	return outcomeOf(resolveCredential("", defaultCredentialSources()))
+}
+
+// resolutionOutcomeIn drives the same resolution against env, presented through
+// the collector's own lookupEnv seam — the one every credential read goes
+// through — with the production service-account paths. The sweep uses it so the
+// home names are driven without this test process's HOME ever being relocated.
+func resolutionOutcomeIn(t *testing.T, env map[string]string) string {
+	t.Helper()
+	return outcomeOf(resolveCredential("", credentialSources{
+		lookupEnv:          fakeEnv(env),
+		inClusterTokenFile: defaultInClusterTokenFile,
+		inClusterCAFile:    defaultInClusterCAFile,
+	}))
+}
+
+func outcomeOf(cred credential, err error) string {
 	if err != nil {
 		return "error: " + err.Error()
 	}
@@ -66,15 +85,44 @@ func proxyOutcome(t *testing.T) string {
 	return fmt.Sprintf("http=%s https=%s no=%s", cfg.HTTPProxy, cfg.HTTPSProxy, cfg.NoProxy)
 }
 
-// clearDeclared removes every declared name from the process environment for the
-// duration of the test, restoring each afterwards, so each arm starts from the
-// same baseline whatever the developer's shell holds. t.Setenv registers the
-// restoration; the Unsetenv is what makes the baseline ABSENT rather than empty.
+// isHomeName reports the names that locate the home directory. They are driven
+// only through resolutionOutcomeIn's environment and never written to this
+// process: relocating a test process's home also redirects toolchain caches and
+// every child's inherited configuration. The proxy resolver, the one reader here
+// that consults the process environment, does not read them.
+func isHomeName(name string) bool {
+	return name == "HOME" || name == "USERPROFILE"
+}
+
+// clearDeclared removes every declared name but the home names from the process
+// environment for the duration of the test, restoring each afterwards, so each
+// arm starts from the same baseline whatever the developer's shell holds.
+// t.Setenv registers the restoration; the Unsetenv is what makes the baseline
+// ABSENT rather than empty.
 func clearDeclared(t *testing.T, names []string) {
 	t.Helper()
 	for _, name := range names {
+		if isHomeName(name) {
+			continue
+		}
 		t.Setenv(name, "")
 		os.Unsetenv(name)
+	}
+}
+
+// presentToProcess installs env's non-home names into the process environment
+// for the proxy resolver, after clearing every declared non-home name, so the
+// process carries exactly the arm under test.
+func presentToProcess(declared []string, env map[string]string) {
+	for _, n := range declared {
+		if !isHomeName(n) {
+			os.Unsetenv(n)
+		}
+	}
+	for k, v := range env {
+		if !isHomeName(k) {
+			os.Setenv(k, v)
+		}
 	}
 }
 
@@ -119,20 +167,19 @@ func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
 	// So each name is driven in both of its own states, against a background
 	// carried by whichever of the two sources it does not occupy.
 	outcomeFor := func(name string, present bool) (string, string) {
-		for _, n := range declared {
-			os.Unsetenv(n)
-		}
+		env := map[string]string{}
 		if name == "KUBECONFIG" {
-			os.Setenv("HOME", home)
+			env["HOME"] = home
 		} else {
-			os.Setenv("KUBECONFIG", kubeconfig)
+			env["KUBECONFIG"] = kubeconfig
 		}
 		if present {
-			os.Setenv(name, "")
+			env[name] = ""
 		} else {
-			os.Unsetenv(name)
+			delete(env, name)
 		}
-		return resolutionOutcome(t), proxyOutcome(t)
+		presentToProcess(declared, env)
+		return resolutionOutcomeIn(t, env), proxyOutcome(t)
 	}
 
 	// The background's own control, taken through the same driver before any
@@ -157,11 +204,8 @@ func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
 	}
 	slices.Sort(differ)
 	if len(differ) != 0 {
-		t.Errorf("%d of %d declared names tell present-and-empty apart from absent: %v\n"+
-			"this collector's worked entry renders the defaulted ${NAME:-} form for every declared name, so a "+
-			"discriminating name means an operator who copies that entry gets a broken collect; either the name is "+
-			"marked empty_sensitive in describe_env.go and the entry stops showing the defaulted form for it, or "+
-			"the reader that started discriminating is the defect", len(differ), len(declared), differ)
+		t.Errorf(`%d of %d declared names tell present-and-empty apart from absent: %v
+this collector's worked entry renders the defaulted ${NAME:-} form for every declared name, so a discriminating name means an operator who copies that entry gets a broken collect; either the name is marked empty_sensitive in describe_env.go and the entry stops showing the defaulted form for it, or the reader that started discriminating is the defect`, len(differ), len(declared), differ)
 	}
 
 	// AND THE DECLARATION AGREES, which is the half the installer reads. The two
@@ -185,22 +229,17 @@ func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
 	// therefore a comparison of two REFUSALS, and it says so rather than
 	// borrowing the resolved-path ground the rest of the sweep stands on.
 	t.Run("HOME as the sole kubeconfig source", func(t *testing.T) {
-		for _, n := range declared {
-			os.Unsetenv(n)
-		}
-		absent := resolutionOutcome(t)
-		os.Setenv("HOME", "")
-		empty := resolutionOutcome(t)
-		os.Unsetenv("HOME")
+		presentToProcess(declared, nil)
+		absent := resolutionOutcomeIn(t, map[string]string{})
+		empty := resolutionOutcomeIn(t, map[string]string{"HOME": ""})
 		if absent != empty {
-			t.Errorf("HOME present-and-empty is not the same as absent when it is the only kubeconfig source\n"+
-				"absent: %s\nempty:  %s", absent, empty)
+			t.Errorf(`HOME present-and-empty is not the same as absent when it is the only kubeconfig source
+absent: %s
+empty:  %s`, absent, empty)
 		}
 		// The same-run positive that makes the equality above mean something: a
 		// REAL home does reach a built client through this same driver.
-		os.Setenv("HOME", home)
-		set := resolutionOutcome(t)
-		os.Unsetenv("HOME")
+		set := resolutionOutcomeIn(t, map[string]string{"HOME": home})
 		assertResolvesTheFixture(t, "HOME set to a home carrying the fixture", set)
 	})
 
@@ -213,23 +252,23 @@ func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
 			arm    string
 			set    map[string]string
 			drop   []string
-			out    func(*testing.T) string
+			out    func(*testing.T, map[string]string) string
 			before string
 		}{
 			{
 				// The in-cluster arm: either name alone reaches the half-declared
 				// refusal, which is a different outcome from a built client.
 				arm: "in-cluster service host", set: map[string]string{"KUBERNETES_SERVICE_HOST": "10.0.0.1"},
-				out: resolutionOutcome, before: credBaseline,
+				out: resolutionOutcomeIn, before: credBaseline,
 			},
 			{
 				arm: "in-cluster service port", set: map[string]string{"KUBERNETES_SERVICE_PORT": "443"},
-				out: resolutionOutcome, before: credBaseline,
+				out: resolutionOutcomeIn, before: credBaseline,
 			},
 			{
 				// The kubeconfig arm, moved by a path that does not exist.
 				arm: "kubeconfig path", set: map[string]string{"KUBECONFIG": filepath.Join(t.TempDir(), "nope")},
-				out: resolutionOutcome, before: credBaseline,
+				out: resolutionOutcomeIn, before: credBaseline,
 			},
 			{
 				// The home arm. It DROPS the background's KUBECONFIG first, because
@@ -238,30 +277,24 @@ func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
 				// the failure a control exists to prevent.
 				arm: "home directory", set: map[string]string{"HOME": t.TempDir()},
 				drop: []string{"KUBECONFIG"},
-				out:  resolutionOutcome, before: credBaseline,
+				out:  resolutionOutcomeIn, before: credBaseline,
 			},
 			{
 				// The proxy family, through its own resolver and against a
 				// non-loopback target.
 				arm: "proxy family", set: map[string]string{"HTTP_PROXY": "http://proxy.example.invalid:3128"},
-				out: proxyOutcome, before: proxyBaseline,
+				out: func(t *testing.T, _ map[string]string) string { return proxyOutcome(t) }, before: proxyBaseline,
 			},
 		} {
 			t.Run(tc.arm, func(t *testing.T) {
-				for _, n := range declared {
-					os.Unsetenv(n)
-				}
-				os.Setenv("KUBECONFIG", kubeconfig)
+				env := map[string]string{"KUBECONFIG": kubeconfig}
 				for _, k := range tc.drop {
-					os.Unsetenv(k)
+					delete(env, k)
 				}
-				for k, v := range tc.set {
-					os.Setenv(k, v)
-				}
-				got := tc.out(t)
-				for k := range tc.set {
-					os.Unsetenv(k)
-				}
+				maps.Copy(env, tc.set)
+				presentToProcess(declared, env)
+				got := tc.out(t, env)
+				presentToProcess(declared, nil)
 				t.Logf("%s arm: baseline=%q moved-to=%q", tc.arm, tc.before, got)
 				if got == tc.before {
 					t.Errorf("control: the %s arm did not move when its name was set to a real value; "+

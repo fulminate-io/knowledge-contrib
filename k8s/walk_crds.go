@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // walk_crds.go — THE DYNAMIC HALF OF THE KIND FLOOR: every custom resource the
@@ -183,7 +185,7 @@ func walkCustomResource(
 // states. A group with no extractor contributes nodes and owner edges only,
 // which is the ordinary case: most custom resources describe something this
 // graph has no other node for.
-type crdExtractor func(item *unstructured.Unstructured, kind string) []Edge
+type crdExtractor func(item *unstructured.Unstructured, kind string) []framework.Edge
 
 // crdExtractorFor returns the extractor registered for an API group, or nil.
 //

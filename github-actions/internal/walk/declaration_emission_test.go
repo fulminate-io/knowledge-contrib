@@ -73,10 +73,8 @@ func TestEveryEmittedNodeTypeIsDeclaredAndEveryDeclaredOneIsEmitted(t *testing.T
 
 	for _, node := range got.Nodes {
 		if !slices.Contains(declared, node.Type) {
-			t.Errorf("the walk emitted the node %q with the node type %q, which the describe "+
-				"declaration does not name; it declares %v.\n"+
-				"The server refuses an undeclared node type by name on the first chunk, so this "+
-				"is every collect of this collector failing at ingest.",
+			t.Errorf(`the walk emitted the node %q with the node type %q, which the describe declaration does not name; it declares %v.
+The server refuses an undeclared node type by name on the first chunk, so this is every collect of this collector failing at ingest.`,
 				node.ID, node.Type, declared)
 			break
 		}
@@ -84,10 +82,8 @@ func TestEveryEmittedNodeTypeIsDeclaredAndEveryDeclaredOneIsEmitted(t *testing.T
 
 	for _, want := range declared {
 		if emitted[want] == 0 {
-			t.Errorf("the describe declaration names the node type %q, which this walk emits "+
-				"on no node; the emitted types are %v.\n"+
-				"A declared type nothing produces is a promise to a consumer that this "+
-				"collector does not keep.", want, sortedKeys(emitted))
+			t.Errorf(`the describe declaration names the node type %q, which this walk emits on no node; the emitted types are %v.
+A declared type nothing produces is a promise to a consumer that this collector does not keep.`, want, sortedKeys(emitted))
 		}
 	}
 }

@@ -158,11 +158,11 @@ func TestSeverityIsRaisedNeverLowered(t *testing.T) {
 // is what makes two renderings of one line cluster at all.
 func TestPreProcessMasksEveryHighCardinalityClass(t *testing.T) {
 	for _, tc := range []struct{ name, in, want string }{
-		{"uuid", "job 550e8400-e29b-41d4-a716-446655440000 done", "job <*> done"},
-		{"timestamp", "at 2026-09-07T12:00:00Z ok", "at <*> ok"},
-		{"clock", "at 12:00:00 ok", "at <*> ok"},
-		{"ipv4", "dial 10.0.0.1 failed", "dial <*> failed"},
-		{"hex id", "trace abcdefabcdefabcd done", "trace <*> done"},
+		{name: "uuid", in: "job 550e8400-e29b-41d4-a716-446655440000 done", want: "job <*> done"},
+		{name: "timestamp", in: "at 2026-09-07T12:00:00Z ok", want: "at <*> ok"},
+		{name: "clock", in: "at 12:00:00 ok", want: "at <*> ok"},
+		{name: "ipv4", in: "dial 10.0.0.1 failed", want: "dial <*> failed"},
+		{name: "hex id", in: "trace abcdefabcdefabcd done", want: "trace <*> done"},
 		// A hex id whose tail is a long digit RUN is claimed by the timestamp
 		// pass first, because that pass's epoch-millis alternative is not
 		// word-anchored and so matches inside a longer token. The result is a
@@ -170,10 +170,10 @@ func TestPreProcessMasksEveryHighCardinalityClass(t *testing.T) {
 		// rather than left to surprise a reader: both halves are masked, so the
 		// clustering still works, and changing the pass order to "fix" it would
 		// move every template id this module has ever emitted.
-		{"hex id with a digit tail is masked in two pieces", "trace abcdef0123456789 done", "trace abcdef<*> done"},
-		{"long number", "port 65535 open", "port <*> open"},
-		{"url", "GET https://example.com/a/very/long/path/here ok", "GET <url> ok"},
-		{"short number survives", "retry 3 times", "retry 3 times"},
+		{name: "hex id with a digit tail is masked in two pieces", in: "trace abcdef0123456789 done", want: "trace abcdef<*> done"},
+		{name: "long number", in: "port 65535 open", want: "port <*> open"},
+		{name: "url", in: "GET https://example.com/a/very/long/path/here ok", want: "GET <url> ok"},
+		{name: "short number survives", in: "retry 3 times", want: "retry 3 times"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := preProcess(tc.in); got != tc.want {

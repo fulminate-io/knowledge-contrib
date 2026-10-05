@@ -119,9 +119,8 @@ func TestCensus_TheContinuationClassifierIsCalibrated(t *testing.T) {
 	} {
 		field, got := continuationFieldOf(t, tc.pkg, tc.operation)
 		if got != tc.want {
-			t.Errorf("the classifier says %s.%s continuation-bearing=%v (field %q), want %v — %s.\n"+
-				"The classifier reads the pinned SDK's %sOutput struct; a wrong answer here means the census "+
-				"above is measuring something other than what it reports.",
+			t.Errorf(`the classifier says %s.%s continuation-bearing=%v (field %q), want %v — %s.
+The classifier reads the pinned SDK's %sOutput struct; a wrong answer here means the census above is measuring something other than what it reports.`,
 				tc.pkg, tc.operation, got, field, tc.want, tc.why, tc.operation)
 		}
 	}
@@ -151,9 +150,8 @@ func continuationFieldOf(t *testing.T, pkg, operation string) (string, bool) {
 		// so its declaration exists somewhere; not finding it means the census
 		// looked in the wrong place, and answering "does not paginate" there would
 		// turn every future miss into a silent pass.
-		t.Fatalf("read the pinned declaration of %s.%s at %s: %v.\nThe census cannot classify an operation "+
-			"whose generated source it cannot open, and treating that as 'no continuation field' would make "+
-			"a wrong path indistinguishable from a non-paginated call.", pkg, operation, path, err)
+		t.Fatalf(`read the pinned declaration of %s.%s at %s: %v.
+The census cannot classify an operation whose generated source it cannot open, and treating that as 'no continuation field' would make a wrong path indistinguishable from a non-paginated call.`, pkg, operation, path, err)
 	}
 
 	// THE OUTPUT STRUCT ONLY. The input struct of a paginated operation carries

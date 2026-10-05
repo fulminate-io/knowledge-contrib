@@ -66,8 +66,9 @@ func TestTheServiceHostNameTellsEmptyApartFromAbsent(t *testing.T) {
 			EnvKubernetesServiceHost, empty)
 	}
 	if empty != real {
-		t.Errorf("%s present-and-empty is not byte-identical to a real value, so the branch is not a presence branch\n"+
-			"empty: %s\nreal:  %s", EnvKubernetesServiceHost, empty, real)
+		t.Errorf(`%s present-and-empty is not byte-identical to a real value, so the branch is not a presence branch
+empty: %s
+real:  %s`, EnvKubernetesServiceHost, empty, real)
 	}
 	// The two arms named, so a refusal that stopped naming the mount would red
 	// here rather than pass on inequality alone.

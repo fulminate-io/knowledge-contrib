@@ -91,11 +91,12 @@ test("R1.6 an incomplete walk with an empty reason is refused, naming the collec
   );
 });
 
-test("R1.6 the reason never reaches the wire", () => {
-  const out = encodeResult("collect", { complete: incomplete("a secret-shaped reason") });
-  const wire = JSON.stringify(out);
-  assert.equal(wire.includes("a secret-shaped reason"), false);
-  assert.equal(wire.includes("reason"), false);
+test("R1.6 the reason reaches the wire only as walk_incomplete_reason", () => {
+  const out = encodeResult("collect", { complete: incomplete("the source paged out") });
+  const wire = JSON.parse(JSON.stringify(out)) as Record<string, unknown>;
+  assert.equal(wire["walk_incomplete_reason"], "the source paged out");
+  const { walk_incomplete_reason: _reason, ...rest } = wire;
+  assert.equal(JSON.stringify(rest).includes("the source paged out"), false, "the reason rides no other key");
 });
 
 test("R1.7 a node with an empty type is refused, naming the collector and the index", () => {

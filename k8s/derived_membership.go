@@ -5,6 +5,8 @@ package main
 import (
 	"encoding/json"
 	"sort"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // derived_membership.go — IN_NAMESPACE and SELECTS: the two derivations that
@@ -27,7 +29,7 @@ import (
 // counting: a Namespace node itself (a namespace is not in a namespace), a
 // cluster-scoped node (there is no namespace to be in), and a namespaced node
 // whose Namespace is missing (which IS the skip, and is reported).
-func buildNamespaceMembershipEdges(nodes []Node) []Edge {
+func buildNamespaceMembershipEdges(nodes []framework.Node) []framework.Edge {
 	edges, _ := namespaceMembership(nodes)
 	return edges
 }
@@ -35,7 +37,7 @@ func buildNamespaceMembershipEdges(nodes []Node) []Edge {
 // namespaceMembership returns the edges and the count of nodes whose Namespace
 // node was absent, so a test can assert the skip rather than read a zero edge
 // count as success.
-func namespaceMembership(nodes []Node) (edges []Edge, skipped int) {
+func namespaceMembership(nodes []framework.Node) (edges []framework.Edge, skipped int) {
 	present := make(map[string]bool)
 	for i := range nodes {
 		n := &nodes[i]
@@ -57,7 +59,7 @@ func namespaceMembership(nodes []Node) (edges []Edge, skipped int) {
 			skipped++
 			continue
 		}
-		edges = append(edges, Edge{
+		edges = append(edges, framework.Edge{
 			FromID: n.ID,
 			ToID:   resourceID("", "Namespace", ns),
 			Type:   edgeInNamespace,
@@ -81,10 +83,10 @@ func namespaceMembership(nodes []Node) (edges []Edge, skipped int) {
 //     its namespace; the walk carries a selector key only for a Service that
 //     declared a non-empty one, so an empty map never reaches here as "matches
 //     everything".
-func buildSelectsEdges(nodes []Node) []Edge {
+func buildSelectsEdges(nodes []framework.Node) []framework.Edge {
 	pods := podsByNamespace(nodes)
 
-	var out []Edge
+	var out []framework.Edge
 	for i := range nodes {
 		n := &nodes[i]
 		if n.Metadata["resource_type"] != "Service" {
@@ -96,7 +98,7 @@ func buildSelectsEdges(nodes []Node) []Edge {
 		}
 		for _, pod := range pods[n.Metadata["namespace"]] {
 			if labelsMatch(pod.Metadata, selector) {
-				out = append(out, Edge{FromID: n.ID, ToID: pod.ID, Type: edgeSelects})
+				out = append(out, framework.Edge{FromID: n.ID, ToID: pod.ID, Type: edgeSelects})
 			}
 		}
 	}
@@ -105,8 +107,8 @@ func buildSelectsEdges(nodes []Node) []Edge {
 
 // podsByNamespace indexes this walk's Pod nodes, in a stable order so two
 // collects of an unchanged cluster produce edges in the same order.
-func podsByNamespace(nodes []Node) map[string][]*Node {
-	index := map[string][]*Node{}
+func podsByNamespace(nodes []framework.Node) map[string][]*framework.Node {
+	index := map[string][]*framework.Node{}
 	for i := range nodes {
 		n := &nodes[i]
 		if n.Metadata["resource_type"] != "Pod" {

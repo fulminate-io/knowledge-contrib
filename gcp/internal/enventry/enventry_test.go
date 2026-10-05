@@ -53,9 +53,9 @@ func TestNamesPerTargetIsSetEquality(t *testing.T) {
 		homeName  string
 		otherHome string
 	}{
-		{"linux", "HOME", "APPDATA"},
-		{"darwin", "HOME", "APPDATA"},
-		{"windows", "APPDATA", "HOME"},
+		{goos: "linux", homeName: "HOME", otherHome: "APPDATA"},
+		{goos: "darwin", homeName: "HOME", otherHome: "APPDATA"},
+		{goos: "windows", homeName: "APPDATA", otherHome: "HOME"},
 	} {
 		t.Run(tc.goos, func(t *testing.T) {
 			want := append(slices.Clone(commonExpectation), tc.homeName)

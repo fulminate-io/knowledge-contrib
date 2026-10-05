@@ -51,41 +51,41 @@ func TestCloudWatchComponentChain(t *testing.T) {
 		labels map[string]string
 		want   string
 	}{
-		{"both components present", map[string]string{"log_stream": "ecs-task", "service": "api"}, "ecs-task.api"},
-		{"log_stream absent yields the second alone", map[string]string{"log_group": "/g", "service": "api"}, "api"},
+		{name: "both components present", labels: map[string]string{"log_stream": "ecs-task", "service": "api"}, want: "ecs-task.api"},
+		{name: "log_stream absent yields the second alone", labels: map[string]string{"log_group": "/g", "service": "api"}, want: "api"},
 		{
 			// firstNonEmpty prefers service and falls back to log_group.
-			"service absent falls back to log_group",
-			map[string]string{"log_stream": "s1", "log_group": "/ecs/prod"}, "s1.ecs-prod",
+			name:   "service absent falls back to log_group",
+			labels: map[string]string{"log_stream": "s1", "log_group": "/ecs/prod"}, want: "s1.ecs-prod",
 		},
 		{
 			// The fallback fires on an EMPTY VALUE too, because firstNonEmpty
 			// tests the value rather than the key's presence.
-			"service present but empty falls back to log_group",
-			map[string]string{"log_stream": "s1", "log_group": "/ecs/prod", "service": ""}, "s1.ecs-prod",
+			name:   "service present but empty falls back to log_group",
+			labels: map[string]string{"log_stream": "s1", "log_group": "/ecs/prod", "service": ""}, want: "s1.ecs-prod",
 		},
-		{"service and log_group absent yields the first alone", map[string]string{"log_stream": "s1"}, "s1"},
+		{name: "service and log_group absent yields the first alone", labels: map[string]string{"log_stream": "s1"}, want: "s1"},
 		{
 			// A log_group present with an EMPTY value does not select the
 			// CloudWatch arm at all: the dispatch tests values, so this falls
 			// through to generic, where an empty value is skipped.
-			"an empty-valued log_group alone takes generic and yields nothing",
-			map[string]string{"log_group": ""}, "",
+			name:   "an empty-valued log_group alone takes generic and yields nothing",
+			labels: map[string]string{"log_group": ""}, want: "",
 		},
 		{
-			"an empty-valued log_group beside a service takes generic",
-			map[string]string{"log_group": "", "service": "api-server"}, "service=api-server",
+			name:   "an empty-valued log_group beside a service takes generic",
+			labels: map[string]string{"log_group": "", "service": "api-server"}, want: "service=api-server",
 		},
 		{
 			// THE DANGLING SEPARATOR, both directions. The branch tests the RAW
 			// values, so a component that is non-empty and sanitizes to empty
 			// still takes the both-present branch.
-			"a first component that sanitizes to empty leaves a leading dot",
-			map[string]string{"log_stream": "...", "service": "api"}, ".api",
+			name:   "a first component that sanitizes to empty leaves a leading dot",
+			labels: map[string]string{"log_stream": "...", "service": "api"}, want: ".api",
 		},
 		{
-			"a second component that sanitizes to empty leaves a trailing dot",
-			map[string]string{"log_stream": "ecs-task", "service": "@@@"}, "ecs-task.",
+			name:   "a second component that sanitizes to empty leaves a trailing dot",
+			labels: map[string]string{"log_stream": "ecs-task", "service": "@@@"}, want: "ecs-task.",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -120,11 +120,11 @@ func TestSanitizeSafeSetBothDirections(t *testing.T) {
 // TestSanitizeCollapsesTrimsAndPreservesCase covers the three remaining rules.
 func TestSanitizeCollapsesTrimsAndPreservesCase(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"a///b", "a-b"},
-		{"...api...", "api"},
-		{"OOMKilled", "OOMKilled"},
-		{"", ""},
-		{"@@@", ""},
+		{in: "a///b", want: "a-b"},
+		{in: "...api...", want: "api"},
+		{in: "OOMKilled", want: "OOMKilled"},
+		{in: "", want: ""},
+		{in: "@@@", want: ""},
 	} {
 		if got := sanitize(tc.in); got != tc.want {
 			t.Errorf("sanitize(%q) = %q, want %q", tc.in, got, tc.want)

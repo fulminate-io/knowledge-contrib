@@ -146,8 +146,8 @@ func TestResolutionWithNoAccountIsRefused(t *testing.T) {
 		res  Resolution
 		want string
 	}{
-		{"no account", Resolution{LabelKey: "namespace", LabelValue: "dev", ResourceID: "r1"}, "cloud account"},
-		{"no resource", Resolution{LabelKey: "namespace", LabelValue: "dev", Account: "acct"}, "cloud resource id"},
+		{name: "no account", res: Resolution{LabelKey: "namespace", LabelValue: "dev", ResourceID: "r1"}, want: "cloud account"},
+		{name: "no resource", res: Resolution{LabelKey: "namespace", LabelValue: "dev", Account: "acct"}, want: "cloud resource id"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, _, err := MaterializeProxies([]Resolution{tc.res}, nil)

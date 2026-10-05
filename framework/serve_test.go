@@ -4,6 +4,7 @@ package framework
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http/httptest"
 	"os"
@@ -191,23 +192,24 @@ func resultText(res *mcp.CallToolResult) string {
 	return b.String()
 }
 
-// assertArray is what distinguishes an EMPTY ARRAY from a JSON null. A nil Go
+// checkArray is what distinguishes an EMPTY ARRAY from a JSON null. A nil Go
 // slice marshals to null, the contract declares both lists as arrays, and that
 // difference is the whole of the empty-walk row.
-func assertArray(t *testing.T, doc map[string]any, key string, want int) {
-	t.Helper()
+func checkArray(doc map[string]any, key string, want int) error {
+	var errs []error
 	raw, present := doc[key]
 	if !present {
-		t.Fatalf("the envelope carries no %q at all: %s", key, mustJSON(t, doc))
+		return fmt.Errorf("the envelope carries no %q at all: %v", key, doc)
 	}
 	list, ok := raw.([]any)
 	if !ok {
-		t.Fatalf("%q is %T (%v), not a JSON array; a nil Go slice reaching the wire as null is what this asserts against",
+		return fmt.Errorf("%q is %T (%v), not a JSON array; a nil Go slice reaching the wire as null is what this asserts against",
 			key, raw, raw)
 	}
 	if len(list) != want {
-		t.Errorf("%q carries %d entries, want %d", key, len(list), want)
+		errs = append(errs, fmt.Errorf("%q carries %d entries, want %d", key, len(list), want))
 	}
+	return errors.Join(errs...)
 }
 
 // mustJSON renders a value as compact JSON for comparison and for a failure
@@ -289,10 +291,10 @@ func TestCollectMatrix(t *testing.T) {
 		wantNodes    int
 		wantEdges    int
 	}{
-		{"nonempty-complete", fixtureConforming, true, 2, 1},
-		{"nonempty-incomplete", fixtureIncompleteWalk, false, 2, 1},
-		{"empty-complete", fixtureEmptyWalk, true, 0, 0},
-		{"empty-incomplete", fixtureEmptyIncomplete, false, 0, 0},
+		{name: "nonempty-complete", mode: fixtureConforming, wantComplete: true, wantNodes: 2, wantEdges: 1},
+		{name: "nonempty-incomplete", mode: fixtureIncompleteWalk, wantComplete: false, wantNodes: 2, wantEdges: 1},
+		{name: "empty-complete", mode: fixtureEmptyWalk, wantComplete: true, wantNodes: 0, wantEdges: 0},
+		{name: "empty-incomplete", mode: fixtureEmptyIncomplete, wantComplete: false, wantNodes: 0, wantEdges: 0},
 	}
 	// THE PARAM AXIS HAS FIVE CLASSES, AND THREE OF THEM ARE REFUSALS THAT
 	// DISCRIMINATE DIFFERENT THINGS. wrong-type is refused by Go's own unmarshal
@@ -312,18 +314,18 @@ func TestCollectMatrix(t *testing.T) {
 		args   map[string]any
 		wantIn string
 	}{
-		{"absent", map[string]any{"id": "inst-7"}, ""},
-		{"valid", map[string]any{"id": "inst-7", "params": map[string]any{"region": "us-east-1", "depth": 3}}, ""},
-		{"wrong-type", map[string]any{"id": "inst-7", "params": map[string]any{"region": 7}}, "region"},
+		{name: "absent", args: map[string]any{"id": "inst-7"}, wantIn: ""},
+		{name: "valid", args: map[string]any{"id": "inst-7", "params": map[string]any{"region": "us-east-1", "depth": 3}}, wantIn: ""},
+		{name: "wrong-type", args: map[string]any{"id": "inst-7", "params": map[string]any{"region": 7}}, wantIn: "region"},
 		// Present, decodes cleanly into fixtureParams, and omits the key the
 		// collector's params schema marks required.
-		{"incomplete", map[string]any{"id": "inst-7", "params": map[string]any{"depth": 3}},
-			`required: missing properties: ["region"]`},
+		{name: "incomplete", args: map[string]any{"id": "inst-7", "params": map[string]any{"depth": 3}},
+			wantIn: `required: missing properties: ["region"]`},
 		// Present, valid on every declared key, and carrying one the params type
 		// does not declare. Go's decode drops it without a word; the inferred
 		// schema sets additionalProperties false and the SDK refuses it.
-		{"unknown-key", map[string]any{"id": "inst-7", "params": map[string]any{"region": "us-east-1", "surprise": "x"}},
-			`unexpected additional properties ["surprise"]`},
+		{name: "unknown-key", args: map[string]any{"id": "inst-7", "params": map[string]any{"region": "us-east-1", "surprise": "x"}},
+			wantIn: `unexpected additional properties ["surprise"]`},
 	}
 
 	for _, transport := range []string{overStdio, overHTTP} {
@@ -337,7 +339,9 @@ func TestCollectMatrix(t *testing.T) {
 					}
 
 					if param.wantIn != "" {
-						assertParamRefusal(t, p, res, param.wantIn)
+						if err := checkParamRefusal(p, res, param.wantIn); err != nil {
+							t.Fatal(err)
+						}
 						return
 					}
 					if res.IsError {
@@ -345,8 +349,12 @@ func TestCollectMatrix(t *testing.T) {
 					}
 
 					doc := envelopeOf(t, res)
-					assertArray(t, doc, "nodes", shape.wantNodes)
-					assertArray(t, doc, "edges", shape.wantEdges)
+					if err := checkArray(doc, "nodes", shape.wantNodes); err != nil {
+						t.Fatal(err)
+					}
+					if err := checkArray(doc, "edges", shape.wantEdges); err != nil {
+						t.Fatal(err)
+					}
 					complete, ok := doc["walk_complete"].(bool)
 					if !ok {
 						t.Fatalf("walk_complete is absent or not a boolean in %s", mustJSON(t, doc))
@@ -354,57 +362,61 @@ func TestCollectMatrix(t *testing.T) {
 					if complete != shape.wantComplete {
 						t.Errorf("walk_complete is %v, want %v", complete, shape.wantComplete)
 					}
-					assertWalkReceived(t, p, param.name)
+					if err := checkWalkReceived(p, param.name); err != nil {
+						t.Fatal(err)
+					}
 				})
 			}
 		}
 	}
 }
 
-// assertWalkReceived checks what the walk was handed, where this process can see
+// checkWalkReceived checks what the walk was handed, where this process can see
 // it: absent params reach the walk as the zero value, valid ones verbatim.
-func assertWalkReceived(t *testing.T, p *provider, paramClass string) {
-	t.Helper()
+func checkWalkReceived(p *provider, paramClass string) error {
+	var errs []error
 	if p.fixture == nil {
-		return
+		return nil
 	}
 	call, ran := p.fixture.lastCall()
 	if !ran {
-		t.Fatalf("the walk never ran on an accepted collect")
+		return errors.New("the walk never ran on an accepted collect")
 	}
 	if call.id != "inst-7" {
-		t.Errorf("the walk received id %q, want inst-7", call.id)
+		errs = append(errs, fmt.Errorf("the walk received id %q, want inst-7", call.id))
 	}
 	want := fixtureParams{}
 	if paramClass == "valid" {
 		want = fixtureParams{Region: "us-east-1", Depth: 3}
 	}
 	if call.params != want {
-		t.Errorf("the walk received params %+v, want %+v", call.params, want)
+		errs = append(errs, fmt.Errorf("the walk received params %+v, want %+v", call.params, want))
 	}
+	return errors.Join(errs...)
 }
 
-// assertParamRefusal is a refused param cell's whole behavior: a tool error
+// checkParamRefusal is a refused param cell's whole behavior: a tool error
 // carrying the refusal this class earns, no envelope, and a walk that never ran.
 //
 // wantIn is per class rather than a single field name, and that is the point of
 // the axis: "region" alone is satisfied by Go's unmarshal, while the required-key
 // and additional-property refusals can only come from the schema the framework
 // advertised on the collector's behalf.
-func assertParamRefusal(t *testing.T, p *provider, res *mcp.CallToolResult, wantIn string) {
-	t.Helper()
+func checkParamRefusal(p *provider, res *mcp.CallToolResult, wantIn string) error {
+	var errs []error
 	if !res.IsError {
-		t.Fatalf("params the advertised schema refuses were ACCEPTED: %s", mustJSON(t, envelopeOf(t, res)))
+		return fmt.Errorf("params the advertised schema refuses were ACCEPTED: %v", res.StructuredContent)
 	}
 	text := resultText(res)
 	if !strings.Contains(text, wantIn) {
-		t.Errorf("the refusal does not carry %q: %s", wantIn, text)
+		errs = append(errs, fmt.Errorf("the refusal does not carry %q: %s", wantIn, text))
 	}
 	if res.StructuredContent != nil {
-		t.Errorf("a refused collect carries an envelope: %v", res.StructuredContent)
+		errs = append(errs, fmt.Errorf("a refused collect carries an envelope: %v", res.StructuredContent))
 	}
 	if p.fixture != nil && p.fixture.callCount() != 0 {
-		t.Errorf("the walk ran %d times on params the advertised schema refuses; it must not run at all",
-			p.fixture.callCount())
+		errs = append(errs, fmt.Errorf("the walk ran %d times on params the advertised schema refuses; it must not run at all",
+			p.fixture.callCount()))
 	}
+	return errors.Join(errs...)
 }

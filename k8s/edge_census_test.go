@@ -16,6 +16,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // edge_census_test.go — R5-h AS A CENSUS: an emit-and-suppress pair for every
@@ -59,16 +61,16 @@ type edgeCensusRow struct {
 	declaredOnly bool
 	reason       string
 	// emit produces edges from a fixture that CLEARS the family's gate.
-	emit func(*testing.T) []Edge
+	emit func(*testing.T) []framework.Edge
 	// suppress produces edges from a fixture that differs only in FAILING the
 	// gate.
-	suppress func(*testing.T) []Edge
+	suppress func(*testing.T) []framework.Edge
 }
 
 // walkEdges runs the whole walk over a typed-object fixture and returns its
 // edges, which is how every walk-side row drives its family.
-func walkEdges(objs ...runtime.Object) func(*testing.T) []Edge {
-	return func(t *testing.T) []Edge {
+func walkEdges(objs ...runtime.Object) func(*testing.T) []framework.Edge {
+	return func(t *testing.T) []framework.Edge {
 		t.Helper()
 		_, edges, _ := runWalk(t, newFakeBundle(t, objs, nil, emptyDynamic()))
 		return edges
@@ -76,8 +78,8 @@ func walkEdges(objs ...runtime.Object) func(*testing.T) []Edge {
 }
 
 // dynamicEdges runs the whole walk over a custom-resource fixture.
-func dynamicEdges(group, version, plural, kind string, spec map[string]any) func(*testing.T) []Edge {
-	return func(t *testing.T) []Edge {
+func dynamicEdges(group, version, plural, kind string, spec map[string]any) func(*testing.T) []framework.Edge {
+	return func(t *testing.T) []framework.Edge {
 		t.Helper()
 		gvr := schema.GroupVersionResource{Group: group, Version: version, Resource: plural}
 		listKinds := emptyDynamic()
@@ -91,13 +93,13 @@ func dynamicEdges(group, version, plural, kind string, spec map[string]any) func
 }
 
 // derivedEdges runs one derivation over a node slice.
-func derivedEdges(fn func([]Node) []Edge, nodes ...Node) func(*testing.T) []Edge {
-	return func(t *testing.T) []Edge { t.Helper(); return fn(nodes) }
+func derivedEdges(fn func([]framework.Node) []framework.Edge, nodes ...framework.Node) func(*testing.T) []framework.Edge {
+	return func(t *testing.T) []framework.Edge { t.Helper(); return fn(nodes) }
 }
 
 // proxyEdges runs the proxy phase over a node slice and a context name.
-func proxyEdges(contextName string, nodes ...Node) func(*testing.T) []Edge {
-	return func(t *testing.T) []Edge {
+func proxyEdges(contextName string, nodes ...framework.Node) func(*testing.T) []framework.Edge {
+	return func(t *testing.T) []framework.Edge {
 		t.Helper()
 		_, edges := buildProxyFamilies(nodes, contextName)
 		return edges
@@ -161,8 +163,8 @@ func hpa(name, targetKind, targetName string) *autoscalingv2.HorizontalPodAutosc
 	}
 }
 
-func netpolNodeFor(name, body string, meta map[string]string) []Node {
-	return []Node{
+func netpolNodeFor(name, body string, meta map[string]string) []framework.Node {
+	return []framework.Node{
 		node("Namespace/prod", "Namespace", nil),
 		netpolNode(name, body, meta),
 		namespacedNode("prod", "Pod", "api-1", map[string]string{"label/app": "api"}),
@@ -170,10 +172,10 @@ func netpolNodeFor(name, body string, meta map[string]string) []Node {
 	}
 }
 
-func anpNodeFor(kind, body string) []Node {
+func anpNodeFor(kind, body string) []framework.Node {
 	n := node(resourceID("", kind, "cluster-wide"), kind, nil)
 	n.Content = body
-	return []Node{
+	return []framework.Node{
 		n,
 		node("Namespace/prod", "Namespace", nil),
 		node("Namespace/web", "Namespace", nil),

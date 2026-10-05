@@ -3,6 +3,8 @@
 package collect_test
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -76,10 +78,14 @@ func TestEveryEmittedEdgeResolvesExceptTheThreeConditionalClasses(t *testing.T) 
 	// that emitted none of these edges at all would pass the assertion above while
 	// proving nothing about resolution.
 	for _, want := range danglingTargets {
-		assertPresentAndDangling(t, got, nodes, want, false)
+		if err := checkPresentAndDangling(got, nodes, want, false); err != nil {
+			t.Error(err)
+		}
 	}
 	for _, want := range danglingSources {
-		assertPresentAndDangling(t, got, nodes, want, true)
+		if err := checkPresentAndDangling(got, nodes, want, true); err != nil {
+			t.Error(err)
+		}
 	}
 
 	// AND THE GROUP-SCOPED VARIABLE NODE DOES EXIST, under its own id. This is the
@@ -97,12 +103,12 @@ func TestEveryEmittedEdgeResolvesExceptTheThreeConditionalClasses(t *testing.T) 
 	}
 }
 
-// assertPresentAndDangling is the known positive for one expected-dangling
+// checkPresentAndDangling is the known positive for one expected-dangling
 // endpoint: it must be named by at least one edge, and it must name no node.
-func assertPresentAndDangling(
-	t *testing.T, got glgraph.Result, nodes map[string]string, endpoint string, isSource bool,
-) {
-	t.Helper()
+func checkPresentAndDangling(
+	got glgraph.Result, nodes map[string]string, endpoint string, isSource bool,
+) error {
+	var errs []error
 	present := slices.ContainsFunc(got.Relations, func(rel glgraph.Relation) bool {
 		if isSource {
 			return rel.FromID == endpoint
@@ -110,14 +116,15 @@ func assertPresentAndDangling(
 		return rel.ToID == endpoint
 	})
 	if !present {
-		t.Errorf("the fixture emitted no edge naming %q, so the dangling class this row exists to "+
-			"pin was never exercised", endpoint)
+		errs = append(errs, fmt.Errorf("the fixture emitted no edge naming %q, so the dangling class this row exists to "+
+			"pin was never exercised", endpoint))
 	}
 	if _, resolved := nodes[endpoint]; resolved {
-		t.Errorf("%q now resolves. That is a behavior change rather than a bug fix: the graph a "+
+		errs = append(errs, fmt.Errorf("%q now resolves. That is a behavior change rather than a bug fix: the graph a "+
 			"consumer already reads carries this edge unresolved, so a change here is a decision "+
-			"to record and not a silent improvement", endpoint)
+			"to record and not a silent improvement", endpoint))
 	}
+	return errors.Join(errs...)
 }
 
 // TestTheTagEdgesResolveToOneNodePerDistinctTag is the first deviation from the

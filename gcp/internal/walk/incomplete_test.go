@@ -44,7 +44,7 @@ func TestARefusedEnumerationMakesTheWalkIncomplete(t *testing.T) {
 	refused := collect.Subcollector{
 		Name: "caches",
 		Run: func(context.Context, string) (gcpgraph.Result, error) {
-			return gcpgraph.Result{}, fmt.Errorf("caches: %w: forbidden", collect.ErrDenied)
+			return gcpgraph.Result{}, fmt.Errorf("%w: caches: forbidden", collect.ErrDenied)
 		},
 	}
 
@@ -91,7 +91,7 @@ func TestAPartiallyReadEnumerationMakesTheWalkIncomplete(t *testing.T) {
 			return gcpgraph.Result{Resources: []gcpgraph.Resource{
 					{ID: "id-b", Name: "b", ResourceType: gcpgraph.ResourceTypeDisk},
 				}},
-				fmt.Errorf("instances: %w: the provider did not read zones/europe-west1-b",
+				fmt.Errorf("%w: instances: the provider did not read zones/europe-west1-b",
 					collect.ErrPartial)
 		},
 	}
@@ -116,7 +116,7 @@ func TestAPartiallyReadEnumerationMakesTheWalkIncomplete(t *testing.T) {
 	}
 	// Both enumerations' resources land: a partial answer is still an answer.
 	if len(got.Nodes) != 2 {
-		t.Errorf("got %d nodes, want 2 — the partial enumeration's own page was dropped", len(got.Nodes))
+		t.Errorf("Walk(good, partial) = %d nodes, want 2 — the partial enumeration's own page was dropped", len(got.Nodes))
 	}
 }
 
@@ -127,7 +127,7 @@ func TestEveryEnumerationPartiallyReadIsAnIncompleteWalkNotAnError(t *testing.T)
 		return collect.Subcollector{
 			Name: name,
 			Run: func(context.Context, string) (gcpgraph.Result, error) {
-				return gcpgraph.Result{}, fmt.Errorf("%s: %w: unreachable", name, collect.ErrPartial)
+				return gcpgraph.Result{}, fmt.Errorf("%w: %s: unreachable", collect.ErrPartial, name)
 			},
 		}
 	}
@@ -150,7 +150,7 @@ func TestARefusedEnumerationKeepsWhatItAlreadyRead(t *testing.T) {
 			return gcpgraph.Result{Resources: []gcpgraph.Resource{
 					{ID: "id-d", Name: "d", ResourceType: gcpgraph.ResourceTypeDisk},
 				}},
-				fmt.Errorf("disks: %w: one zone refused", collect.ErrDenied)
+				fmt.Errorf("%w: disks: one zone refused", collect.ErrDenied)
 		},
 	}
 	got, err := walk.Collector{Enumerations: fixedEnumerations(partial)}.
@@ -175,7 +175,7 @@ func TestEveryEnumerationRefusedIsAnIncompleteWalkNotAnError(t *testing.T) {
 		return collect.Subcollector{
 			Name: name,
 			Run: func(context.Context, string) (gcpgraph.Result, error) {
-				return gcpgraph.Result{}, fmt.Errorf("%s: %w: forbidden", name, collect.ErrDenied)
+				return gcpgraph.Result{}, fmt.Errorf("%w: %s: forbidden", collect.ErrDenied, name)
 			},
 		}
 	}
@@ -188,6 +188,6 @@ func TestEveryEnumerationRefusedIsAnIncompleteWalkNotAnError(t *testing.T) {
 		t.Fatal("a project this credential may read nothing of was reported as a complete walk")
 	}
 	if len(got.Nodes) != 0 {
-		t.Errorf("got %d nodes from a fully refused project", len(got.Nodes))
+		t.Errorf("Walk(fully refused project) = %d nodes from a fully refused project", len(got.Nodes))
 	}
 }

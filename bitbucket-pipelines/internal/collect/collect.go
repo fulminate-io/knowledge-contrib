@@ -197,7 +197,7 @@ func (r *reads) err(name string) error {
 	// a name spliced into the format would be interpreted as verbs if it ever
 	// carried a percent sign.
 	args := []any{name}
-	clauses := []string{}
+	var clauses []string
 	for _, class := range []struct {
 		sentinel error
 		scopes   []string

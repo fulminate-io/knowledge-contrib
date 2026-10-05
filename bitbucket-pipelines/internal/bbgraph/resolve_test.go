@@ -61,11 +61,11 @@ func TestThePrecedenceIsEnvironmentThenRepositoryThenWorkspace(t *testing.T) {
 		deployment string
 		want       string
 	}{
-		{[]string{env, repo, workspace}, "production", env},
-		{[]string{repo, workspace}, "production", repo},
-		{[]string{workspace}, "production", workspace},
-		{[]string{env, repo, workspace}, "", repo},
-		{[]string{env, workspace}, "", workspace},
+		{present: []string{env, repo, workspace}, deployment: "production", want: env},
+		{present: []string{repo, workspace}, deployment: "production", want: repo},
+		{present: []string{workspace}, deployment: "production", want: workspace},
+		{present: []string{env, repo, workspace}, deployment: "", want: repo},
+		{present: []string{env, workspace}, deployment: "", want: workspace},
 	} {
 		result := pipelineWithRef(variables(row.present...), row.deployment, "KEY")
 		bbgraph.ResolveSecretRefs(&result, "acme")

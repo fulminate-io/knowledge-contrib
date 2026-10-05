@@ -114,7 +114,7 @@ pipelines:
           - echo "$API_KEY again"
           - echo "${API_KEY} once more"
 `
-	got, err := walkTheFixtureAllowingError(t, fixture, nil)
+	got, err := walkTheFixtureAllowingError(fixture, nil)
 	if err != nil {
 		t.Fatalf("the walk: %v", err)
 	}

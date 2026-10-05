@@ -23,8 +23,8 @@ func TestFindCorrelations_FewerThanTwoErrorTemplates(t *testing.T) {
 		name string
 		in   Input
 	}{
-		{"no templates at all", Input{}},
-		{"one error template", Input{
+		{name: "no templates at all", in: Input{}},
+		{name: "one error template", in: Input{
 			Templates: []*Template{only},
 			Chunks:    []*Chunk{chunkFor(api, only)},
 			Streams:   []*Stream{api},
@@ -55,14 +55,14 @@ func TestFindCorrelations_FewerThanTwoErrorTemplates(t *testing.T) {
 func TestFindCorrelations_OneAttributableTemplate(t *testing.T) {
 	base := time.Date(2026, 4, 13, 14, 0, 0, 0, time.UTC)
 	api := streamFor("api")
-	unlabelled := &Stream{ID: "stream-none", Labels: map[string]string{"pod": "x-1"}}
+	unlabeled := &Stream{ID: "stream-none", Labels: map[string]string{"pod": "x-1"}}
 	a := templateAt("a", SeverityError, base, time.Minute)
 	b := templateAt("b", SeverityError, base, time.Minute)
 
 	results, err := FindCorrelations(Input{
 		Templates: []*Template{a, b},
-		Chunks:    []*Chunk{chunkFor(api, a), chunkFor(unlabelled, b)},
-		Streams:   []*Stream{api, unlabelled},
+		Chunks:    []*Chunk{chunkFor(api, a), chunkFor(unlabeled, b)},
+		Streams:   []*Stream{api, unlabeled},
 	})
 	if err != nil {
 		t.Fatalf("FindCorrelations: %v", err)
@@ -149,7 +149,7 @@ func TestTemporalOverlap_NilTemplateDoesNotOverlap(t *testing.T) {
 // scorer rather than against today's arithmetic.
 func TestClampUnit(t *testing.T) {
 	for _, tc := range []struct{ in, want float64 }{
-		{-1, 0}, {0, 0}, {0.5, 0.5}, {1, 1}, {1.5, 1},
+		{in: -1, want: 0}, {in: 0, want: 0}, {in: 0.5, want: 0.5}, {in: 1, want: 1}, {in: 1.5, want: 1},
 	} {
 		if got := clampUnit(tc.in); got != tc.want {
 			t.Errorf("clampUnit(%v) = %v, want %v", tc.in, got, tc.want)

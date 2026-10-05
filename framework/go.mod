@@ -16,6 +16,7 @@ toolchain go1.26.8
 // be tidied and writes no go.sum, and the CI cache family names that go.sum by
 // explicit path.
 require (
+	github.com/google/go-cmp v0.7.0
 	github.com/google/jsonschema-go v0.4.3
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	go.uber.org/goleak v1.3.0

@@ -75,11 +75,11 @@ usage() {
 # WHICH COLLECTORS TELL THAT STATE APART FROM ABSENT IS DECLARED, NOT COUNTED
 # HERE. Every collector marks each name it discriminates on with
 # `empty_sensitive` in its own describe declaration, and
-# --print-env-sensitive-table below prints the marks; the shipped-document gate in
-# scripts/collector-install_test.sh reads that table rather than a list of its
-# own. The earlier version of this comment named three collectors and one of the
-# three had no discriminating name at all, which is what a hand-maintained count
-# beside a derived table turns into.
+# --print-env-sensitive-table below prints the marks. A reader wanting the set
+# reads that table rather than a list of its own. The earlier version of this
+# comment named three collectors and one of the three had no discriminating name
+# at all, which is what a hand-maintained count beside a derived table turns
+# into.
 #
 # WHY THE ROW IS WRITTEN ONLY WHEN THIS SHELL HOLDS THE NAME, which is the same
 # set-ness gate the selector class uses. A collector's secret rows are frequently
@@ -446,7 +446,7 @@ case "$os" in
 Linux) os="linux" ;;
 Darwin) os="darwin" ;;
 CYGWIN* | MINGW* | MSYS* | Windows_NT)
-	fail "native Windows is not installable by this script — the release does publish windows-amd64 .zip archives; unpack one by hand, or use WSL (https://learn.microsoft.com/windows/wsl/)."
+	fail "native Windows is not supported — the release publishes linux-amd64, linux-arm64 and darwin-arm64 archives only; use WSL (https://learn.microsoft.com/windows/wsl/)."
 	;;
 *) fail "unsupported OS '$os' — use WSL (https://learn.microsoft.com/windows/wsl/) or download the archive manually." ;;
 esac
@@ -474,7 +474,7 @@ if [ -x "$INSTALL_DIR/knowledge" ]; then
 elif command -v knowledge >/dev/null 2>&1; then
 	CLIENT="$(command -v knowledge)"
 else
-	fail "the knowledge client is not installed — install it first: curl -fsSL https://raw.githubusercontent.com/fulminate-io/knowledge-mcp/main/install.sh | sh"
+	fail "the knowledge client is not installed — install it first: curl -fsSL https://fulminate.io/install.sh | sh"
 fi
 
 BIN_NAME="knowledge-collector-${COLLECTOR}"

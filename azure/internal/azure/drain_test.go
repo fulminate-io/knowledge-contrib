@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+
 	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
@@ -229,8 +231,8 @@ func TestPaging_AMidPageFailureReachesTheWalkAsAnIncompleteAssertion(t *testing.
 		subscriptionID: censusSubscription, transport: fake}}
 
 	c := &Collector{
-		newCredential: func(context.Context) (azureCredential, error) { return fakeCredential{}, nil },
-		buildSubs:     func(azureCredential, string) []subCollector { return []subCollector{sub} },
+		newCredential: func(context.Context) (azcore.TokenCredential, error) { return fakeCredential{}, nil },
+		buildSubs:     func(azcore.TokenCredential, string) []subCollector { return []subCollector{sub} },
 		lookupEnv:     func(string) (string, bool) { return "", false },
 	}
 	result, err := c.Walk(context.Background(), censusSubscription, Params{}, framework.ForeignContext{})

@@ -84,7 +84,7 @@ func TestARefusedVariablesReadIsIncompleteAndNamesWhatItMissed(t *testing.T) {
 // collector that reported itself incomplete on every input would satisfy the
 // assertions above while proving nothing.
 func TestTheSameFixtureWithNoRefusalIsComplete(t *testing.T) {
-	got, errs, listerPartial := runAll(t, fixtureAPI())
+	got, errs, listerPartial := runAll(fixtureAPI())
 
 	for name, err := range errs {
 		if err != nil {

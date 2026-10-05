@@ -66,40 +66,40 @@ func TestSeverityPrecedenceIsTheReverseOfTheCheckOrder(t *testing.T) {
 		want   string
 	}{
 		{
-			"a JSON body field beats a disagreeing stream label",
-			map[string]string{"level": "info"},
-			`{"level":"error","message":"upstream refused"}`,
-			logpipe.SeverityError,
+			name:   "a JSON body field beats a disagreeing stream label",
+			labels: map[string]string{"level": "info"},
+			line:   `{"level":"error","message":"upstream refused"}`,
+			want:   logpipe.SeverityError,
 		},
 		{
-			"an embedded plain-text marker beats a disagreeing stream label",
-			map[string]string{"level": "info"},
-			"ERROR upstream refused",
-			logpipe.SeverityError,
+			name:   "an embedded plain-text marker beats a disagreeing stream label",
+			labels: map[string]string{"level": "info"},
+			line:   "ERROR upstream refused",
+			want:   logpipe.SeverityError,
 		},
 		{
-			"the stream label stands when the line says nothing",
-			map[string]string{"level": "warn"},
-			"upstream refused",
-			logpipe.SeverityWarn,
+			name:   "the stream label stands when the line says nothing",
+			labels: map[string]string{"level": "warn"},
+			line:   "upstream refused",
+			want:   logpipe.SeverityWarn,
 		},
 		{
-			"the seed stands when neither says anything",
-			nil,
-			"upstream refused",
-			logpipe.SeverityInfo,
+			name:   "the seed stands when neither says anything",
+			labels: nil,
+			line:   "upstream refused",
+			want:   logpipe.SeverityInfo,
 		},
 		{
-			"a JSON body with no level keeps the stream label",
-			map[string]string{"severity": "warn"},
-			`{"message":"upstream refused"}`,
-			logpipe.SeverityWarn,
+			name:   "a JSON body with no level keeps the stream label",
+			labels: map[string]string{"severity": "warn"},
+			line:   `{"message":"upstream refused"}`,
+			want:   logpipe.SeverityWarn,
 		},
 		{
-			"a JSON body's own level wins even when its message text carries another marker",
-			nil,
-			`{"level":"debug","message":"ERROR upstream refused"}`,
-			logpipe.SeverityDebug,
+			name:   "a JSON body's own level wins even when its message text carries another marker",
+			labels: nil,
+			line:   `{"level":"debug","message":"ERROR upstream refused"}`,
+			want:   logpipe.SeverityDebug,
 		},
 	}
 	for _, tc := range cases {
@@ -139,14 +139,14 @@ func TestMessageExtractionByLineShape(t *testing.T) {
 	cases := []struct {
 		name, line, want string
 	}{
-		{"a plain line is its own message", "upstream refused", "upstream refused"},
-		{"a JSON object yields its message field", `{"message":"upstream refused"}`, "upstream refused"},
-		{"msg is read too", `{"msg":"upstream refused"}`, "upstream refused"},
-		{"a nested object is descended", `{"body":{"message":"upstream refused"}}`, "upstream refused"},
-		{"a JSON object with no known field keeps its own JSON", `{"a":"b"}`, `{"a":"b"}`},
-		{"a JSON array is not structured and is kept whole", `["a","b"]`, `["a","b"]`},
-		{"malformed JSON is kept whole rather than dropped", `{"message": `, `{"message": `},
-		{"an empty line stays empty", "", ""},
+		{name: "a plain line is its own message", line: "upstream refused", want: "upstream refused"},
+		{name: "a JSON object yields its message field", line: `{"message":"upstream refused"}`, want: "upstream refused"},
+		{name: "msg is read too", line: `{"msg":"upstream refused"}`, want: "upstream refused"},
+		{name: "a nested object is descended", line: `{"body":{"message":"upstream refused"}}`, want: "upstream refused"},
+		{name: "a JSON object with no known field keeps its own JSON", line: `{"a":"b"}`, want: `{"a":"b"}`},
+		{name: "a JSON array is not structured and is kept whole", line: `["a","b"]`, want: `["a","b"]`},
+		{name: "malformed JSON is kept whole rather than dropped", line: `{"message": `, want: `{"message": `},
+		{name: "an empty line stays empty", line: "", want: ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

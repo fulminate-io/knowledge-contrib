@@ -5,6 +5,8 @@ package main
 import (
 	"encoding/json"
 	"sort"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // derived_reachability.go — the FOUR REACHABILITY FAMILIES:
@@ -37,11 +39,11 @@ import (
 // the edge runs target -> peer. An egress rule says the target may reach the
 // peer, so the edge runs target -> peer as well. Both are read as "this pod's
 // policy permits this pod pair", with the type naming the direction.
-func buildNetworkPolicyReachabilityEdges(nodes []Node) []Edge {
+func buildNetworkPolicyReachabilityEdges(nodes []framework.Node) []framework.Edge {
 	pods := podsByNamespace(nodes)
 	namespaceLabels := namespaceLabelIndex(nodes)
 
-	var out []Edge
+	var out []framework.Edge
 	for i := range nodes {
 		n := &nodes[i]
 		if n.Metadata["resource_type"] != "NetworkPolicy" {
@@ -114,11 +116,11 @@ type anpPeer struct {
 // MUST CARRY ITS OWN NAMESPACE SELECTOR. A derivation that defaulted a peer's
 // namespace to the policy's would default it to the empty string and match
 // nothing, which looks exactly like a correct suppression.
-func buildAdminNetworkPolicyEdges(nodes []Node) []Edge {
+func buildAdminNetworkPolicyEdges(nodes []framework.Node) []framework.Edge {
 	pods := podsByNamespace(nodes)
 	namespaceLabels := namespaceLabelIndex(nodes)
 
-	var out []Edge
+	var out []framework.Edge
 	for i := range nodes {
 		n := &nodes[i]
 		kind := n.Metadata["resource_type"]
@@ -152,16 +154,16 @@ func buildAdminNetworkPolicyEdges(nodes []Node) []Edge {
 // anpSubjectPods resolves an ANP's subject to pods. A subject is either a
 // namespace selector (every pod in the matching namespaces) or a pods selector
 // (a namespace selector AND a pod selector).
-func anpSubjectPods(spec anpSpec, pods map[string][]*Node, namespaceLabels map[string]map[string]string) []*Node {
+func anpSubjectPods(spec anpSpec, pods map[string][]*framework.Node, namespaceLabels map[string]map[string]string) []*framework.Node {
 	switch {
 	case spec.Spec.Subject.Pods != nil:
-		var out []*Node
+		var out []*framework.Node
 		for _, ns := range matchNamespaces(namespaceLabels, spec.Spec.Subject.Pods.NamespaceSelector.MatchLabels) {
 			out = append(out, matchPods(pods[ns], spec.Spec.Subject.Pods.PodSelector.MatchLabels)...)
 		}
 		return out
 	case spec.Spec.Subject.Namespaces != nil:
-		var out []*Node
+		var out []*framework.Node
 		for _, ns := range matchNamespaces(namespaceLabels, spec.Spec.Subject.Namespaces.MatchLabels) {
 			out = append(out, pods[ns]...)
 		}
@@ -178,13 +180,13 @@ func anpSubjectPods(spec anpSpec, pods map[string][]*Node, namespaceLabels map[s
 func resolvePeers(
 	peers []netpolPeer,
 	policyNamespace string,
-	pods map[string][]*Node,
+	pods map[string][]*framework.Node,
 	namespaceLabels map[string]map[string]string,
-) []*Node {
+) []*framework.Node {
 	if len(peers) == 0 {
 		return nil
 	}
-	var out []*Node
+	var out []*framework.Node
 	for i := range peers {
 		p := &peers[i]
 		if p.IPBlock != nil {
@@ -210,13 +212,13 @@ func resolvePeers(
 // policy namespace to default to.
 func resolveANPPeers(
 	peers []anpPeer,
-	pods map[string][]*Node,
+	pods map[string][]*framework.Node,
 	namespaceLabels map[string]map[string]string,
-) []*Node {
+) []*framework.Node {
 	if len(peers) == 0 {
 		return nil
 	}
-	var out []*Node
+	var out []*framework.Node
 	for i := range peers {
 		p := &peers[i]
 		if len(p.Networks) > 0 && p.Namespaces == nil && p.Pods == nil {
@@ -239,12 +241,12 @@ func resolveANPPeers(
 
 // pairEdges renders the cross product of targets and peers, DROPPING SELF-PAIRS
 // and deduping, in a stable order.
-func pairEdges(targets, peers []*Node, edgeType string) []Edge {
+func pairEdges(targets, peers []*framework.Node, edgeType string) []framework.Edge {
 	if len(targets) == 0 || len(peers) == 0 {
 		return nil
 	}
 	seen := map[string]bool{}
-	var out []Edge
+	var out []framework.Edge
 	for _, t := range targets {
 		for _, p := range peers {
 			if t.ID == p.ID {
@@ -255,7 +257,7 @@ func pairEdges(targets, peers []*Node, edgeType string) []Edge {
 				continue
 			}
 			seen[key] = true
-			out = append(out, Edge{FromID: t.ID, ToID: p.ID, Type: edgeType})
+			out = append(out, framework.Edge{FromID: t.ID, ToID: p.ID, Type: edgeType})
 		}
 	}
 	sort.Slice(out, func(a, b int) bool {
@@ -270,8 +272,8 @@ func pairEdges(targets, peers []*Node, edgeType string) []Edge {
 // matchPods filters pods by an equality selector. AN EMPTY SELECTOR MATCHES
 // EVERY POD, which is the correct Kubernetes semantics: an empty podSelector on
 // a peer means "every pod in the selected namespaces".
-func matchPods(pods []*Node, selector map[string]string) []*Node {
-	out := make([]*Node, 0, len(pods))
+func matchPods(pods []*framework.Node, selector map[string]string) []*framework.Node {
+	out := make([]*framework.Node, 0, len(pods))
 	for _, p := range pods {
 		if labelsMatch(p.Metadata, selector) {
 			out = append(out, p)
@@ -287,7 +289,7 @@ func matchPods(pods []*Node, selector map[string]string) []*Node {
 // carry it. Kubernetes sets kubernetes.io/metadata.name on every namespace, and
 // policies routinely select on it; a namespace fixture that omits it would make
 // every such policy match nothing.
-func namespaceLabelIndex(nodes []Node) map[string]map[string]string {
+func namespaceLabelIndex(nodes []framework.Node) map[string]map[string]string {
 	index := map[string]map[string]string{}
 	for i := range nodes {
 		n := &nodes[i]

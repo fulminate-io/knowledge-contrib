@@ -4,6 +4,7 @@ package awswalk
 
 import (
 	"cmp"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -164,6 +165,20 @@ func marshalContent(m map[string]string) string {
 	return b.String()
 }
 
+// invalidByteReplacement is what encoding/json writes, between the quotes, for
+// one invalid UTF-8 byte in a string. It is read from encoding/json because the
+// spelling is the toolchain's, not this package's, and it changed between Go
+// releases. Encoding a string cannot fail, so a failure here is a broken
+// standard library and stops the process at start rather than producing output
+// that disagrees with it.
+var invalidByteReplacement = func() string {
+	quoted, err := json.Marshal("\xff")
+	if err != nil {
+		panic(fmt.Sprintf("awswalk: encoding/json refused to encode a string: %v", err))
+	}
+	return string(quoted[1 : len(quoted)-1])
+}()
+
 // writeJSONString writes one JSON string literal, escaped EXACTLY as
 // encoding/json escapes it.
 //
@@ -179,11 +194,14 @@ func marshalContent(m map[string]string) string {
 //     and \u0026. Nothing about JSON requires it; the package does it so a
 //     document can be embedded in a script tag, and it is on unless a caller
 //     turns it off.
-//   - AN INVALID UTF-8 BYTE is written as the six-character escape \ufffd, while a
-//     VALID U+FFFD already in the input is written through as its three raw
-//     bytes. Telling them apart needs the decoded SIZE, which is why this decodes
-//     explicitly rather than using a range loop — a range loop yields RuneError
-//     for both and cannot distinguish them.
+//   - AN INVALID UTF-8 BYTE is written as encoding/json's replacement for it,
+//     while a VALID U+FFFD already in the input is written through as its three
+//     raw bytes. Telling them apart needs the decoded SIZE, which is why this
+//     decodes explicitly rather than using a range loop — a range loop yields
+//     RuneError for both and cannot distinguish them. The replacement is read
+//     from encoding/json once (invalidByteReplacement) rather than spelled here,
+//     because the toolchain changed it: the six-character escape \ufffd through
+//     Go 1.26, the raw replacement character from Go 1.27.
 //   - U+2028 and U+2029 are escaped too, because they terminate a line in
 //     JavaScript and would break a document embedded in one.
 func writeJSONString(b *strings.Builder, s string) {
@@ -193,8 +211,8 @@ func writeJSONString(b *strings.Builder, s string) {
 		i += size
 		switch {
 		case r == utf8.RuneError && size == 1:
-			// An invalid byte, which encoding/json replaces with the escape.
-			b.WriteString(`\ufffd`)
+			// An invalid byte, which encoding/json replaces.
+			b.WriteString(invalidByteReplacement)
 		case r == '"':
 			b.WriteString(`\"`)
 		case r == '\\':

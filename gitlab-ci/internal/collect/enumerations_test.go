@@ -29,7 +29,7 @@ func TestAnEmptyGroupEmitsItsGroupNodeAndIsComplete(t *testing.T) {
 		runnerDetails: map[int64]*gl.RunnerDetails{},
 	}
 
-	got, errs, listerPartial := runAll(t, empty)
+	got, errs, listerPartial := runAll(empty)
 	for name, err := range errs {
 		if err != nil {
 			t.Errorf("%s over an empty group reported %v; a group with nothing in it is a "+

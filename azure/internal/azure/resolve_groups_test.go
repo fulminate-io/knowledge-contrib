@@ -27,8 +27,8 @@ func TestResolveAADGroupAssignments_AccessHalfHasTwoInputArms(t *testing.T) {
 		input []edge
 		want  string
 	}{
-		{"legacy access policy", fx{t}.edges(accessPolicyEdges(keyVault())), vaultGrantSourcePolicy},
-		{"role assignment", vaultRoleAssignmentEdges(vaultID, vaultRoleAssignments()), vaultGrantSourceRBAC},
+		{name: "legacy access policy", input: fx{t}.edges(accessPolicyEdges(keyVault())), want: vaultGrantSourcePolicy},
+		{name: "role assignment", input: vaultRoleAssignmentEdges(vaultID, vaultRoleAssignments()), want: vaultGrantSourceRBAC},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			edges := resolveAADGroupAssignments([]resource{group}, []resource{vault}, nil, tc.input)
@@ -148,10 +148,10 @@ func TestResolveAADGroupAssignments_RoleHalfPassesTwoGates(t *testing.T) {
 	}
 }
 
-// TestGroupIndex_KeysOnTheObjectIdInsideTheNodeId. A grant names a bare object
+// TestGroupIndex_KeysOnTheObjectIDInsideTheNodeID. A grant names a bare object
 // id, and the index is what turns it into a node; a mis-keyed index resolves
 // nothing while looking populated.
-func TestGroupIndex_KeysOnTheObjectIdInsideTheNodeId(t *testing.T) {
+func TestGroupIndex_KeysOnTheObjectIDInsideTheNodeID(t *testing.T) {
 	group := fx{t}.res(groupResource(directoryGroup()))
 	index := groupIndex([]resource{group})
 	if got := index[groupObjectID]; got != aadGroupIDPrefix+groupObjectID {

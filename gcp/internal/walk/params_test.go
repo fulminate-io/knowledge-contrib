@@ -29,17 +29,17 @@ func TestWalkRefusesAMalformedProjectID(t *testing.T) {
 		project string
 		wantIn  string
 	}{
-		{"too short", "abcde", "6 and 30"},
-		{"too long", strings.Repeat("a", 31), "6 and 30"},
-		{"leading digit", "1project", "start with a letter"},
-		{"leading hyphen", "-project", "start with a letter"},
-		{"trailing hyphen", "project-", "end with a hyphen"},
-		{"uppercase", "MyProject", "lowercase"},
-		{"underscore", "my_project", "lowercase"},
-		{"dot", "my.project", "lowercase"},
-		{"slash", "projects/mine", "lowercase"},
-		{"space", "my project", "lowercase"},
-		{"a whole resource name", "projects/my-project", "lowercase"},
+		{name: "too short", project: "abcde", wantIn: "6 and 30"},
+		{name: "too long", project: strings.Repeat("a", 31), wantIn: "6 and 30"},
+		{name: "leading digit", project: "1project", wantIn: "start with a letter"},
+		{name: "leading hyphen", project: "-project", wantIn: "start with a letter"},
+		{name: "trailing hyphen", project: "project-", wantIn: "end with a hyphen"},
+		{name: "uppercase", project: "MyProject", wantIn: "lowercase"},
+		{name: "underscore", project: "my_project", wantIn: "lowercase"},
+		{name: "dot", project: "my.project", wantIn: "lowercase"},
+		{name: "slash", project: "projects/mine", wantIn: "lowercase"},
+		{name: "space", project: "my project", wantIn: "lowercase"},
+		{name: "a whole resource name", project: "projects/my-project", wantIn: "lowercase"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := walk.Collector{Enumerations: fixedEnumerations()}.

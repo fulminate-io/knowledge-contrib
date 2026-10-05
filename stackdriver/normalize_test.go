@@ -41,16 +41,16 @@ func TestNormalizeMapsResourceLabelsThroughTheirFallbackChains(t *testing.T) {
 		wantService    string
 		wantHost       string
 	}{
-		{"container name wins over service name",
-			labels("container_name", "api", "service_name", "run-svc"), "api", ""},
-		{"service name when there is no container",
-			labels("service_name", "run-svc"), "run-svc", ""},
-		{"module id last",
-			labels("module_id", "default"), "default", ""},
-		{"instance id wins over pod name for host",
-			labels("instance_id", "i-1", "pod_name", "p-1"), "", "i-1"},
-		{"pod name when there is no instance",
-			labels("pod_name", "p-1"), "", "p-1"},
+		{name: "container name wins over service name",
+			resourceLabels: labels("container_name", "api", "service_name", "run-svc"), wantService: "api", wantHost: ""},
+		{name: "service name when there is no container",
+			resourceLabels: labels("service_name", "run-svc"), wantService: "run-svc", wantHost: ""},
+		{name: "module id last",
+			resourceLabels: labels("module_id", "default"), wantService: "default", wantHost: ""},
+		{name: "instance id wins over pod name for host",
+			resourceLabels: labels("instance_id", "i-1", "pod_name", "p-1"), wantService: "", wantHost: "i-1"},
+		{name: "pod name when there is no instance",
+			resourceLabels: labels("pod_name", "p-1"), wantService: "", wantHost: "p-1"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			le := normalizeEntry(gcpEntry(0, logging.Info, "m", "k8s_container", tc.resourceLabels, nil), "p")
@@ -133,14 +133,14 @@ func TestExtractMessageCoversEveryPayloadShape(t *testing.T) {
 		payload any
 		want    string
 	}{
-		{"string", "plain text", "plain text"},
-		{"struct", structPayload, "from a struct"},
-		{"map", map[string]any{"msg": "from a map"}, "from a map"},
-		{"nested map", map[string]any{"message": map[string]any{"body": "nested"}}, "nested"},
-		{"nil", nil, ""},
-		{"nil struct pointer", (*structpb.Struct)(nil), ""},
-		{"unknown type marshals", []int{1, 2}, "[1,2]"},
-		{"map with no known key marshals", map[string]any{"other": "x"}, `{"other":"x"}`},
+		{name: "string", payload: "plain text", want: "plain text"},
+		{name: "struct", payload: structPayload, want: "from a struct"},
+		{name: "map", payload: map[string]any{"msg": "from a map"}, want: "from a map"},
+		{name: "nested map", payload: map[string]any{"message": map[string]any{"body": "nested"}}, want: "nested"},
+		{name: "nil", payload: nil, want: ""},
+		{name: "nil struct pointer", payload: (*structpb.Struct)(nil), want: ""},
+		{name: "unknown type marshals", payload: []int{1, 2}, want: "[1,2]"},
+		{name: "map with no known key marshals", payload: map[string]any{"other": "x"}, want: `{"other":"x"}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := extractMessage(&logging.Entry{Payload: tc.payload}); got != tc.want {
@@ -155,9 +155,9 @@ func TestExtractMessageCoversEveryPayloadShape(t *testing.T) {
 // and the pass-through for a name with no prefix.
 func TestExtractLogIDStripsThePrefixAndDecodesTheEncodedSlash(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
-		{"projects/p/logs/stderr", "stderr"},
-		{"projects/p/logs/cloudaudit.googleapis.com%2Factivity", "cloudaudit.googleapis.com/activity"},
-		{"stderr", "stderr"},
+		{in: "projects/p/logs/stderr", want: "stderr"},
+		{in: "projects/p/logs/cloudaudit.googleapis.com%2Factivity", want: "cloudaudit.googleapis.com/activity"},
+		{in: "stderr", want: "stderr"},
 	} {
 		if got := extractLogID(tc.in); got != tc.want {
 			t.Errorf("extractLogID(%q) = %q, want %q", tc.in, got, tc.want)

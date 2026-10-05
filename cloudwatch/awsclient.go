@@ -33,7 +33,7 @@ import (
 // environment, and config.LoadDefaultConfig finds it. A region that resolves
 // nowhere is refused below, once, naming what the caller can do about it.
 func newDefaultChainClient(ctx context.Context, region string) (*cloudwatchlogs.Client, error) {
-	opts := []func(*config.LoadOptions) error{}
+	var opts []func(*config.LoadOptions) error
 	if region != "" {
 		opts = append(opts, config.WithRegion(region))
 	}
@@ -46,11 +46,11 @@ func newDefaultChainClient(ctx context.Context, region string) (*cloudwatchlogs.
 
 	if _, err := cfg.Credentials.Retrieve(ctx); err != nil {
 		return nil, fmt.Errorf(
-			"cloudwatch: the AWS default credential chain resolved no credential: %w; "+
+			"cloudwatch: the AWS default credential chain resolved no credential; "+
 				"the chain reads, in order, the environment variables, the shared credentials and config files "+
 				"under $HOME/.aws, a web-identity or SSO session, the container credential endpoint and the EC2 "+
 				"instance metadata service — this collector supplies none of them itself, so the names it needs "+
-				"must be listed with their values in its entry in the collector configuration file", err)
+				"must be listed with their values in its entry in the collector configuration file: %w", err)
 	}
 
 	if cfg.Region == "" {

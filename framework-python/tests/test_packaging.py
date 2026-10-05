@@ -27,9 +27,8 @@ from . import support
 _PYPROJECT = os.path.join(support.PORT_ROOT, "pyproject.toml")
 _JOB_NAME = "framework-python-tests"
 # The paths filter this port's CI leg is gated on. It is DERIVED the way the
-# workflow and scripts/collectors-membership-census.sh derive it — `collectors-`
-# followed by the subject's path under cmd/collectors — so this constant cannot
-# drift from the name the census asserts.
+# workflow derives it — `collectors-` followed by the subject's path under
+# cmd/collectors — so this constant cannot drift from the filter name.
 _FILTER_NAME = "collectors-" + os.path.basename(support.PORT_ROOT)
 
 

@@ -115,7 +115,7 @@ func listVariables(
 	ctx context.Context, client *bbclient.Client, path string,
 ) ([]apiVariable, error) {
 	var vars []apiVariable
-	err := client.GetPaginated(ctx, path, func(raw json.RawMessage) error {
+	err := client.FetchPaginated(ctx, path, func(raw json.RawMessage) error {
 		var page []apiVariable
 		if err := json.Unmarshal(raw, &page); err != nil {
 			return fmt.Errorf("decoding a variables page: %w", err)

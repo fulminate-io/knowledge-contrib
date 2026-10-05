@@ -74,12 +74,12 @@ func TestAllRunsEveryResolverOverOneWalk(t *testing.T) {
 		what               string
 		from, to, edgeType string
 	}{
-		{"firewall", vmWeb, gcpgraph.CIDRSentinelID("0.0.0.0/0"), gcpgraph.EdgeAllowsIngressFrom},
-		{"shared vpc", hostVPC, localSubID, gcpgraph.EdgeSharedWith},
-		{"image lineage", runSvcID, arRepoID, gcpgraph.EdgeUsesImage},
-		{"cross-project trust", foreignSA, "projects/proj-a", gcpgraph.EdgeTrusts},
-		{"dns targeting", recordID, sqlID, gcpgraph.EdgeRoutesTo},
-		{"iam group resolution", "roles/viewer", groupID, gcpgraph.EdgeGrants},
+		{what: "firewall", from: vmWeb, to: gcpgraph.CIDRSentinelID("0.0.0.0/0"), edgeType: gcpgraph.EdgeAllowsIngressFrom},
+		{what: "shared vpc", from: hostVPC, to: localSubID, edgeType: gcpgraph.EdgeSharedWith},
+		{what: "image lineage", from: runSvcID, to: arRepoID, edgeType: gcpgraph.EdgeUsesImage},
+		{what: "cross-project trust", from: foreignSA, to: "projects/proj-a", edgeType: gcpgraph.EdgeTrusts},
+		{what: "dns targeting", from: recordID, to: sqlID, edgeType: gcpgraph.EdgeRoutesTo},
+		{what: "iam group resolution", from: "roles/viewer", to: groupID, edgeType: gcpgraph.EdgeGrants},
 	} {
 		if !hasEdge(got.Relations, want.from, want.to, want.edgeType) {
 			t.Errorf("All did not derive the %s edge (%s -> %s, %s)",

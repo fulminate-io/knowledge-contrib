@@ -125,14 +125,14 @@ func (c *k8sCollector) Walk(
 // decides completeness, and there is no way to assert a complete walk while a
 // reason is outstanding.
 type walkResult struct {
-	nodes   []Node
-	edges   []Edge
+	nodes   []framework.Node
+	edges   []framework.Edge
 	reasons []string
 }
 
-func (w *walkResult) addNode(n Node) { w.nodes = append(w.nodes, n) }
+func (w *walkResult) addNode(n framework.Node) { w.nodes = append(w.nodes, n) }
 
-func (w *walkResult) addEdges(edges ...Edge) { w.edges = append(w.edges, edges...) }
+func (w *walkResult) addEdges(edges ...framework.Edge) { w.edges = append(w.edges, edges...) }
 
 // incomplete records that this walk did not see everything, and why.
 func (w *walkResult) incomplete(format string, args ...any) {

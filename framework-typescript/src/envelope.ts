@@ -25,6 +25,11 @@ export interface CollectOutput {
   nodes: Record<string, unknown>[];
   edges: Record<string, unknown>[];
   walk_complete: boolean;
+  /**
+   * The reason an incomplete walk carries, sent only beside walk_complete false
+   * and absent (never an empty string) on a complete walk.
+   */
+  walk_incomplete_reason?: string;
 }
 
 /**
@@ -104,7 +109,13 @@ export function encodeResult(collector: string, result: Result): CollectOutput {
     edges.push(project(edge, EDGE_WIRE_KEYS));
   }
 
-  return { nodes, edges, walk_complete: assertion.isComplete() };
+  // THE REASON RIDES ONLY THE INCOMPLETE ARM, where the refusal above has already
+  // made it non-empty. A complete walk sends no key at all, so a client that
+  // predates the key keeps reading this collector's complete walks.
+  if (!assertion.isComplete()) {
+    return { nodes, edges, walk_complete: false, walk_incomplete_reason: assertion.reason() };
+  }
+  return { nodes, edges, walk_complete: true };
 }
 
 /**

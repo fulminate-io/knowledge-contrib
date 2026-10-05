@@ -73,10 +73,10 @@ func TestBuildRefusesAnUndeclaredEdgeType(t *testing.T) {
 	}
 }
 
-// TestBuildRefusesAnEmptyIdOrEndpoint. A node with no id is a node nothing can
+// TestBuildRefusesAnEmptyIDOrEndpoint. A node with no id is a node nothing can
 // reference, and an edge with an empty endpoint is a relationship naming nothing
 // at all.
-func TestBuildRefusesAnEmptyIdOrEndpoint(t *testing.T) {
+func TestBuildRefusesAnEmptyIDOrEndpoint(t *testing.T) {
 	missingID := oneOfEach()
 	missingID.Resources[0].ID = ""
 	if _, _, err := bbgraph.Build(missingID); err == nil {

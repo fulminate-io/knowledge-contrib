@@ -108,7 +108,7 @@ func TestABoundEqualToTheEntryCountIsNotTruncated(t *testing.T) {
 		t.Fatalf("draining: %v", err)
 	}
 	if len(got.Entries) != len(entries) {
-		t.Fatalf("got %d entries, want %d", len(got.Entries), len(entries))
+		t.Fatalf("drainEntries(recorded entries) = %d entries, want %d", len(got.Entries), len(entries))
 	}
 	if got.Truncated {
 		t.Errorf("a read that took exactly the bound and had nothing left asserted truncation")
@@ -171,7 +171,7 @@ func TestAPeekFailurePastTheBoundAssertsTruncationRatherThanFailing(t *testing.T
 		t.Fatalf("a peek failure failed the whole collect: %v", err)
 	}
 	if len(got.Entries) != 2 {
-		t.Errorf("got %d entries, want the bound of 2", len(got.Entries))
+		t.Errorf("drainEntries(peek failure) = %d entries, want the bound of 2", len(got.Entries))
 	}
 	if !got.Truncated {
 		t.Errorf("a read that could not tell whether more remained asserted completeness")
@@ -227,7 +227,7 @@ func TestTheTextFilterIsCaseInsensitive(t *testing.T) {
 		t.Fatalf("draining: %v", err)
 	}
 	if len(got.Entries) != 1 {
-		t.Fatalf("got %d entries, want the one matching case-insensitively", len(got.Entries))
+		t.Fatalf("drainEntries(TextFilter timeout) = %d entries, want the one matching case-insensitively", len(got.Entries))
 	}
 }
 
@@ -249,7 +249,7 @@ func TestFilteredEntriesDoNotCountAgainstTheBound(t *testing.T) {
 		t.Fatalf("draining: %v", err)
 	}
 	if len(got.Entries) != 3 {
-		t.Fatalf("got %d matching entries, want the bound of 3", len(got.Entries))
+		t.Fatalf("drainEntries(TextFilter wanted, MaxEntries 3) = %d matching entries, want the bound of 3", len(got.Entries))
 	}
 	if !got.Truncated {
 		t.Errorf("the bound stopped the read but truncation was not asserted")

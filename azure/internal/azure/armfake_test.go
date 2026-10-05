@@ -136,8 +136,10 @@ func (f *armFake) assertEveryRouteFired(t *testing.T) {
 		return
 	}
 	sort.Strings(silent)
-	t.Errorf("%d canned route(s) answered no request, so their path is wrong and everything behind them is "+
-		"absent from this census:\n  %s\nrequest paths nothing claimed:\n  %s",
+	t.Errorf(`%d canned route(s) answered no request, so their path is wrong and everything behind them is absent from this census:
+  %s
+request paths nothing claimed:
+  %s`,
 		len(silent), strings.Join(silent, "\n  "), strings.Join(f.unclaimedPaths(), "\n  "))
 }
 

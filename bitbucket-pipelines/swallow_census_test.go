@@ -182,10 +182,9 @@ func TestNoErrorIsSwallowedAnywhereInThisModule(t *testing.T) {
 		}
 	}
 	if len(hits) > 0 {
-		t.Errorf("%d error(s) are discarded in this module:\n  %s\n"+
-			"A read whose failure is dropped loses whatever it carried while the walk still "+
-			"reports a complete collect, which is what lets the server delete what the collect "+
-			"could not see. Return the error and let the caller classify it.",
+		t.Errorf(`%d error(s) are discarded in this module:
+  %s
+A read whose failure is dropped loses whatever it carried while the walk still reports a complete collect, which is what lets the server delete what the collect could not see. Return the error and let the caller classify it.`,
 			len(hits), strings.Join(hits, "\n  "))
 	}
 }
@@ -352,9 +351,8 @@ func TestNoIncompleteWalkCarriesAnEmptyReason(t *testing.T) {
 			"server delete what a refused read could not carry")
 	}
 	if len(hits) > 0 {
-		t.Errorf("%d incompleteness assertion(s) carry an empty reason:\n  %s\n"+
-			"The framework REFUSES a reasonless incomplete walk when the envelope is encoded, so "+
-			"this does not mark a collect — it fails one, and the operator is told less than "+
-			"they were before.", len(hits), strings.Join(hits, "\n  "))
+		t.Errorf(`%d incompleteness assertion(s) carry an empty reason:
+  %s
+The framework REFUSES a reasonless incomplete walk when the envelope is encoded, so this does not mark a collect — it fails one, and the operator is told less than they were before.`, len(hits), strings.Join(hits, "\n  "))
 	}
 }

@@ -42,12 +42,12 @@ func TestACleanWalkIsCompleteAndCarriesTheWholeGraph(t *testing.T) {
 	// seen — which is the whole reason the joins happen after the fan-out. A join
 	// that did not run leaves its edge class absent entirely.
 	for _, want := range []struct{ edge, target, why string }{
-		{"USES_SECRET", "bitbucket:acme/Variable/repository/api/API_KEY",
-			"the pipeline's $API_KEY against the variables enumeration's own variables"},
-		{"DEPLOYS_TO", "bitbucket:acme/Environment/api/production",
-			"the step's deployment against the environments enumeration's own environments"},
-		{"RUNS_IN", "bitbucket:acme/Label/self-hosted",
-			"the step's runs-on label against the labels the runners enumeration minted"},
+		{edge: "USES_SECRET", target: "bitbucket:acme/Variable/repository/api/API_KEY",
+			why: "the pipeline's $API_KEY against the variables enumeration's own variables"},
+		{edge: "DEPLOYS_TO", target: "bitbucket:acme/Environment/api/production",
+			why: "the step's deployment against the environments enumeration's own environments"},
+		{edge: "RUNS_IN", target: "bitbucket:acme/Label/self-hosted",
+			why: "the step's runs-on label against the labels the runners enumeration minted"},
 	} {
 		var joined bool
 		for _, edge := range result.Edges {

@@ -117,8 +117,8 @@ func TestAResolutionMissingItsIdentifiersIsRefused(t *testing.T) {
 		name string
 		in   resolvedProxyEntry
 	}{
-		{"no account", resolvedProxyEntry{LabelKey: "service", LabelValue: "api", ResourceID: "r"}},
-		{"no resource", resolvedProxyEntry{LabelKey: "service", LabelValue: "api", Account: "a"}},
+		{name: "no account", in: resolvedProxyEntry{LabelKey: "service", LabelValue: "api", ResourceID: "r"}},
+		{name: "no resource", in: resolvedProxyEntry{LabelKey: "service", LabelValue: "api", Account: "a"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, _, err := materializeProxies([]resolvedProxyEntry{tc.in})
@@ -169,7 +169,7 @@ func TestTheEmissionIntegratesIntoTheBatchWithBothEndpointsPresent(t *testing.T)
 		}
 	}
 	if emitted != 2 {
-		t.Fatalf("got %d EMITTED_BY edges, want 2", emitted)
+		t.Fatalf("assembleGraph(recorded entries) = %d EMITTED_BY edges, want 2", emitted)
 	}
 }
 
@@ -187,7 +187,7 @@ func TestACollectWithNoCloudContextEmitsNoneOfTheThree(t *testing.T) {
 		t.Fatalf("running the pipeline: %v", err)
 	}
 	if len(out.Resolutions) != 0 {
-		t.Errorf("got %d resolutions with no cloud context", len(out.Resolutions))
+		t.Errorf("runPipeline(no cloud context) = %d resolutions with no cloud context", len(out.Resolutions))
 	}
 	nodes, edges, err := assembleGraph(out.Templates, out.Streams, out.Chunks, out.Resolutions, out.Correlations)
 	if err != nil {
@@ -209,11 +209,11 @@ func TestACollectWithNoCloudContextEmitsNoneOfTheThree(t *testing.T) {
 	}
 	proxies, emittedBy := countOf(nodes, edges, nodeTypeProxy, edgeTypeEmittedBy)
 	if proxies != 0 || emittedBy != 0 {
-		t.Errorf("got %d proxies and %d EMITTED_BY edges with no cloud context", proxies, emittedBy)
+		t.Errorf("assembleGraph(no cloud context) = %d proxies and %d EMITTED_BY edges with no cloud context", proxies, emittedBy)
 	}
 	_, correlates := countOf(nodes, edges, "", edgeTypeCorrelatesWith)
 	if correlates != 0 {
-		t.Errorf("got %d CORRELATES_WITH edges with no cloud context", correlates)
+		t.Errorf("assembleGraph(no cloud context) = %d CORRELATES_WITH edges with no cloud context", correlates)
 	}
 	// KNOWN POSITIVE: the collect still produced a real graph.
 	if len(nodes) == 0 || len(edges) == 0 {

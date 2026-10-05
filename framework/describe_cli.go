@@ -71,17 +71,17 @@ func describeQuery(args []string) string {
 // reading an empty table would write an empty install row and the collector
 // would install with no environment at all, which is the silent-narrowing shape
 // the whole contract refuses; so the arm fails loudly with the same message
-// NewServer would have given.
-func serveDescribeQuery[P any](c Collector[P]) bool {
+// NewServer would have given, returned up to the collector's main, which prints
+// it and exits non-zero.
+func serveDescribeQuery[P any](c Collector[P]) (bool, error) {
 	query := describeQuery(os.Args)
 	if query == "" {
-		return false
+		return false, nil
 	}
 	if err := writeDescribeQuery(os.Stdout, query, c); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return true, err
 	}
-	return true
+	return true, nil
 }
 
 // writeDescribeQuery writes one query's answer to w. Split from the argv arm so

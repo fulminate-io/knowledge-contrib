@@ -226,11 +226,35 @@ export function decodeResult(tool: string, structured: unknown): unknown {
         `unknown field "${unknownKey.key}" in ${unknownKey.where}`,
     );
   }
+  refuseContradictoryReason(tool, structured as Record<string, unknown>);
   return structured;
 }
 
+/**
+ * Refuses the two walk_incomplete_reason shapes that contradict the key's
+ * contract: a reason beside a walk asserting completeness, and an empty reason.
+ * An incomplete walk with no reason key is admitted, because the key is optional.
+ */
+function refuseContradictoryReason(tool: string, result: Record<string, unknown>): void {
+  if (!("walk_incomplete_reason" in result)) {
+    return;
+  }
+  if (result["walk_complete"] === true) {
+    throw new Error(
+      `custom collector: tool "${tool}" result carries walk_incomplete_reason beside walk_complete true; ` +
+        `the reason is sent only on an incomplete walk`,
+    );
+  }
+  if (result["walk_incomplete_reason"] === "") {
+    throw new Error(
+      `custom collector: tool "${tool}" result carries an empty walk_incomplete_reason beside walk_complete false; ` +
+        `an incomplete walk sends a non-empty reason or omits the key`,
+    );
+  }
+}
+
 /** The contract's own top-level, node and edge key sets, derived from the wire maps. */
-const TOP_LEVEL_KEYS = new Set(["nodes", "edges", "walk_complete"]);
+const TOP_LEVEL_KEYS = new Set(["nodes", "edges", "walk_complete", "walk_incomplete_reason"]);
 const NODE_KEYS = new Set(NODE_WIRE_KEYS.values());
 const EDGE_KEYS = new Set(EDGE_WIRE_KEYS.values());
 

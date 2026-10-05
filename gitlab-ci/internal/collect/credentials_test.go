@@ -46,9 +46,9 @@ func TestNoCredentialValueReachesAnyByteOfTheResult(t *testing.T) {
 	assertTheScanFires(t, rendered)
 
 	for _, sentinel := range []struct{ what, value string }{
-		{"a project-scoped variable's value", projectVarValue},
-		{"a group-scoped variable's value", groupVarValue},
-		{"a project's runner registration token", runnersTokenValue},
+		{what: "a project-scoped variable's value", value: projectVarValue},
+		{what: "a group-scoped variable's value", value: groupVarValue},
+		{what: "a project's runner registration token", value: runnersTokenValue},
 	} {
 		if strings.Contains(rendered, sentinel.value) {
 			t.Errorf("%s reached the result. Nothing this collector emits may carry one: the "+
@@ -81,10 +81,10 @@ func TestAVariableNodeCarriesOnlyItsAllowedFields(t *testing.T) {
 		id      string
 		allowed []string
 	}{
-		{"gitlab:acme/Variable/acme/api/API_KEY",
-			[]string{"scope", "project", "protected", "masked", "resource_type", "provider"}},
-		{"gitlab:acme/Variable/acme/GROUP_DEPLOY_TOKEN",
-			[]string{"scope", "group", "resource_type", "provider"}},
+		{id: "gitlab:acme/Variable/acme/api/API_KEY",
+			allowed: []string{"scope", "project", "protected", "masked", "resource_type", "provider"}},
+		{id: "gitlab:acme/Variable/acme/GROUP_DEPLOY_TOKEN",
+			allowed: []string{"scope", "group", "resource_type", "provider"}},
 	} {
 		res, ok := resourceByID(got, row.id)
 		if !ok {

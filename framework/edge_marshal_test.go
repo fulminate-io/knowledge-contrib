@@ -35,9 +35,8 @@ func TestEdgeMarshal_AGraphFamilyFieldIsAbsentUnlessSet(t *testing.T) {
 	}
 	for _, key := range []string{"source_graph", "target_graph"} {
 		if strings.Contains(string(plain), key) {
-			t.Errorf("an edge naming no graph family carries %q in its bytes: %s\n"+
-				"every collector's every edge would change shape the day the field shipped, and a "+
-				"present-but-blank family is a value the client must then tell apart from an absent one",
+			t.Errorf(`an edge naming no graph family carries %q in its bytes: %s
+every collector's every edge would change shape the day the field shipped, and a present-but-blank family is a value the client must then tell apart from an absent one`,
 				key, plain)
 		}
 	}

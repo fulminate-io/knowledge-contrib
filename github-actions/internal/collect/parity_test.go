@@ -77,9 +77,8 @@ func TestEveryDeclaredResourceTypeIsEmitted(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("%d declared resource types are never emitted: %s\n"+
-			"A type in the declared vocabulary that nothing produces is a promise this collector "+
-			"does not keep.", len(missing), strings.Join(missing, ", "))
+		t.Errorf(`%d declared resource types are never emitted: %s
+A type in the declared vocabulary that nothing produces is a promise this collector does not keep.`, len(missing), strings.Join(missing, ", "))
 	}
 
 	// The control: the assertion above would pass just as well against a

@@ -55,9 +55,8 @@ func TestREADME_DocumentsEveryEnvironmentNameThisCollectorReads(t *testing.T) {
 		}
 	}
 	if len(missing) > 0 {
-		t.Errorf("%s documents %d fewer environment variables than this collector reads; missing: %v.\n"+
-			"The entry's env block is the child's WHOLE environment, so a name nobody knows to set is a "+
-			"setting that silently does nothing.", readmePath, len(missing), missing)
+		t.Errorf(`%s documents %d fewer environment variables than this collector reads; missing: %v.
+The entry's env block is the child's WHOLE environment, so a name nobody knows to set is a setting that silently does nothing.`, readmePath, len(missing), missing)
 	}
 }
 

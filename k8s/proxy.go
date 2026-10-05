@@ -2,7 +2,11 @@
 
 package main
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
+)
 
 // proxy.go — the PROXY NODE: how this collector names something that lives in
 // another graph, and why the naming has to be byte-exact.
@@ -64,11 +68,11 @@ type proxyTarget struct {
 // proxyAccumulator collects the distinct proxies a walk needs, so a resource
 // referenced by twenty pods is minted once.
 type proxyAccumulator struct {
-	byID map[string]Node
+	byID map[string]framework.Node
 }
 
 func newProxyAccumulator() *proxyAccumulator {
-	return &proxyAccumulator{byID: map[string]Node{}}
+	return &proxyAccumulator{byID: map[string]framework.Node{}}
 }
 
 // proxy interns one target and returns the id an edge should point at.
@@ -113,7 +117,7 @@ func (a *proxyAccumulator) proxy(t proxyTarget) (string, bool) {
 		name = t.ID
 	}
 
-	a.byID[id] = Node{
+	a.byID[id] = framework.Node{
 		ID:         id,
 		Type:       nodeTypeProxy,
 		SymbolName: name,
@@ -125,8 +129,8 @@ func (a *proxyAccumulator) proxy(t proxyTarget) (string, bool) {
 
 // nodes returns the interned proxies in a stable order, so two collects of an
 // unchanged cluster produce the same result bytes.
-func (a *proxyAccumulator) nodes() []Node {
-	out := make([]Node, 0, len(a.byID))
+func (a *proxyAccumulator) nodes() []framework.Node {
+	out := make([]framework.Node, 0, len(a.byID))
 	for _, n := range a.byID {
 		out = append(out, n)
 	}
@@ -140,10 +144,10 @@ func (a *proxyAccumulator) nodes() []Node {
 // THE NODES AND THE EDGES ARE RETURNED TOGETHER because they must be WRITTEN
 // together: an edge whose proxy is missing from the same result is a dangling
 // edge nothing later repairs.
-func buildProxyFamilies(nodes []Node, contextName string) ([]Node, []Edge) {
+func buildProxyFamilies(nodes []framework.Node, contextName string) ([]framework.Node, []framework.Edge) {
 	acc := newProxyAccumulator()
 
-	var edges []Edge
+	var edges []framework.Edge
 	edges = append(edges, buildExposedByEdges(nodes, acc)...)
 	edges = append(edges, buildRunsInClusterEdges(nodes, contextName, acc)...)
 	edges = append(edges, buildBackedByVMEdges(nodes, acc)...)

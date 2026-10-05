@@ -23,8 +23,8 @@ import (
 // both were, and every edge in this graph is joined on a string one of those
 // helpers built.
 
-// TestTheWorkspaceAndRepositoryIdsAndMetadata is the repos converter.
-func TestTheWorkspaceAndRepositoryIdsAndMetadata(t *testing.T) {
+// TestTheWorkspaceAndRepositoryIDsAndMetadata is the repos converter.
+func TestTheWorkspaceAndRepositoryIDsAndMetadata(t *testing.T) {
 	got := walkTheFixture(t)
 
 	workspace, ok := resourceByID(got, "bitbucket:acme/Workspace/acme")
@@ -124,7 +124,7 @@ func TestAMissingMainBranchFallsBackToMain(t *testing.T) {
 		 "scm":"git","language":"","mainbranch":{"name":""}}
 	]`}
 
-	got, err := walkTheFixtureAllowingError(t, fixture, func([]collect.Subcollector) {})
+	got, err := walkTheFixtureAllowingError(fixture, func([]collect.Subcollector) {})
 	if err != nil {
 		t.Fatalf("the fixture walk: %v", err)
 	}
@@ -150,9 +150,9 @@ func TestAMissingMainBranchFallsBackToMain(t *testing.T) {
 	}
 }
 
-// TestThePipelineRunIdsMetadataAndConditionalKeys is the runs converter, both
+// TestThePipelineRunIDsMetadataAndConditionalKeys is the runs converter, both
 // ways on all five conditional keys.
-func TestThePipelineRunIdsMetadataAndConditionalKeys(t *testing.T) {
+func TestThePipelineRunIDsMetadataAndConditionalKeys(t *testing.T) {
 	got := walkTheFixture(t)
 
 	finished, ok := resourceByID(got, "bitbucket:acme/PipelineRun/api/{run-1}")
@@ -208,9 +208,9 @@ func TestTheHistoryDepthCapsWhatIsRead(t *testing.T) {
 		value int
 		want  int
 	}{
-		{1, 1},  // BELOW what the fixture carries: the cap bites.
-		{2, 2},  // EXACTLY what it carries.
-		{50, 2}, // ABOVE it: everything, and the cap does not invent runs.
+		{value: 1, want: 1},  // BELOW what the fixture carries: the cap bites.
+		{value: 2, want: 2},  // EXACTLY what it carries.
+		{value: 50, want: 2}, // ABOVE it: everything, and the cap does not invent runs.
 	} {
 		var runs collect.Subcollector
 		for _, sub := range collect.AfterRepos(client, collect.RepoInfos(repositories), depth.value) {
@@ -235,8 +235,8 @@ func TestTheHistoryDepthCapsWhatIsRead(t *testing.T) {
 	}
 }
 
-// TestTheRunnerIdsScopesAndBothParentArms is the runners converter.
-func TestTheRunnerIdsScopesAndBothParentArms(t *testing.T) {
+// TestTheRunnerIDsScopesAndBothParentArms is the runners converter.
+func TestTheRunnerIDsScopesAndBothParentArms(t *testing.T) {
 	got := walkTheFixture(t)
 
 	workspaceRunner, ok := resourceByID(got, "bitbucket:acme/Runner/{runner-ws}")
@@ -267,7 +267,7 @@ func TestTheRunnerIdsScopesAndBothParentArms(t *testing.T) {
 	}
 }
 
-// TestTheThreeVariableScopesCarryTheirOwnWordAndTheirOwnIdShape is the row that
+// TestTheThreeVariableScopesCarryTheirOwnWordAndTheirOwnIDShape is the row that
 // an id assertion alone cannot make.
 //
 // THE ID AND THE STORED SCOPE ARE DIFFERENT SPELLINGS, and only one of them is
@@ -276,13 +276,13 @@ func TestTheRunnerIdsScopesAndBothParentArms(t *testing.T) {
 // regardless — while the stored `scope` metadata and the stored content both
 // silently change from `deployment` to `env`. So the word is asserted directly,
 // for all three scopes, in both places it is stored.
-func TestTheThreeVariableScopesCarryTheirOwnWordAndTheirOwnIdShape(t *testing.T) {
+func TestTheThreeVariableScopesCarryTheirOwnWordAndTheirOwnIDShape(t *testing.T) {
 	got := walkTheFixture(t)
 
 	for _, want := range []struct{ id, scope, repo, environment string }{
-		{"bitbucket:acme/Variable/workspace/WORKSPACE_TOKEN", "workspace", "", ""},
-		{"bitbucket:acme/Variable/repository/api/API_KEY", "repository", "api", ""},
-		{"bitbucket:acme/Variable/env/api/production/DEPLOY_KEY", "deployment", "api", "production"},
+		{id: "bitbucket:acme/Variable/workspace/WORKSPACE_TOKEN", scope: "workspace", repo: "", environment: ""},
+		{id: "bitbucket:acme/Variable/repository/api/API_KEY", scope: "repository", repo: "api", environment: ""},
+		{id: "bitbucket:acme/Variable/env/api/production/DEPLOY_KEY", scope: "deployment", repo: "api", environment: "production"},
 	} {
 		variable, ok := resourceByID(got, want.id)
 		if !ok {
@@ -403,9 +403,9 @@ func TestTheHistoryDepthStopsThePaginationAndNotOnlyTheResult(t *testing.T) {
 		requests int
 		why      string
 	}{
-		{99, 99, 1, "below a full page: the first page satisfies the depth"},
-		{100, 100, 1, "exactly a full page: the depth is reached ON that page and the walk stops"},
-		{101, 101, 2, "one above: the second page is needed, and only the second"},
+		{depth: 99, runs: 99, requests: 1, why: "below a full page: the first page satisfies the depth"},
+		{depth: 100, runs: 100, requests: 1, why: "exactly a full page: the depth is reached ON that page and the walk stops"},
+		{depth: 101, runs: 101, requests: 2, why: "one above: the second page is needed, and only the second"},
 	} {
 		fixture := newFixture(t)
 		fixture.pages[runsPath] = []string{fullRunsPage(0), fullRunsPage(1)}

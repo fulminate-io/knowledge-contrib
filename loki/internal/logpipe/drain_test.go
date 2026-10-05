@@ -107,8 +107,8 @@ func TestDrainTokenCountBucketsAreDisjoint(t *testing.T) {
 		n    int
 		want string
 	}{
-		{1, "short"}, {3, "short"}, {4, "medium"}, {8, "medium"},
-		{9, "long"}, {15, "long"}, {16, "vlong"}, {100, "vlong"},
+		{n: 1, want: "short"}, {n: 3, want: "short"}, {n: 4, want: "medium"}, {n: 8, want: "medium"},
+		{n: 9, want: "long"}, {n: 15, want: "long"}, {n: 16, want: "vlong"}, {n: 100, want: "vlong"},
 	} {
 		if got := tokenCountBucket(tc.n); got != tc.want {
 			t.Fatalf("tokenCountBucket(%d) = %q, want %q", tc.n, got, tc.want)
@@ -190,17 +190,17 @@ func TestSeverityRaisesButNeverFalls(t *testing.T) {
 // each one decides pattern text and therefore template identity.
 func TestPreProcessReplacesEachHighCardinalityClass(t *testing.T) {
 	cases := []struct{ name, in, want string }{
-		{"uuid", "id 7c9e6679-7425-40de-944b-e07fc1f90ae7 done", "id <*> done"},
-		{"rfc3339 timestamp", "at 2026-09-07T12:00:00Z done", "at <*> done"},
-		{"clock time", "at 12:00:00 done", "at <*> done"},
-		{"epoch millis", "at 1788802640167 done", "at <*> done"},
-		{"ipv4", "from 10.0.12.4 done", "from <*> done"},
+		{name: "uuid", in: "id 7c9e6679-7425-40de-944b-e07fc1f90ae7 done", want: "id <*> done"},
+		{name: "rfc3339 timestamp", in: "at 2026-09-07T12:00:00Z done", want: "at <*> done"},
+		{name: "clock time", in: "at 12:00:00 done", want: "at <*> done"},
+		{name: "epoch millis", in: "at 1788802640167 done", want: "at <*> done"},
+		{name: "ipv4", in: "from 10.0.12.4 done", want: "from <*> done"},
 		// A hex id with no ten-digit run, because the timestamp regex claims a
 		// run of ten to thirteen digits and would take it first.
-		{"long hex", "sha a1b2c3d4e5f6a7b8c9 done", "sha <*> done"},
-		{"long number", "port 65535 done", "port <*> done"},
-		{"short number is kept", "worker 7 done", "worker 7 done"},
-		{"url becomes a named marker", "get https://example.com/a/very/long/path/here done", "get <url> done"},
+		{name: "long hex", in: "sha a1b2c3d4e5f6a7b8c9 done", want: "sha <*> done"},
+		{name: "long number", in: "port 65535 done", want: "port <*> done"},
+		{name: "short number is kept", in: "worker 7 done", want: "worker 7 done"},
+		{name: "url becomes a named marker", in: "get https://example.com/a/very/long/path/here done", want: "get <url> done"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -226,12 +226,12 @@ func TestSimilarityScoresEachTokenRelation(t *testing.T) {
 		a, b []string
 		want float64
 	}{
-		{"identical", []string{"GET", "/api", "200"}, []string{"GET", "/api", "200"}, 1.0},
-		{"one difference", []string{"GET", "/api", "200"}, []string{"GET", "/api", "404"}, 2.0 / 3.0},
-		{"all different", []string{"GET", "/api", "200"}, []string{"POST", "/users", "500"}, 0.0},
-		{"a wildcard on either side matches", []string{"GET", Wildcard, "200"}, []string{"GET", "/api", "200"}, 1.0},
-		{"different lengths never compare", []string{"GET", "/api"}, []string{"GET", "/api", "200"}, 0.0},
-		{"two empty slices score zero, not one", []string{}, []string{}, 0.0},
+		{name: "identical", a: []string{"GET", "/api", "200"}, b: []string{"GET", "/api", "200"}, want: 1.0},
+		{name: "one difference", a: []string{"GET", "/api", "200"}, b: []string{"GET", "/api", "404"}, want: 2.0 / 3.0},
+		{name: "all different", a: []string{"GET", "/api", "200"}, b: []string{"POST", "/users", "500"}, want: 0.0},
+		{name: "a wildcard on either side matches", a: []string{"GET", Wildcard, "200"}, b: []string{"GET", "/api", "200"}, want: 1.0},
+		{name: "different lengths never compare", a: []string{"GET", "/api"}, b: []string{"GET", "/api", "200"}, want: 0.0},
+		{name: "two empty slices score zero, not one", a: []string{}, b: []string{}, want: 0.0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -251,15 +251,15 @@ func TestMergeTokensWidensOnlyWhereTheyDisagree(t *testing.T) {
 		template, tokens []string
 		want             []string
 	}{
-		{"an existing wildcard is kept", []string{"GET", "/api", Wildcard, "200"}, []string{"GET", "/api", "789", "200"},
-			[]string{"GET", "/api", Wildcard, "200"}},
-		{"a disagreement becomes a wildcard", []string{"GET", "/api", "404"}, []string{"GET", "/api", "200"},
-			[]string{"GET", "/api", Wildcard}},
-		{"full agreement changes nothing", []string{"GET", "/api"}, []string{"GET", "/api"}, []string{"GET", "/api"}},
-		{"a wildcard in the MESSAGE keeps the template's token", []string{"GET", "/api"}, []string{"GET", Wildcard},
-			[]string{"GET", "/api"}},
-		{"different lengths return the template untouched", []string{"GET", "/api"}, []string{"GET", "/api", "200"},
-			[]string{"GET", "/api"}},
+		{name: "an existing wildcard is kept", template: []string{"GET", "/api", Wildcard, "200"}, tokens: []string{"GET", "/api", "789", "200"},
+			want: []string{"GET", "/api", Wildcard, "200"}},
+		{name: "a disagreement becomes a wildcard", template: []string{"GET", "/api", "404"}, tokens: []string{"GET", "/api", "200"},
+			want: []string{"GET", "/api", Wildcard}},
+		{name: "full agreement changes nothing", template: []string{"GET", "/api"}, tokens: []string{"GET", "/api"}, want: []string{"GET", "/api"}},
+		{name: "a wildcard in the MESSAGE keeps the template's token", template: []string{"GET", "/api"}, tokens: []string{"GET", Wildcard},
+			want: []string{"GET", "/api"}},
+		{name: "different lengths return the template untouched", template: []string{"GET", "/api"}, tokens: []string{"GET", "/api", "200"},
+			want: []string{"GET", "/api"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -288,7 +288,7 @@ func TestExampleVarsAreCapturedFromSubsequentMessages(t *testing.T) {
 	}
 	for i, m := range []string{"user id2002 logged in successfully", "user id3003 logged in successfully"} {
 		if got := d.AddMessage(msg(m, time.Duration(i+1)*time.Second)); got != tpl {
-			t.Fatalf("message %d did not join the first cluster", i)
+			t.Fatalf("message %q did not join the first cluster", m)
 		}
 	}
 	if len(tpl.ExampleVars) == 0 {

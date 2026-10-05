@@ -54,10 +54,10 @@ func TestNormalizeSetsExactlyThreeLabels(t *testing.T) {
 // group carry the same one and it never distinguishes them.
 func TestServiceIsTheLastPathSegmentAndIsSharedByEveryStream(t *testing.T) {
 	for _, tc := range []struct{ group, want string }{
-		{"/ecs/prod/api-server", "api-server"},
-		{"/aws/lambda/my_function", "my_function"},
-		{"flat-name", "flat-name"},
-		{"/trailing/", ""},
+		{group: "/ecs/prod/api-server", want: "api-server"},
+		{group: "/aws/lambda/my_function", want: "my_function"},
+		{group: "flat-name", want: "flat-name"},
+		{group: "/trailing/", want: ""},
 	} {
 		if got := extractService(tc.group); got != tc.want {
 			t.Errorf("extractService(%q) = %q, want %q", tc.group, got, tc.want)
@@ -142,18 +142,18 @@ func TestParseLogMessageCoversTheFourShapes(t *testing.T) {
 		wantMessage string
 		wantSever   string
 	}{
-		{"json body", `{"level":"error","message":"upstream refused"}`, "upstream refused", SeverityError},
-		{"logger-prefixed json", `[app.http] {"level":"warn","message":"slow response"}`, "slow response", SeverityWarn},
-		{"severity-prefixed text", "ERROR connection refused", "connection refused", SeverityError},
-		{"bracketed severity prefix", "[WARN] disk nearly full", "disk nearly full", SeverityWarn},
+		{name: "json body", line: `{"level":"error","message":"upstream refused"}`, wantMessage: "upstream refused", wantSever: SeverityError},
+		{name: "logger-prefixed json", line: `[app.http] {"level":"warn","message":"slow response"}`, wantMessage: "slow response", wantSever: SeverityWarn},
+		{name: "severity-prefixed text", line: "ERROR connection refused", wantMessage: "connection refused", wantSever: SeverityError},
+		{name: "bracketed severity prefix", line: "[WARN] disk nearly full", wantMessage: "disk nearly full", wantSever: SeverityWarn},
 		{
-			"nested container wrapper",
-			`{"log":"{\"level\":\"critical\",\"msg\":\"segfault\"}","stream":"stderr"}`,
-			"segfault", SeverityCritical,
+			name:        "nested container wrapper",
+			line:        `{"log":"{\"level\":\"critical\",\"msg\":\"segfault\"}","stream":"stderr"}`,
+			wantMessage: "segfault", wantSever: SeverityCritical,
 		},
-		{"plain text with an embedded level", "level=debug starting worker", "level=debug starting worker", SeverityDebug},
-		{"plain text with no level at all", "just some text", "just some text", SeverityInfo},
-		{"an empty line", "", "", SeverityInfo},
+		{name: "plain text with an embedded level", line: "level=debug starting worker", wantMessage: "level=debug starting worker", wantSever: SeverityDebug},
+		{name: "plain text with no level at all", line: "just some text", wantMessage: "just some text", wantSever: SeverityInfo},
+		{name: "an empty line", line: "", wantMessage: "", wantSever: SeverityInfo},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			msg, sev := parseLogMessage(tc.line)

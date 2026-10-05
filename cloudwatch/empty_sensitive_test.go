@@ -5,8 +5,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -78,16 +80,80 @@ func homeOutcome() string {
 	return "home: " + dir
 }
 
-// clearDeclared removes every declared name from the process environment for the
-// duration of the test, restoring each afterwards, so each arm starts from the
-// same baseline whatever the developer's shell holds. t.Setenv registers the
-// restoration; the Unsetenv is what makes the baseline ABSENT rather than empty.
+// isHomeName reports the names that locate the home directory. They are never
+// written to this process — relocating a test process's home also redirects
+// toolchain caches and every child's inherited configuration — so their arms run
+// in a child whose environment the parent builds: see homeArm.
+func isHomeName(name string) bool {
+	return name == "HOME" || name == "USERPROFILE"
+}
+
+// clearDeclared removes every declared name but the home names from the process
+// environment for the duration of the test, restoring each afterwards, so each
+// arm starts from the same baseline whatever the developer's shell holds.
+// t.Setenv registers the restoration; the Unsetenv is what makes the baseline
+// ABSENT rather than empty.
 func clearDeclared(t *testing.T, names []string) {
 	t.Helper()
 	for _, name := range names {
+		if isHomeName(name) {
+			continue
+		}
 		t.Setenv(name, "")
 		os.Unsetenv(name)
 	}
+}
+
+const (
+	homeArmProbeEnv    = "CLOUDWATCH_HOME_ARM_PROBE"
+	homeArmProbeMarker = "HOME-ARM-PROBE: "
+)
+
+// TestHomeArmProbeChild is the CHILD ARM of homeArm. It skips in an ordinary run
+// and does its work only when the parent re-executes this binary: it reports both
+// instruments over the environment the parent built for it.
+func TestHomeArmProbeChild(t *testing.T) {
+	if os.Getenv(homeArmProbeEnv) == "" {
+		t.Skip("the child arm of the home-name probe; the parent test re-executes this binary to run it")
+	}
+	os.Stdout.WriteString(homeArmProbeMarker + envConfigOutcome(t) + "|" + homeOutcome() + "\n")
+}
+
+// homeArm re-executes this test binary with name in the state given — absent
+// when present is false, otherwise set to value — and returns both instruments'
+// outcome as the child resolved them.
+//
+// THE CHILD'S ENVIRONMENT IS BUILT, NOT INHERITED: PATH, the probe switch and the
+// name under test, and nothing else, so the only difference between two arms is
+// the name's own state and no declared name the developer's shell holds reaches
+// the child. Its working directory is a temp directory, so a workspace-relative
+// read would fail rather than pass on this package's cached inputs.
+func homeArm(t *testing.T, name, value string, present bool) string {
+	t.Helper()
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatalf("resolving the test binary: %v", err)
+	}
+	env := []string{homeArmProbeEnv + "=1", "PATH=" + os.Getenv("PATH")}
+	if present {
+		env = append(env, name+"="+value)
+	}
+	cmd := exec.Command(self, "-test.run=^TestHomeArmProbeChild$", "-test.v")
+	cmd.Env = env
+	cmd.Dir = t.TempDir()
+	var stderr strings.Builder
+	cmd.Stderr = &stderr
+	stdout, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("the home-arm probe child exited %v (stderr: %s)\n%s", err, stderr.String(), stdout)
+	}
+	for line := range strings.SplitSeq(string(stdout), "\n") {
+		if outcome, ok := strings.CutPrefix(line, homeArmProbeMarker); ok {
+			return outcome
+		}
+	}
+	t.Fatalf("the home-arm probe child reported no result line; its output was:\n%s", stdout)
+	return ""
 }
 
 func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
@@ -103,24 +169,26 @@ func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
 	clearDeclared(t, declared)
 
 	envBaseline := envConfigOutcome(t)
-	homeBaseline := homeOutcome()
 
 	var differ []string
 	for _, name := range declared {
+		if isHomeName(name) {
+			if homeArm(t, name, "", false) != homeArm(t, name, "", true) {
+				differ = append(differ, name)
+			}
+			continue
+		}
 		os.Setenv(name, "")
-		got, gotHome := envConfigOutcome(t), homeOutcome()
+		got := envConfigOutcome(t)
 		os.Unsetenv(name)
-		if got != envBaseline || gotHome != homeBaseline {
+		if got != envBaseline {
 			differ = append(differ, name)
 		}
 	}
 	slices.Sort(differ)
 	if len(differ) != 0 {
-		t.Errorf("%d of %d declared names tell present-and-empty apart from absent: %v\n"+
-			"this collector's worked entry renders the defaulted ${NAME:-} form for every declared name, so a "+
-			"discriminating name means an operator who copies that entry gets a broken collect; either the name is "+
-			"marked empty_sensitive in describe_env.go and the entry stops showing the defaulted form for it, or "+
-			"the reader that started discriminating is the defect", len(differ), len(declared), differ)
+		t.Errorf(`%d of %d declared names tell present-and-empty apart from absent: %v
+this collector's worked entry renders the defaulted ${NAME:-} form for every declared name, so a discriminating name means an operator who copies that entry gets a broken collect; either the name is marked empty_sensitive in describe_env.go and the entry stops showing the defaulted form for it, or the reader that started discriminating is the defect`, len(differ), len(declared), differ)
 	}
 
 	// AND THE DECLARATION AGREES, which is the half the installer reads. The two
@@ -189,12 +257,10 @@ func TestNoDeclaredNameTellsEmptyApartFromAbsent(t *testing.T) {
 			})
 		}
 
-		// The home arm's own control, through its own reader.
+		// The home arm's own control, through its own reader in the same child
+		// instrument the sweep used.
 		t.Run("home directory", func(t *testing.T) {
-			os.Setenv("HOME", dir)
-			got := homeOutcome()
-			os.Unsetenv("HOME")
-			if got == homeBaseline {
+			if homeArm(t, "HOME", dir, true) == homeArm(t, "HOME", "", false) {
 				t.Error("control: HOME set to a real directory did not move os.UserHomeDir; " +
 					"the sweep's zero for that name is unexplained")
 			}

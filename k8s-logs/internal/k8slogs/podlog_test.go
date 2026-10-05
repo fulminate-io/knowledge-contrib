@@ -345,17 +345,17 @@ func TestACancelledContextStopsTheRead(t *testing.T) {
 	}
 }
 
-// cancellingReader hands out a log body and cancels the context part way
+// cancelingReader hands out a log body and cancels the context part way
 // through it, which is how a collect is actually cancelled: the stream is
 // already open and the read is under way.
-type cancellingReader struct {
+type cancelingReader struct {
 	body   *strings.Reader
 	cancel context.CancelFunc
 	after  int
 	read   int
 }
 
-func (c *cancellingReader) Read(p []byte) (int, error) {
+func (c *cancelingReader) Read(p []byte) (int, error) {
 	n, err := c.body.Read(p)
 	c.read += n
 	if c.read >= c.after && c.cancel != nil {
@@ -380,7 +380,7 @@ func TestTheScanLoopStopsOnCancellationMidRead(t *testing.T) {
 	body := stamped(fixtureBase, lines...)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	reader := &cancellingReader{body: strings.NewReader(body), cancel: cancel, after: 200}
+	reader := &cancelingReader{body: strings.NewReader(body), cancel: cancel, after: 200}
 	t.Cleanup(cancel)
 
 	res, err := scanLog(ctx, reader, Source{Namespace: "dev", Pod: "api-1", Container: "api"}, nil, ReadOptions{})

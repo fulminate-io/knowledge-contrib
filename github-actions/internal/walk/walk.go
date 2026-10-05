@@ -182,50 +182,62 @@ func (c Collector) fanOut(
 		limit = len(subs)
 	}
 
-	var (
-		mu     sync.Mutex
-		merged ghgraph.Result
-		wg     sync.WaitGroup
-	)
-	work := make(chan collect.Subcollector)
+	// EACH ENUMERATION WRITES ITS OWN SLOT, indexed by its position in subs,
+	// and the slots are folded after the join: the WaitGroup's happens-before is
+	// the whole synchronization, and the fold runs in subs order, so the same
+	// input reports the same incompleteness and failures in the same order on
+	// every run rather than in whichever order the workers happened to finish.
+	type outcome struct {
+		got ghgraph.Result
+		err error
+		ran bool
+	}
+	outcomes := make([]outcome, len(subs))
+	var wg sync.WaitGroup
+	work := make(chan int)
 	for range limit {
 		wg.Go(func() {
-			for sub := range work {
-				got, err := sub.Run(ctx, org)
-				mu.Lock()
-				switch {
-				case err == nil:
-					merged.Add(got)
-				case errors.Is(err, collect.ErrDenied), errors.Is(err, collect.ErrPartial):
-					// Both keep whatever the enumeration had already read: an
-					// organization commonly refuses ONE repository of many, and
-					// discarding the rest would be the larger loss.
-					merged.Add(got)
-					incomplete = append(incomplete, err.Error())
-				default:
-					failures = append(failures, fmt.Sprintf("%s: %v", sub.Name, err))
-				}
-				mu.Unlock()
+			for i := range work {
+				got, err := subs[i].Run(ctx, org)
+				outcomes[i] = outcome{got: got, err: err, ran: true}
 			}
 		})
 	}
-	for _, sub := range subs {
+	cancelled := false
+feed:
+	for i := range subs {
 		select {
-		case work <- sub:
+		case work <- i:
 		case <-ctx.Done():
 			// A cancelled context stops handing out work. The workers drain and
 			// exit, so the wait below returns rather than leaking them, and the
 			// enumerations that did run are still reported.
-			close(work)
-			wg.Wait()
-			mu.Lock()
-			failures = append(failures, fmt.Sprintf("walk cancelled: %v", ctx.Err()))
-			out, i, f := merged, incomplete, failures
-			mu.Unlock()
-			return out, i, f
+			cancelled = true
+			break feed
 		}
 	}
 	close(work)
 	wg.Wait()
-	return merged, incomplete, failures
+	for i, o := range outcomes {
+		if !o.ran {
+			continue
+		}
+		sub, got, err := subs[i], o.got, o.err
+		switch {
+		case err == nil:
+			result.Add(got)
+		case errors.Is(err, collect.ErrDenied), errors.Is(err, collect.ErrPartial):
+			// Both keep whatever the enumeration had already read: an
+			// organization commonly refuses ONE repository of many, and
+			// discarding the rest would be the larger loss.
+			result.Add(got)
+			incomplete = append(incomplete, err.Error())
+		default:
+			failures = append(failures, fmt.Sprintf("%s: %v", sub.Name, err))
+		}
+	}
+	if cancelled {
+		failures = append(failures, fmt.Sprintf("walk cancelled: %v", ctx.Err()))
+	}
+	return result, incomplete, failures
 }

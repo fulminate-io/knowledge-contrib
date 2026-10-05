@@ -54,7 +54,7 @@ func ListEnvironments(
 	path := fmt.Sprintf("repositories/%s/%s/environments", workspace, slug)
 
 	var envs []apiEnvironment
-	err := client.GetPaginated(ctx, path, func(raw json.RawMessage) error {
+	err := client.FetchPaginated(ctx, path, func(raw json.RawMessage) error {
 		var page []apiEnvironment
 		if err := json.Unmarshal(raw, &page); err != nil {
 			return fmt.Errorf("decoding an environments page: %w", err)

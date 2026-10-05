@@ -4,8 +4,6 @@ package main
 
 import (
 	"sort"
-
-	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // vocabulary.go — the NODE AND EDGE VOCABULARY this collector writes into its
@@ -22,14 +20,6 @@ import (
 // LINKAGE edge naming another graph rather than as its own-graph vocabulary, so
 // it is not in the set below; see linkage.go. Folding it in here would claim a
 // cross-graph mechanism as an in-graph one.
-
-// Node and Edge are the contract shapes the framework encodes. They are aliased
-// rather than re-declared so a walk builds the framework's own values and no
-// conversion layer can drift from the contract.
-type (
-	Node = framework.Node
-	Edge = framework.Edge
-)
 
 // nodeTypeCloudResource is the node type every Kubernetes object this collector
 // produces carries. It matches the built-in collector's own node type, so a

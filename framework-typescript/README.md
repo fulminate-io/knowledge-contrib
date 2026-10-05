@@ -62,8 +62,9 @@ an MCP SDK server passed a result carrying `edges: null` straight through.
 complete walk lets the server treat the rows this collect did not carry as gone.
 So `complete` has no usable zero value: build it with `complete()` or
 `incomplete(reason)`, and a result carrying anything else is refused when it is
-encoded, naming your tool. The reason is for your own logs; the wire carries a
-boolean.
+encoded, naming your tool. The reason rides the wire as `walk_incomplete_reason`
+beside `walk_complete: false`, and the client prints it when it refuses the
+collect's deletion phase, so write it for the operator who reads that line.
 
 ### An edge into another graph names a family, never an instance
 

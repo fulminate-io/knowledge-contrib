@@ -57,8 +57,7 @@ func runOneWithCaps(
 // THE DISCOVERY'S OWN GAPS ARE A THIRD RETURN because they belong to no single
 // enumeration: six of them read one discovery, and the walk folds its
 // incompleteness in once rather than letting six enumerations repeat it.
-func runAll(t *testing.T, api *fakeAPI) (glgraph.Result, map[string]error, []string) {
-	t.Helper()
+func runAll(api *fakeAPI) (glgraph.Result, map[string]error, []string) {
 	api.newWalk()
 	plan := collect.All(api.bundle(), collect.Caps{}, fixtureGroup)
 	out := glgraph.Result{}

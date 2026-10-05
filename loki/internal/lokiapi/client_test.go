@@ -22,13 +22,13 @@ func TestTheAddressIsValidatedBeforeAnyRequestIsBuilt(t *testing.T) {
 		address string
 		want    string
 	}{
-		{"empty", "", "is empty"},
-		{"only whitespace", "   ", "is empty"},
-		{"a bare host with no scheme", "loki.example:3100", "scheme"},
-		{"a relative path", "/loki/api/v1", "scheme"},
-		{"the file scheme", "file:///etc/passwd", "scheme"},
-		{"a scheme with no host", "http://", "no host"},
-		{"an unparseable URL", "http://[::1", "does not parse"},
+		{name: "empty", address: "", want: "is empty"},
+		{name: "only whitespace", address: "   ", want: "is empty"},
+		{name: "a bare host with no scheme", address: "loki.example:3100", want: "scheme"},
+		{name: "a relative path", address: "/loki/api/v1", want: "scheme"},
+		{name: "the file scheme", address: "file:///etc/passwd", want: "scheme"},
+		{name: "a scheme with no host", address: "http://", want: "no host"},
+		{name: "an unparseable URL", address: "http://[::1", want: "does not parse"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -50,13 +50,13 @@ func TestTheAddressIsValidatedBeforeAnyRequestIsBuilt(t *testing.T) {
 // concatenation cannot produce a double slash.
 func TestAValidAddressIsAcceptedAndNormalized(t *testing.T) {
 	cases := []struct{ in, want string }{
-		{"http://localhost:3100", "http://localhost:3100"},
-		{"https://loki.example.com", "https://loki.example.com"},
-		{"http://localhost:3100/", "http://localhost:3100"},
-		{"http://localhost:3100///", "http://localhost:3100"},
-		{"  http://localhost:3100  ", "http://localhost:3100"},
-		{"https://loki.example.com/prefix", "https://loki.example.com/prefix"},
-		{"http://[::1]:3100", "http://[::1]:3100"},
+		{in: "http://localhost:3100", want: "http://localhost:3100"},
+		{in: "https://loki.example.com", want: "https://loki.example.com"},
+		{in: "http://localhost:3100/", want: "http://localhost:3100"},
+		{in: "http://localhost:3100///", want: "http://localhost:3100"},
+		{in: "  http://localhost:3100  ", want: "http://localhost:3100"},
+		{in: "https://loki.example.com/prefix", want: "https://loki.example.com/prefix"},
+		{in: "http://[::1]:3100", want: "http://[::1]:3100"},
 	}
 	for _, tc := range cases {
 		got, err := NormalizeAddress(tc.in)
@@ -78,9 +78,9 @@ func TestTheCredentialHeadersAreWrittenFromTheEnvironment(t *testing.T) {
 		assert func(t *testing.T, req map[string]string)
 	}{
 		{
-			"basic auth",
-			map[string]string{EnvUsername: "u", EnvPassword: "p"},
-			func(t *testing.T, req map[string]string) {
+			name: "basic auth",
+			env:  map[string]string{EnvUsername: "u", EnvPassword: "p"},
+			assert: func(t *testing.T, req map[string]string) {
 				got := req["header:Authorization"]
 				if !strings.HasPrefix(got, "Basic ") {
 					t.Fatalf("Authorization = %q, want a Basic credential", got)
@@ -88,18 +88,18 @@ func TestTheCredentialHeadersAreWrittenFromTheEnvironment(t *testing.T) {
 			},
 		},
 		{
-			"a bearer token in the default header",
-			map[string]string{EnvBearerToken: "t0ken"},
-			func(t *testing.T, req map[string]string) {
+			name: "a bearer token in the default header",
+			env:  map[string]string{EnvBearerToken: "t0ken"},
+			assert: func(t *testing.T, req map[string]string) {
 				if got := req["header:Authorization"]; got != "Bearer t0ken" {
 					t.Fatalf("Authorization = %q, want a Bearer credential", got)
 				}
 			},
 		},
 		{
-			"a bearer token in a named header",
-			map[string]string{EnvBearerToken: "t0ken", EnvAuthHeader: "X-Gateway-Auth"},
-			func(t *testing.T, req map[string]string) {
+			name: "a bearer token in a named header",
+			env:  map[string]string{EnvBearerToken: "t0ken", EnvAuthHeader: "X-Gateway-Auth"},
+			assert: func(t *testing.T, req map[string]string) {
 				if got := req["header:X-Gateway-Auth"]; got != "Bearer t0ken" {
 					t.Fatalf("X-Gateway-Auth = %q, want the bearer credential", got)
 				}
@@ -109,54 +109,54 @@ func TestTheCredentialHeadersAreWrittenFromTheEnvironment(t *testing.T) {
 			},
 		},
 		{
-			"basic auth wins over a bearer token when both are set",
-			map[string]string{EnvUsername: "u", EnvPassword: "p", EnvBearerToken: "t0ken"},
-			func(t *testing.T, req map[string]string) {
+			name: "basic auth wins over a bearer token when both are set",
+			env:  map[string]string{EnvUsername: "u", EnvPassword: "p", EnvBearerToken: "t0ken"},
+			assert: func(t *testing.T, req map[string]string) {
 				if got := req["header:Authorization"]; !strings.HasPrefix(got, "Basic ") {
 					t.Fatalf("Authorization = %q, want the Basic credential to win", got)
 				}
 			},
 		},
 		{
-			"the tenant header",
-			map[string]string{EnvOrgID: "tenant-1"},
-			func(t *testing.T, req map[string]string) {
+			name: "the tenant header",
+			env:  map[string]string{EnvOrgID: "tenant-1"},
+			assert: func(t *testing.T, req map[string]string) {
 				if got := req["header:X-Scope-Orgid"]; got != "tenant-1" {
 					t.Fatalf("X-Scope-OrgID = %q, want %q", got, "tenant-1")
 				}
 			},
 		},
 		{
-			"the query tags header",
-			map[string]string{EnvQueryTags: "team=platform"},
-			func(t *testing.T, req map[string]string) {
+			name: "the query tags header",
+			env:  map[string]string{EnvQueryTags: "team=platform"},
+			assert: func(t *testing.T, req map[string]string) {
 				if got := req["header:X-Query-Tags"]; got != "team=platform" {
 					t.Fatalf("X-Query-Tags = %q, want %q", got, "team=platform")
 				}
 			},
 		},
 		{
-			"the no-cache header",
-			map[string]string{EnvNoCache: "true"},
-			func(t *testing.T, req map[string]string) {
+			name: "the no-cache header",
+			env:  map[string]string{EnvNoCache: "true"},
+			assert: func(t *testing.T, req map[string]string) {
 				if got := req["header:Cache-Control"]; got != "no-cache" {
 					t.Fatalf("Cache-Control = %q, want no-cache", got)
 				}
 			},
 		},
 		{
-			"compression is negotiated only when it is asked for",
-			map[string]string{EnvHTTPCompression: "true"},
-			func(t *testing.T, req map[string]string) {
+			name: "compression is negotiated only when it is asked for",
+			env:  map[string]string{EnvHTTPCompression: "true"},
+			assert: func(t *testing.T, req map[string]string) {
 				if got := req["header:Accept-Encoding"]; got != "gzip" {
 					t.Fatalf("Accept-Encoding = %q, want gzip", got)
 				}
 			},
 		},
 		{
-			"an unauthenticated collect sends no credential at all",
-			nil,
-			func(t *testing.T, req map[string]string) {
+			name: "an unauthenticated collect sends no credential at all",
+			env:  nil,
+			assert: func(t *testing.T, req map[string]string) {
 				for _, header := range []string{"header:Authorization", "header:X-Scope-Orgid", "header:X-Query-Tags", "header:Cache-Control"} {
 					if v, ok := req[header]; ok {
 						t.Fatalf("%s was sent as %q with nothing configured", header, v)
@@ -263,11 +263,11 @@ func TestTheRetryBackoffGrowsAndIsCapped(t *testing.T) {
 		attempt int
 		want    time.Duration
 	}{
-		{0, 10 * time.Millisecond},
-		{1, 20 * time.Millisecond},
-		{2, 40 * time.Millisecond},
-		{3, 40 * time.Millisecond},
-		{9, 40 * time.Millisecond},
+		{attempt: 0, want: 10 * time.Millisecond},
+		{attempt: 1, want: 20 * time.Millisecond},
+		{attempt: 2, want: 40 * time.Millisecond},
+		{attempt: 3, want: 40 * time.Millisecond},
+		{attempt: 9, want: 40 * time.Millisecond},
 	} {
 		start := time.Now()
 		if err := sleepBackoff(context.Background(), s, tc.attempt); err != nil {
@@ -320,11 +320,11 @@ func TestTheProxyDecisionIsMadeOnceAtConstruction(t *testing.T) {
 		wantProxy   bool
 		wantFromEnv bool
 	}{
-		{"no proxy configured", nil, false, false},
-		{"an explicit proxy URL", map[string]string{EnvHTTPProxyURL: "http://proxy:3128"}, true, false},
-		{"the environment proxy", map[string]string{EnvEnvProxy: "true"}, true, true},
-		{"an explicit URL wins over the environment flag",
-			map[string]string{EnvHTTPProxyURL: "http://proxy:3128", EnvEnvProxy: "true"}, true, false},
+		{name: "no proxy configured", env: nil, wantProxy: false, wantFromEnv: false},
+		{name: "an explicit proxy URL", env: map[string]string{EnvHTTPProxyURL: "http://proxy:3128"}, wantProxy: true, wantFromEnv: false},
+		{name: "the environment proxy", env: map[string]string{EnvEnvProxy: "true"}, wantProxy: true, wantFromEnv: true},
+		{name: "an explicit URL wins over the environment flag",
+			env: map[string]string{EnvHTTPProxyURL: "http://proxy:3128", EnvEnvProxy: "true"}, wantProxy: true, wantFromEnv: false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

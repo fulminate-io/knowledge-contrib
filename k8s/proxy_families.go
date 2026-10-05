@@ -4,6 +4,8 @@ package main
 
 import (
 	"strings"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // proxy_families.go — the SIX PROXY FAMILIES, one function each, with the gate
@@ -29,8 +31,8 @@ import (
 // THE EVIDENCE NAMES WHICH LOOKUP KEY MATCHED, so an operator auditing a
 // mis-linkage can see whether the ip or the hostname produced it without
 // re-running anything.
-func buildExposedByEdges(nodes []Node, acc *proxyAccumulator) []Edge {
-	var out []Edge
+func buildExposedByEdges(nodes []framework.Node, acc *proxyAccumulator) []framework.Edge {
+	var out []framework.Edge
 	seen := map[string]bool{}
 	for i := range nodes {
 		n := &nodes[i]
@@ -60,7 +62,7 @@ func buildExposedByEdges(nodes []Node, acc *proxyAccumulator) []Edge {
 				continue
 			}
 			seen[dedupe] = true
-			out = append(out, Edge{
+			out = append(out, framework.Edge{
 				FromID:   n.ID,
 				ToID:     proxyID,
 				Type:     edgeExposedBy,
@@ -90,7 +92,7 @@ func buildExposedByEdges(nodes []Node, acc *proxyAccumulator) []Edge {
 //
 // AN UNRESOLVABLE CONTEXT YIELDS NO CLUSTER AND ZERO EDGES. That arm is also
 // what proves a fixture reached this function at all.
-func buildRunsInClusterEdges(nodes []Node, contextName string, acc *proxyAccumulator) []Edge {
+func buildRunsInClusterEdges(nodes []framework.Node, contextName string, acc *proxyAccumulator) []framework.Edge {
 	cluster, ok := parseManagedCluster(contextName)
 	if !ok {
 		return nil
@@ -100,7 +102,7 @@ func buildRunsInClusterEdges(nodes []Node, contextName string, acc *proxyAccumul
 		return nil
 	}
 
-	out := make([]Edge, 0, len(nodes))
+	out := make([]framework.Edge, 0, len(nodes))
 	for i := range nodes {
 		n := &nodes[i]
 		if n.ID == proxyID {
@@ -109,7 +111,7 @@ func buildRunsInClusterEdges(nodes []Node, contextName string, acc *proxyAccumul
 		if n.Type == nodeTypeProxy {
 			continue
 		}
-		out = append(out, Edge{FromID: n.ID, ToID: proxyID, Type: edgeRunsInCluster})
+		out = append(out, framework.Edge{FromID: n.ID, ToID: proxyID, Type: edgeRunsInCluster})
 	}
 	return out
 }
@@ -175,8 +177,8 @@ func parseManagedCluster(contextName string) (proxyTarget, bool) {
 // So this family requires BOTH and emits nothing otherwise, which is the
 // opposite choice from the two identity families below and is deliberate: a VM
 // always belongs to a determinable account, an identity binding does not.
-func buildBackedByVMEdges(nodes []Node, acc *proxyAccumulator) []Edge {
-	var out []Edge
+func buildBackedByVMEdges(nodes []framework.Node, acc *proxyAccumulator) []framework.Edge {
+	var out []framework.Edge
 	for i := range nodes {
 		n := &nodes[i]
 		if n.Metadata["resource_type"] != "Node" {
@@ -193,7 +195,7 @@ func buildBackedByVMEdges(nodes []Node, acc *proxyAccumulator) []Edge {
 		if !ok {
 			continue
 		}
-		out = append(out, Edge{FromID: n.ID, ToID: proxyID, Type: edgeBackedByVM})
+		out = append(out, framework.Edge{FromID: n.ID, ToID: proxyID, Type: edgeBackedByVM})
 	}
 	return out
 }

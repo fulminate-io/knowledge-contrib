@@ -80,7 +80,7 @@ func TestEdgeCensus_BuildsIsNeitherDeclaredNorEmitted(t *testing.T) {
 	// KNOWN POSITIVE ON THE INSTRUMENT, over the SAME slice: the counter finds a
 	// BUILDS edge when one is present, so the zero above is an observation
 	// rather than a counter that can only ever return zero.
-	assert.Equal(t, 1, countEdges(append(res.Edges, Edge{
+	assert.Equal(t, 1, countEdges(append(res.Edges, framework.Edge{
 		FromID: "prod/Deployment/api-server", ToID: "api", Type: retiredEdgeBuilds,
 	}), retiredEdgeBuilds), "known positive: this counter sees a BUILDS edge in this exact slice")
 

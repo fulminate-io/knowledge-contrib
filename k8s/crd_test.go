@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8stesting "k8s.io/client-go/testing"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // crd_test.go — R5-e, R5-f and R5-f2: the custom-resource half of the kind
@@ -267,7 +269,7 @@ func TestCRD_InstanceWithNoKindFallsBackToTheDefinition(t *testing.T) {
 // walkOneCustomResource runs a whole walk over one custom resource definition
 // declaring declaredKind, served by one instance whose own kind is
 // instanceKind, and returns the nodes.
-func walkOneCustomResource(t *testing.T, declaredKind, instanceKind string) []Node {
+func walkOneCustomResource(t *testing.T, declaredKind, instanceKind string) []framework.Node {
 	t.Helper()
 	const group, version, plural = "example.com", "v1", "widgets"
 	gvr := schema.GroupVersionResource{Group: group, Version: version, Resource: plural}

@@ -81,7 +81,8 @@ func writeMinimalKubeconfigUnderHome(t *testing.T, home string) string {
 func assertResolvesTheFixture(t *testing.T, label, outcome string) {
 	t.Helper()
 	if !strings.Contains(outcome, minimalKubeconfigServer) {
-		t.Fatalf("%s did not resolve the fixture kubeconfig; the comparison would be taken against a refusal "+
-			"rather than a built client.\ngot: %s\nwant a resolved host of %s", label, outcome, minimalKubeconfigServer)
+		t.Fatalf(`%s did not resolve the fixture kubeconfig; the comparison would be taken against a refusal rather than a built client.
+got: %s
+want a resolved host of %s`, label, outcome, minimalKubeconfigServer)
 	}
 }

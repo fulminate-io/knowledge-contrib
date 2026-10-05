@@ -65,7 +65,7 @@ func TestADeclaredCloudContextArrivesAndProducesTheCloudLinkedEmission(t *testin
 
 	proxies := got.nodesOfType(nodeTypeProxy)
 	if len(proxies) != 2 {
-		t.Fatalf("got %d proxy nodes, want one per declared resource the labels resolved to: %+v",
+		t.Fatalf("CallTool(collect) = %d proxy nodes, want one per declared resource the labels resolved to: %+v",
 			len(proxies), got.NodeTypes())
 	}
 	wantIDs := map[string]bool{"proxy:cloud:acct:res-api": true, "proxy:cloud:acct:res-worker": true}
@@ -80,7 +80,7 @@ func TestADeclaredCloudContextArrivesAndProducesTheCloudLinkedEmission(t *testin
 
 	emitted := got.edgesOfType(edgeTypeEmittedBy)
 	if len(emitted) != 2 {
-		t.Fatalf("got %d EMITTED_BY edges, want one per resolution: %+v", len(emitted), got.EdgeTypes())
+		t.Fatalf("CallTool(collect) = %d EMITTED_BY edges, want one per resolution: %+v", len(emitted), got.EdgeTypes())
 	}
 	for _, e := range emitted {
 		if !got.hasNode(e.FromID) || !got.hasNode(e.ToID) {
@@ -90,7 +90,7 @@ func TestADeclaredCloudContextArrivesAndProducesTheCloudLinkedEmission(t *testin
 
 	correlations := got.edgesOfType(edgeTypeCorrelatesWith)
 	if len(correlations) != 1 {
-		t.Fatalf("got %d CORRELATES_WITH edges, want the one the declared dependency confirms: %+v",
+		t.Fatalf("CallTool(collect) = %d CORRELATES_WITH edges, want the one the declared dependency confirms: %+v",
 			len(correlations), got.EdgeTypes())
 	}
 	if correlations[0].Method != correlationMethod {
@@ -118,12 +118,12 @@ func TestTheSameCollectWithNoDeclaredContextEmitsNoneOfTheThree(t *testing.T) {
 
 	for _, nodeType := range []string{nodeTypeProxy} {
 		if n := got.nodesOfType(nodeType); len(n) != 0 {
-			t.Errorf("got %d %s nodes with no declared context", len(n), nodeType)
+			t.Errorf("CallTool(collect, no context) = %d %s nodes with no declared context", len(n), nodeType)
 		}
 	}
 	for _, edgeType := range []string{edgeTypeEmittedBy, edgeTypeCorrelatesWith} {
 		if e := got.edgesOfType(edgeType); len(e) != 0 {
-			t.Errorf("got %d %s edges with no declared context", len(e), edgeType)
+			t.Errorf("CallTool(collect, no context) = %d %s edges with no declared context", len(e), edgeType)
 		}
 	}
 	// KNOWN POSITIVE: the collect still produced the log graph proper, so the
@@ -171,7 +171,7 @@ func TestTwoDeclaredResourcesWithNoEdgeBetweenThemConfirmNoCorrelation(t *testin
 	got := decodeEnvelope(t, res)
 
 	if c := got.edgesOfType(edgeTypeCorrelatesWith); len(c) != 0 {
-		t.Errorf("got %d CORRELATES_WITH edges with no declared dependency", len(c))
+		t.Errorf("CallTool(collect, no dependency) = %d CORRELATES_WITH edges with no declared dependency", len(c))
 	}
 	// THE CONTROL: resolution still happened, so the zero above is the missing
 	// dependency rather than a block that failed to arrive.

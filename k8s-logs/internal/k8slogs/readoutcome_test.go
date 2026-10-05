@@ -4,6 +4,8 @@ package k8slogs
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -51,24 +53,23 @@ func twoPods(t *testing.T) *fakeAPI {
 	return api
 }
 
-// assertNeighborSurvived is the known positive every failing row carries: the
-// pod that COULD be read is in the result.
-func assertNeighborSurvived(t *testing.T, api *fakeAPI, reason string) {
-	t.Helper()
-	res, err := collectorOver(api, t).Walk(context.Background(), "id", devParams(), framework.ForeignContext{})
+// checkNeighborSurvived is the known positive every failing row carries: the
+// pod that COULD be read is in the walk's result. It judges the walk the row
+// ran and returns what is wrong for the Test to fail on.
+func checkNeighborSurvived(res framework.Result, err error, reason string) error {
 	if err != nil {
-		t.Fatalf("a single failed container read FAILED the whole collect: %v. The result must carry what "+
+		return fmt.Errorf("a single failed container read FAILED the whole collect: %w. The result must carry what "+
 			"was read, with the failure reported as incompleteness", err)
 	}
 	if res.Complete.IsComplete() {
-		t.Fatalf("%s left the walk asserting COMPLETE. The server treats a complete collect's absent rows "+
+		return fmt.Errorf("%s left the walk asserting COMPLETE. The server treats a complete collect's absent rows "+
 			"as gone, so a partial walk reported complete arms deletion over the rows it could not read", reason)
 	}
 	if !strings.Contains(res.Complete.Reason(), "api-1") {
-		t.Errorf("the incompleteness reason does not name the container that failed: %q", res.Complete.Reason())
+		return fmt.Errorf("the incompleteness reason does not name the container that failed: %q", res.Complete.Reason())
 	}
 	if len(res.Nodes) == 0 {
-		t.Fatal("the walk carried no nodes at all; the neighboring pod read cleanly and must be present")
+		return errors.New("the walk carried no nodes at all; the neighboring pod read cleanly and must be present")
 	}
 	found := false
 	for _, n := range res.Nodes {
@@ -77,9 +78,10 @@ func assertNeighborSurvived(t *testing.T, api *fakeAPI, reason string) {
 		}
 	}
 	if !found {
-		t.Fatal("the neighboring pod's stream is absent; one container's failure dropped a container that " +
+		return errors.New("the neighboring pod's stream is absent; one container's failure dropped a container that " +
 			"read cleanly")
 	}
+	return nil
 }
 
 // TestReadOutcomeSuccess is the control the five failing rows rest on.
@@ -122,7 +124,10 @@ func TestReadOutcomeEmptyContainer(t *testing.T) {
 func TestReadOutcomeDenied(t *testing.T) {
 	api := twoPods(t)
 	api.refuseLog("dev", "api-1", "api", http.StatusForbidden)
-	assertNeighborSurvived(t, api, "a container whose log the apiserver refused")
+	res, walkErr := collectorOver(api, t).Walk(context.Background(), "id", devParams(), framework.ForeignContext{})
+	if err := checkNeighborSurvived(res, walkErr, "a container whose log the apiserver refused"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // TestReadOutcomePodGoneMidRead — the pod was listed and then deleted, so its
@@ -131,7 +136,10 @@ func TestReadOutcomeDenied(t *testing.T) {
 func TestReadOutcomePodGoneMidRead(t *testing.T) {
 	api := twoPods(t)
 	api.refuseLog("dev", "api-1", "api", http.StatusNotFound)
-	assertNeighborSurvived(t, api, "a pod that disappeared between the list and the read")
+	res, walkErr := collectorOver(api, t).Walk(context.Background(), "id", devParams(), framework.ForeignContext{})
+	if err := checkNeighborSurvived(res, walkErr, "a pod that disappeared between the list and the read"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // TestReadOutcomeContainerRestarted — the container the log belongs to is no
@@ -140,7 +148,10 @@ func TestReadOutcomePodGoneMidRead(t *testing.T) {
 func TestReadOutcomeContainerRestarted(t *testing.T) {
 	api := twoPods(t)
 	api.refuseLog("dev", "api-1", "api", http.StatusBadRequest)
-	assertNeighborSurvived(t, api, "a container that restarted out from under the read")
+	res, walkErr := collectorOver(api, t).Walk(context.Background(), "id", devParams(), framework.ForeignContext{})
+	if err := checkNeighborSurvived(res, walkErr, "a container that restarted out from under the read"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // TestReadOutcomeStreamErrorMidRead is the one the other four cannot reach: the
@@ -155,7 +166,10 @@ func TestReadOutcomeStreamErrorMidRead(t *testing.T) {
 	api.addLog("dev", "api-1", "api", stamped(fixtureBase,
 		"the first line of a body that stops", "the second", "the third", "the fourth"))
 	api.abortLog("dev", "api-1", "api")
-	assertNeighborSurvived(t, api, "a container whose log stream broke part way through")
+	res, walkErr := collectorOver(api, t).Walk(context.Background(), "id", devParams(), framework.ForeignContext{})
+	if err := checkNeighborSurvived(res, walkErr, "a container whose log stream broke part way through"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // TestAPartialStreamIsNotPassedOffAsWhole is the same arm read at the container

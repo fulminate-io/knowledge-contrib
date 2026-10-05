@@ -8,6 +8,8 @@ import (
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // walk_config.go — ConfigMaps, Secrets, ServiceAccounts and the four RBAC
@@ -110,13 +112,13 @@ func walkServiceAccounts(ctx context.Context, c clientBundle, w *walkResult) err
 			if ref.Name == "" {
 				continue
 			}
-			w.addEdges(Edge{FromID: id, ToID: resourceID(sa.Namespace, "Secret", ref.Name), Type: edgeMountsSecret})
+			w.addEdges(framework.Edge{FromID: id, ToID: resourceID(sa.Namespace, "Secret", ref.Name), Type: edgeMountsSecret})
 		}
 		for _, ref := range sa.ImagePullSecrets {
 			if ref.Name == "" {
 				continue
 			}
-			w.addEdges(Edge{
+			w.addEdges(framework.Edge{
 				FromID: id,
 				ToID:   resourceID(sa.Namespace, "Secret", ref.Name),
 				Type:   edgeMountsSecret,
@@ -211,8 +213,8 @@ func walkClusterRoleBindings(ctx context.Context, c clientBundle, w *walkResult)
 // THE ROLE REFERENCE'S SCOPE IS NOT THE BINDING'S. A namespaced RoleBinding may
 // bind a ClusterRole, and its target id then carries no namespace; building
 // every role target in the binding's namespace points half of them at nothing.
-func roleBindingEdges(bindingID, namespace string, ref rbacv1.RoleRef, subjects []rbacv1.Subject) []Edge {
-	var out []Edge
+func roleBindingEdges(bindingID, namespace string, ref rbacv1.RoleRef, subjects []rbacv1.Subject) []framework.Edge {
+	var out []framework.Edge
 	if ref.Name != "" {
 		kind := ref.Kind
 		if kind == "" {
@@ -222,7 +224,7 @@ func roleBindingEdges(bindingID, namespace string, ref rbacv1.RoleRef, subjects 
 		if clusterScopedKinds[kind] {
 			roleNamespace = ""
 		}
-		out = append(out, Edge{
+		out = append(out, framework.Edge{
 			FromID: bindingID,
 			ToID:   resourceID(roleNamespace, kind, ref.Name),
 			Type:   edgeBindsRole,
@@ -241,7 +243,7 @@ func roleBindingEdges(bindingID, namespace string, ref rbacv1.RoleRef, subjects 
 			// binding, names no resolvable object.
 			continue
 		}
-		out = append(out, Edge{
+		out = append(out, framework.Edge{
 			FromID: bindingID,
 			ToID:   resourceID(ns, "ServiceAccount", s.Name),
 			Type:   edgeBindsSubject,

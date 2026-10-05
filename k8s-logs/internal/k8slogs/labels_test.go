@@ -36,8 +36,8 @@ func TestTwoPodsGetDifferentReadableNames(t *testing.T) {
 // (cluster, container) and collide again.
 func TestClusterKeysDoNotDisplaceThePodFromTheName(t *testing.T) {
 	for _, tc := range []struct{ name, cluster, project string }{
-		{"gke context", "main", "fulminate-services"},
-		{"no cluster at all", "", ""},
+		{name: "gke context", cluster: "main", project: "fulminate-services"},
+		{name: "no cluster at all", cluster: "", project: ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			a := logpipe.AliasFor(&logpipe.Stream{Labels: StreamLabels("dev", "api-1", "api", tc.cluster, tc.project)})
@@ -102,18 +102,18 @@ func TestEmptyLabelValuesAreOmitted(t *testing.T) {
 		absent                                   []string
 		want                                     int
 	}{
-		{"a non-GKE context", "dev", "api-1", "api", "", "",
-			[]string{LabelCluster, LabelProject}, 3},
-		{"a project with no cluster", "dev", "api-1", "api", "", "proj",
-			[]string{LabelCluster}, 4},
-		{"an unnamed container", "dev", "api-1", "", "main", "proj",
-			[]string{LabelContainer}, 4},
-		{"an unnamed pod", "dev", "", "api", "main", "proj",
-			[]string{LabelPod}, 4},
-		{"no namespace", "", "api-1", "api", "main", "proj",
-			[]string{LabelNamespace}, 4},
-		{"nothing at all", "", "", "", "", "",
-			[]string{LabelContainer, LabelPod, LabelNamespace, LabelCluster, LabelProject}, 0},
+		{name: "a non-GKE context", namespace: "dev", pod: "api-1", container: "api", cluster: "", proj: "",
+			absent: []string{LabelCluster, LabelProject}, want: 3},
+		{name: "a project with no cluster", namespace: "dev", pod: "api-1", container: "api", cluster: "", proj: "proj",
+			absent: []string{LabelCluster}, want: 4},
+		{name: "an unnamed container", namespace: "dev", pod: "api-1", container: "", cluster: "main", proj: "proj",
+			absent: []string{LabelContainer}, want: 4},
+		{name: "an unnamed pod", namespace: "dev", pod: "", container: "api", cluster: "main", proj: "proj",
+			absent: []string{LabelPod}, want: 4},
+		{name: "no namespace", namespace: "", pod: "api-1", container: "api", cluster: "main", proj: "proj",
+			absent: []string{LabelNamespace}, want: 4},
+		{name: "nothing at all", namespace: "", pod: "", container: "", cluster: "", proj: "",
+			absent: []string{LabelContainer, LabelPod, LabelNamespace, LabelCluster, LabelProject}, want: 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			labels := StreamLabels(tc.namespace, tc.pod, tc.container, tc.cluster, tc.proj)

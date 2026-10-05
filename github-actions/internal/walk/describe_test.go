@@ -86,10 +86,8 @@ func TestDescribe_DeclaresThePersonEdgesAndOnlyTheContractNodeType(t *testing.T)
 	decl := walk.Collector{}.Describe()
 
 	if want := []string{"cicd-resource"}; !slices.Equal(decl.NodeTypes, want) {
-		t.Errorf("the declaration names the node types %v, want exactly %v.\n"+
-			"The kinds — user among them — ride the resource_type metadata key on every node, "+
-			"and a kind declared here is a type the server's gate refuses on ingest because "+
-			"no node carries it.", decl.NodeTypes, want)
+		t.Errorf(`the declaration names the node types %v, want exactly %v.
+The kinds — user among them — ride the resource_type metadata key on every node, and a kind declared here is a type the server's gate refuses on ingest because no node carries it.`, decl.NodeTypes, want)
 	}
 
 	for _, want := range []string{"ATTRIBUTED_TO", "INITIATED_BY", "CREATED_BY"} {
@@ -118,7 +116,7 @@ func TestDescribe_TheDeclaredVocabularyIsWellFormed(t *testing.T) {
 	for _, pair := range []struct {
 		label string
 		types []string
-	}{{"node", decl.NodeTypes}, {"edge", decl.EdgeTypes}} {
+	}{{label: "node", types: decl.NodeTypes}, {label: "edge", types: decl.EdgeTypes}} {
 		seen := map[string]struct{}{}
 		for _, ty := range pair.types {
 			if ty == "" {

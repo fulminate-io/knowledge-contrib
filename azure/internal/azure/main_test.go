@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+
 	"github.com/fulminate-io/knowledge-contrib/framework"
 	"github.com/fulminate-io/knowledge-contrib/framework/frameworktest"
 )
@@ -85,8 +87,8 @@ func TestMain(m *testing.M) {
 // Azure API.
 func runServeChild() {
 	collector := &Collector{
-		newCredential: func(context.Context) (azureCredential, error) { return fakeCredential{}, nil },
-		buildSubs: func(azureCredential, string) []subCollector {
+		newCredential: func(context.Context) (azcore.TokenCredential, error) { return fakeCredential{}, nil },
+		buildSubs: func(azcore.TokenCredential, string) []subCollector {
 			return []subCollector{staticSub{name: "child-walk", result: childWalkResult()}}
 		},
 	}

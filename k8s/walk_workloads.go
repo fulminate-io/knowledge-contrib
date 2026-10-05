@@ -9,6 +9,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/fulminate-io/knowledge-contrib/framework"
 )
 
 // walk_workloads.go — Namespaces, Nodes, and the seven kinds that carry a pod
@@ -93,7 +95,7 @@ func walkPods(ctx context.Context, c clientBundle, w *walkResult) error {
 		// RUNS_ON: a SCHEDULED pod runs on a Node. An unscheduled pod carries
 		// no node name and gets no edge — that is the gate.
 		if p.Spec.NodeName != "" {
-			w.addEdges(Edge{FromID: id, ToID: resourceID("", "Node", p.Spec.NodeName), Type: edgeRunsOn})
+			w.addEdges(framework.Edge{FromID: id, ToID: resourceID("", "Node", p.Spec.NodeName), Type: edgeRunsOn})
 		}
 		w.addEdges(podTemplateEdges(id, p.Namespace, p.Spec)...)
 	}
@@ -154,8 +156,8 @@ func walkStatefulSets(ctx context.Context, c clientBundle, w *walkResult) error 
 // only the pod template would miss every storage relationship a StatefulSet
 // has. The ordinals are derived from the DESIRED replica count, which is what
 // the claims are created from.
-func volumeClaimTemplateEdges(ownerID, namespace, setName string, replicas int32, templates []corev1.PersistentVolumeClaim) []Edge {
-	var out []Edge
+func volumeClaimTemplateEdges(ownerID, namespace, setName string, replicas int32, templates []corev1.PersistentVolumeClaim) []framework.Edge {
+	var out []framework.Edge
 	for i := range templates {
 		tmpl := &templates[i]
 		if tmpl.Name == "" {
@@ -163,7 +165,7 @@ func volumeClaimTemplateEdges(ownerID, namespace, setName string, replicas int32
 		}
 		for ordinal := range replicas {
 			claim := fmt.Sprintf("%s-%s-%d", tmpl.Name, setName, ordinal)
-			out = append(out, Edge{
+			out = append(out, framework.Edge{
 				FromID: ownerID,
 				ToID:   resourceID(namespace, "PersistentVolumeClaim", claim),
 				Type:   edgeUsesPVC,

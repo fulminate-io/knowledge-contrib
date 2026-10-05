@@ -199,8 +199,8 @@ func TestADifferentWindowIsAParameterNotAnIdentity(t *testing.T) {
 	}
 }
 
-// TestValidateEntriesRefusesAnUnlabelledEntry — bad input errors.
-func TestValidateEntriesRefusesAnUnlabelledEntry(t *testing.T) {
+// TestValidateEntriesRefusesAnUnlabeledEntry — bad input errors.
+func TestValidateEntriesRefusesAnUnlabeledEntry(t *testing.T) {
 	if err := ValidateEntries([]Entry{{Message: "x"}}); err == nil {
 		t.Fatal("an entry with no labels was accepted; it identifies no log source")
 	}

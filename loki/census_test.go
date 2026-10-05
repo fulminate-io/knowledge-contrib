@@ -3,6 +3,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -184,7 +186,9 @@ func TestNoNonTestFileSpawnsAProcess(t *testing.T) {
 			}
 			used[name] = true
 		}
-		assertNoSpawnPrimitive(t, name, body, spawnPrimitives)
+		if err := checkNoSpawnPrimitive(name, body, spawnPrimitives); err != nil {
+			t.Error(err)
+		}
 	}
 
 	// THE STALE-ENTRY DIRECTION, which is what keeps the allowlist a census
@@ -199,14 +203,15 @@ func TestNoNonTestFileSpawnsAProcess(t *testing.T) {
 	assertCensusSawItsSubject(t, files)
 }
 
-// assertNoSpawnPrimitive walks a file's syntax tree for a call to one of the
-// process-starting selectors, whatever package it is qualified by.
-func assertNoSpawnPrimitive(t *testing.T, name string, body []byte, primitives map[string]bool) {
-	t.Helper()
+// checkNoSpawnPrimitive walks a file's syntax tree for a call to one of the
+// process-starting selectors, whatever package it is qualified by, and returns
+// every such call as one error for the Test to fail on.
+func checkNoSpawnPrimitive(name string, body []byte, primitives map[string]bool) error {
 	file, err := parser.ParseFile(token.NewFileSet(), name, body, 0)
 	if err != nil {
-		t.Fatalf("parsing %s: %v", name, err)
+		return fmt.Errorf("parsing %s: %w", name, err)
 	}
+	var errs []error
 	ast.Inspect(file, func(n ast.Node) bool {
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
@@ -221,10 +226,11 @@ func assertNoSpawnPrimitive(t *testing.T, name string, body []byte, primitives m
 		if pkg != nil {
 			qualifier = pkg.Name
 		}
-		t.Errorf("%s calls %s.%s, which starts a process; this collector spawns nothing",
-			name, qualifier, sel.Sel.Name)
+		errs = append(errs, fmt.Errorf("%s calls %s.%s, which starts a process; this collector spawns nothing",
+			name, qualifier, sel.Sel.Name))
 		return false
 	})
+	return errors.Join(errs...)
 }
 
 // assertCensusSawItsSubject is both censuses' known positive.

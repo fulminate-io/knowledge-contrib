@@ -177,9 +177,9 @@ func TestANodeMatchesOnItsSymbolNameOrEitherMetadataName(t *testing.T) {
 		name string
 		node framework.ForeignNode
 	}{
-		{"symbol name", framework.ForeignNode{ID: "i-1", SymbolName: "checkout"}},
-		{"metadata name", framework.ForeignNode{ID: "i-1", Metadata: map[string]string{"name": "checkout"}}},
-		{"metadata service", framework.ForeignNode{ID: "i-1", Metadata: map[string]string{"service": "checkout"}}},
+		{name: "symbol name", node: framework.ForeignNode{ID: "i-1", SymbolName: "checkout"}},
+		{name: "metadata name", node: framework.ForeignNode{ID: "i-1", Metadata: map[string]string{"name": "checkout"}}},
+		{name: "metadata service", node: framework.ForeignNode{ID: "i-1", Metadata: map[string]string{"service": "checkout"}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

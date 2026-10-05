@@ -140,7 +140,7 @@ func TestChunkTimesAreTheEntriesNotTheWindow(t *testing.T) {
 		t.Fatalf("assembleChunks: %v", err)
 	}
 	if len(chunks) != 1 {
-		t.Fatalf("got %d chunks, want 1", len(chunks))
+		t.Fatalf("assembleChunks(out-of-order entries) = %d chunks, want 1", len(chunks))
 	}
 	if !chunks[0].StartTime.Equal(start) {
 		t.Errorf("chunk start %s, want the earliest ENTRY %s, not the window's edge", chunks[0].StartTime, start)
@@ -163,8 +163,9 @@ func TestChunkContentIsTheEntryBlock(t *testing.T) {
 	// Supplied out of order, so the ascending-order rule is observable.
 	entries := []LogEntry{{Timestamp: later, Message: "second"}, {Timestamp: earlier, Message: "first"}}
 
-	const want = "2026-03-01T12:06:14.000000000Z\tfirst\n" +
-		"2026-03-01T12:07:02.000000000Z\tsecond\n"
+	const want = `2026-03-01T12:06:14.000000000Z	first
+2026-03-01T12:07:02.000000000Z	second
+`
 	if got := encodeChunkContent(entries); got != want {
 		t.Errorf("chunk content =\n%q\nwant\n%q", got, want)
 	}
@@ -196,7 +197,7 @@ func TestChunkAssemblySkipsEntriesWithNoTemplate(t *testing.T) {
 		t.Fatalf("assembleChunks: %v", err)
 	}
 	if len(chunks) != 0 {
-		t.Errorf("got %d chunks for an entry with no template, want none", len(chunks))
+		t.Errorf("assembleChunks(entry with no template) = %d chunks for an entry with no template, want none", len(chunks))
 	}
 }
 

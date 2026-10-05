@@ -17,8 +17,8 @@ mod common;
 use std::collections::BTreeSet;
 
 use knowledge_collector_framework::conformance::{
-    conforming_payload, over_former_cap_payload, Mode, DEFAULT_STUB_TOOL, OVER_FORMER_CAP_NODES,
-    STUB_MODES, STUB_MODE_ENV, STUB_STDERR_MARKER, TOOL_ERROR_TEXT,
+    conforming_payload, over_former_cap_payload, Mode, DEFAULT_STUB_TOOL, INCOMPLETE_WALK_REASON,
+    OVER_FORMER_CAP_NODES, STUB_MODES, STUB_MODE_ENV, STUB_STDERR_MARKER, TOOL_ERROR_TEXT,
 };
 use knowledge_collector_framework::contract::{check_tool_schemas, validate_result_payload};
 use serde_json::{json, Value};
@@ -137,6 +137,7 @@ fn every_mode_advertises_and_answers_what_the_client_asserts() {
             }
             Mode::IncompleteWalk => {
                 assert_eq!(payload["walk_complete"], json!(false), "[{name}]");
+                assert_eq!(payload["walk_incomplete_reason"], json!(INCOMPLETE_WALK_REASON), "[{name}]");
                 conforming.expect("[incomplete-walk] an incomplete walk is conforming");
             }
             Mode::EmptyGraph => {

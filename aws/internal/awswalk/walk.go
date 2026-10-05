@@ -158,10 +158,10 @@ func (s *subreadFailures) errors() []error {
 func runServiceWalks(ctx context.Context, w *walkContext, walks []serviceWalk) []error {
 	sem := make(chan struct{}, defaultConcurrency)
 	var (
-		mu   sync.Mutex
-		errs = map[string]error{}
-		wg   sync.WaitGroup
+		mu sync.Mutex
+		wg sync.WaitGroup
 	)
+	errs := map[string]error{}
 	for _, sw := range walks {
 		// THE CONTEXT IS CHECKED BEFORE THE SEMAPHORE, so a cancelled collect
 		// stops queueing work instead of running every remaining service walk to

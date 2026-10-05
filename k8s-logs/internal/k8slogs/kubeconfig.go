@@ -3,6 +3,7 @@
 package k8slogs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -86,9 +87,9 @@ func (r Resolver) Config(contextName string) (*rest.Config, error) {
 		return nil, inClusterFailure(inClusterErr)
 	}
 	return nil, fmt.Errorf(
-		"k8s-logs: no credentials: the kubeconfig did not resolve (%v) and this process is not in-cluster (%v); "+
-			"list KUBECONFIG or HOME in this collector's config entry, or run it inside a cluster",
-		kubeErr, inClusterErr)
+		"k8s-logs: no credentials: the kubeconfig did not resolve and this process is not in-cluster; "+
+			"list KUBECONFIG or HOME in this collector's config entry, or run it inside a cluster: %w",
+		errors.Join(kubeErr, inClusterErr))
 }
 
 // InClusterConfig returns the in-cluster configuration alone, naming the
@@ -110,10 +111,10 @@ func (r Resolver) InClusterConfig() (*rest.Config, error) {
 // [Resolver.Config] returns it too when this process is running in a pod.
 func inClusterFailure(err error) error {
 	return fmt.Errorf(
-		"k8s-logs: the in-cluster credentials did not resolve (%v); "+
+		"k8s-logs: the in-cluster credentials did not resolve; "+
 			"a pod reaches the apiserver through its mounted service account, so check the mount and "+
 			"that "+EnvKubernetesServiceHost+" and "+EnvKubernetesServicePort+
-			" are listed in this collector's config entry",
+			" are listed in this collector's config entry: %w",
 		err)
 }
 

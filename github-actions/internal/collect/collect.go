@@ -136,11 +136,12 @@ func (r *reads) err(name string) error {
 	case r.clean():
 		return nil
 	case len(r.failed) == 0:
-		return fmt.Errorf("%s: %w: %s", name, ErrDenied, strings.Join(r.denied, "; "))
+		return fmt.Errorf("%w: %s: %s", ErrDenied, name, strings.Join(r.denied, "; "))
 	case len(r.denied) == 0:
-		return fmt.Errorf("%s: %w: %s", name, ErrPartial, strings.Join(r.failed, "; "))
+		return fmt.Errorf("%w: %s: %s", ErrPartial, name, strings.Join(r.failed, "; "))
 	default:
-		return fmt.Errorf("%s: %w (%s) and %w (%s)",
-			name, ErrDenied, strings.Join(r.denied, "; "), ErrPartial, strings.Join(r.failed, "; "))
+		return errors.Join(
+			fmt.Errorf("%w: %s: %s", ErrDenied, name, strings.Join(r.denied, "; ")),
+			fmt.Errorf("%w: %s: %s", ErrPartial, name, strings.Join(r.failed, "; ")))
 	}
 }
