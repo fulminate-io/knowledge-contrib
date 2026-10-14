@@ -29,7 +29,7 @@ const NodeTypeCloudResource = "cloud-resource"
 
 // Metadata keys every node carries. They are named here rather than spelled at
 // each construction site because a consumer reads them by name: `resource_type`
-// is what the census, the cross-graph linker and every topology query select on.
+// is what the census and every topology query select on.
 const (
 	MetaResourceType = "resource_type"
 	MetaRegion       = "region"

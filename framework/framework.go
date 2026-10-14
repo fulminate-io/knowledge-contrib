@@ -34,6 +34,9 @@ type ToolSpec struct {
 	// tool listing. Empty is allowed; a collector that means to be installed by
 	// a human should write one.
 	Description string
+	// Summary is one line naming what the collector collects, printed by the
+	// --describe-summary query. Empty is allowed.
+	Summary string
 }
 
 // DefaultToolName is the tool name a collector serves when its [ToolSpec]
@@ -157,12 +160,10 @@ type Node struct {
 // an edge foreign at both ends names something this contract cannot resolve.
 //
 // THE BUILT-IN COLLECTORS DO NOT ALL EMIT CROSS-GRAPH EDGES THE SAME WAY, so
-// reading one of them and generalizing will mislead you. The cross-graph edges
-// that exist in this tree are emitted by the post-collect linker rather than by
-// any collector's result, and the built-in log collector's proxy is an
-// OWN-GRAPH node that never reaches the linkage graph at all. Use TargetGraph
-// for a cross-graph endpoint; emit a proxy node plus a plain edge to it when
-// you want the proxy in your own graph.
+// reading one of them and generalizing will mislead you. An edge from a
+// collector's result reaches the linkage graph only when it sets TargetGraph or
+// SourceGraph. Use TargetGraph for a cross-graph endpoint; emit a proxy node
+// plus a plain edge to it when you want the proxy in your own graph.
 type Edge struct {
 	FromID     string  `json:"from_id"`
 	ToID       string  `json:"to_id"`

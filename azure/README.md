@@ -51,17 +51,21 @@ It takes `--version <tag>` to pin a release, and reads a GitHub token from
 needs neither, and the token is never written to the entry, to the version
 sidecar or to any other file.
 
-**It writes no provider credential VALUE into the entry.** For a credential name
-your installing shell holds it writes a REFERENCE — `"NAME": "${NAME}"` — and the
-process that serves the collect reads the value out of your own environment when
-it starts this collector; a name that shell does not hold is left out of the
-entry entirely. It never writes the `${NAME:-}` form: that one is expanded by the
-serving process too and resolves to an empty value the provider sees as set,
-which is a different failure and not a working credential. The bare form has no
-such default, so a serving process without the name refuses that entry by name
-and leaves every other collector in the file collecting. What the script also
-writes is the non-secret configuration and the paths below, and a credential
-reaches this collector the way the entry above shows.
+**It writes no provider credential value into the entry.** For each
+credential name this collector declares that your installing shell exports,
+it copies the value into this collector's own credential file,
+`collectors.d/azure.json` beside your user-scope `collectors.json`
+(`~/.knowledge/collectors.d/azure.json` by default): a JSON object of
+variable name to value, mode 0600. The value reaches the client on standard
+input, through `knowledge desktop-collectors credentials`, and never an
+argument or a message. The entry names it with a bare `"NAME": "${NAME}"`
+reference, which the client fills from that file when it starts this
+collector. A name your shell does not export is not written; the script
+prints it, and exporting it and re-running the script adds it. A reference
+the file does not set refuses that entry by name and leaves every other
+collector in the file collecting. What the script also writes is the non-secret
+configuration and the paths below, and a credential reaches this collector the
+way the entry above shows.
 
 Reversing it removes the binary, its version sidecar and the config entry, and
 no graph:

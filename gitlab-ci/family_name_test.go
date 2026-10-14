@@ -22,10 +22,8 @@ import (
 // name, so a collector could not claim it however it was spelled — the
 // registration fails and no collect ever runs.
 //
-// `gitlab` IS WORSE, because it SUCCEEDS. A compiled-in collector holds that
-// name, and the client's post-collect linker is keyed on exactly those names — so
-// a family registered under the bare provider name would have a linker run over a
-// graph whose data it was never written for, silently, with no error anywhere.
+// `gitlab` is the provider's bare one-word name, which this module does not
+// register under either.
 //
 // SO WHY IS THIS A CENSUS AND NOT ONE ASSERTION ON THE FAMILY CONSTANT. Because
 // both strings legitimately appear in this module for OTHER reasons: `cicd` is the

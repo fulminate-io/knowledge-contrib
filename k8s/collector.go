@@ -80,6 +80,7 @@ func (c *k8sCollector) Tool() framework.ToolSpec {
 		Name: "collect",
 		Description: "Enumerate a Kubernetes cluster's objects and the relationships between them, " +
 			"reading through the standard kubeconfig resolution or an in-cluster service account.",
+		Summary: "Kubernetes resource inventory",
 	}
 }
 

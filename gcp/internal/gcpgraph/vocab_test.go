@@ -71,9 +71,9 @@ func TestEdgeTypeFloorIsThirtyTwo(t *testing.T) {
 }
 
 // TestDerivedEdgeTypesAreInTheFloor pins the five edge types NO sub-collector
-// emits. They exist only through the in-memory resolvers this module runs in
-// place of the client's post-populate hook, which is why a module that ships the
-// vocabulary and skips the resolvers declares them and derives them never.
+// emits. They exist only through the in-memory resolvers this module runs
+// before it returns; a module that ships the vocabulary and skips the resolvers
+// declares them and derives them never.
 func TestDerivedEdgeTypesAreInTheFloor(t *testing.T) {
 	derived := []string{
 		gcpgraph.EdgeAllowsIngressFrom,

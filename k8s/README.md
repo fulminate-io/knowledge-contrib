@@ -63,17 +63,21 @@ It takes `--version <tag>` to pin a release, and reads a GitHub token from
 needs neither, and the token is never written to the entry, to the version
 sidecar or to any other file.
 
-**It writes no provider credential VALUE into the entry.** For a credential name
-your installing shell holds it writes a REFERENCE — `"NAME": "${NAME}"` — and the
-process that serves the collect reads the value out of your own environment when
-it starts this collector; a name that shell does not hold is left out of the
-entry entirely. It never writes the `${NAME:-}` form: that one is expanded by the
-serving process too and resolves to an empty value the provider sees as set,
-which is a different failure and not a working credential. The bare form has no
-such default, so a serving process without the name refuses that entry by name
-and leaves every other collector in the file collecting. What the script also
-writes is the non-secret configuration and the paths below, and a credential
-reaches this collector the way the entry above shows.
+**It writes no provider credential value into the entry.** For each
+credential name this collector declares that your installing shell exports,
+it copies the value into this collector's own credential file,
+`collectors.d/k8s.json` beside your user-scope `collectors.json`
+(`~/.knowledge/collectors.d/k8s.json` by default): a JSON object of
+variable name to value, mode 0600. The value reaches the client on standard
+input, through `knowledge desktop-collectors credentials`, and never an
+argument or a message. The entry names it with a bare `"NAME": "${NAME}"`
+reference, which the client fills from that file when it starts this
+collector. A name your shell does not export is not written; the script
+prints it, and exporting it and re-running the script adds it. A reference
+the file does not set refuses that entry by name and leaves every other
+collector in the file collecting. What the script also writes is the non-secret
+configuration and the paths below, and a credential reaches this collector the
+way the entry above shows.
 
 Reversing it removes the binary, its version sidecar and the config entry, and
 no graph:
@@ -265,8 +269,10 @@ of the intuitive ones:
   If you are not passing a real home directory, omit the variable rather than
   setting it to a placeholder.
 
-Set the values in your own environment; the `${VAR:-}` references in the entry
-carry them in, so no credential is written into a config file.
+Put the values you use in this collector's credential file,
+`collectors.d/k8s.json` beside your user-scope `collectors.json` (a JSON object
+of variable name to value, mode 0600); the `${VAR:-}` references in the entry
+carry them in, so no credential is written into the entry.
 
 ## Completeness
 
@@ -307,8 +313,8 @@ because that edge's far endpoint is a code graph's name and a code graph holds
 no node denoting a repository for it to resolve against.
 
 The Helm shape was computed and held while the contract had only the
-target-graph field, since reversing the edge would have asserted a relationship
-the built-in linker does not and emitting it with no family would have landed an
+target-graph field, since reversing the edge would have asserted the reverse
+relationship and emitting it with no family would have landed an
 in-graph edge to a chart id nothing here resolves. The mirror field is the third
 option and this collector now takes it. A test reads the contract edge's fields
 by reflection, so dropping either one goes red rather than silently turning

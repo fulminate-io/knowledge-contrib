@@ -86,16 +86,17 @@ it picks the archive for your platform, verifies it against `checksums.txt` and
 installs nothing if the checksum is missing or does not match. Building from
 source stays supported and is described above.
 
-**The install script writes no provider credential value.** Both of this
-collector's token variables are credentials, and a credential's VALUE is never
-written into a config file. What the entry carries is a reference to the
-variable — `"GITLAB_TOKEN": "${GITLAB_TOKEN}"` — written for whichever of the two
-token names your installing shell holds. The value is read from the environment
-the daemon serves collects from, at the moment it starts this collector; if that
-process does not have the name, the collect is refused naming it, and no other
-collector in your config file is affected. The script also writes the instance
-selector described below, as a literal, because it names a host rather than a
-secret.
+**The install script writes no provider credential value into the entry.** Both
+of this collector's token variables are credentials. Whichever your installing
+shell exports, the script copies into this collector's credential file,
+`collectors.d/gitlab-ci.json` beside your user-scope `collectors.json` (a JSON
+object of variable name to value, mode 0600), through `knowledge
+desktop-collectors credentials`, which reads it on standard input; the entry
+names it with a reference — `"GITLAB_TOKEN": "${GITLAB_TOKEN}"` — which the
+client fills from that file at the moment it starts this collector. If the file
+does not set the name, the collect is refused naming it, and no other collector
+in your config file is affected. The script also writes the instance selector described below,
+as a literal, because it names a host rather than a secret.
 
 A collector is installed by writing an entry into a JSON config file. There is no
 registration command and no server-side record: the entry IS the registration, and
@@ -184,17 +185,17 @@ This collector's whole environment closure is three names:
 | `GITLAB_PRIVATE_TOKEN` | the same credential under its other common spelling, read when the first is unset or empty |
 | `GITLAB_URL` | the instance to enumerate |
 
-The two tokens are CREDENTIALS, and neither VALUE is written into the entry. What
-the entry above carries is `"GITLAB_TOKEN": "${GITLAB_TOKEN}"`, a reference to
-your own environment: a stdio collector receives exactly the environment its
-entry declares, and the process serving the collect expands that reference when
-it starts this collector. Set the variable in the environment the daemon serves
-from, and the token reaches this collector having been in no file on the way.
+The two tokens are CREDENTIALS, and neither value is written into the entry.
+What the entry above carries is `"GITLAB_TOKEN": "${GITLAB_TOKEN}"`, a reference
+to this collector's credential file, `collectors.d/gitlab-ci.json` beside your
+user-scope `collectors.json` (a JSON object of variable name to value, mode
+0600): a stdio collector receives exactly the environment its entry declares,
+and the client fills that reference from the file when it starts this collector.
 
-Export it in the shell you run the install script in too: the script writes the
-reference only for a credential name that shell holds, and prints the names it
-left out when it does not. If you installed without it, export `GITLAB_TOKEN`
-and re-run the script.
+The install script copies an exported token into the credential file and
+writes its reference, and prints the names it did not find. If you installed
+without it, export the token and re-run the script, or set it from the Desktop's
+Collectors page.
 
 The two names are alternatives, so reference the one you set. Referencing both
 means a collect is refused until both are set.

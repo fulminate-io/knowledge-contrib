@@ -102,15 +102,17 @@ archive for your platform, verifies it against `checksums.txt` and installs
 nothing if the checksum is missing or does not match. Building from source stays
 supported and is described above.
 
-**The install script writes no provider credential value.** This collector
-authenticates with a Bitbucket username and app password, and neither VALUE is
-written into a config file. What the entry carries is a reference to each
-variable — `"BITBUCKET_USERNAME": "${BITBUCKET_USERNAME}"` and the same for the
-app password — written for whichever of them your installing shell holds. The
-values are read from the environment the daemon serves collects from, at the
-moment it starts this collector; if that process does not have a name, the
-collect is refused naming it, and no other collector in your config file is
-affected.
+**The install script writes no provider credential value into the entry.** This
+collector authenticates with a Bitbucket username and app password. Whichever of
+them your installing shell exports, the script copies into this collector's
+credential file, `collectors.d/bitbucket-pipelines.json` beside your user-scope
+`collectors.json` (a JSON object of variable name to value, mode 0600), through
+`knowledge desktop-collectors credentials`, which reads the values on standard
+input; the entry names each with a reference — `"BITBUCKET_USERNAME":
+"${BITBUCKET_USERNAME}"` and the same for the app password — which the client
+fills from that file at the moment it starts this collector. If the file does
+not set a name, the collect is refused naming it, and no other collector in your
+config file is affected.
 
 A collector is installed by writing an entry into a JSON config file. There is no
 registration command and no server-side record: the entry IS the registration,
@@ -211,27 +213,28 @@ This collector's whole closure is three names, in two classes:
 | `BITBUCKET_APP_PASSWORD` | credential | the app password itself |
 | `BITBUCKET_PIPELINE_HISTORY_DEPTH` | selector | how many recent pipeline runs to read per repository; unset means 50 |
 
-**Neither credential VALUE is written into the entry above, and a value is not
+**Neither credential value is written into the entry above, and a value is not
 what belongs there.** What the entry names is the two variables:
 `"BITBUCKET_USERNAME": "${BITBUCKET_USERNAME}"` and the same shape for the app
-password are references to your own environment, expanded by the process that
-serves the collect at the moment it starts this collector. Set both in the
-environment the daemon serves from and they reach this collector's child process
-from there, having been in no file on the way. Both halves are required together:
-an app password without its username authenticates nothing.
+password are references to this collector's credential file,
+`collectors.d/bitbucket-pipelines.json` beside your user-scope `collectors.json`
+(a JSON object of variable name to value, mode 0600), which the client reads at
+the moment it starts this collector. Both halves are required together: an app
+password without its username authenticates nothing.
 
-Export both in the shell you run the install script in too: the script writes a
-reference only for a credential name that shell holds, and prints the names it
-left out when it does not. If you installed without them, export
-`BITBUCKET_USERNAME` and `BITBUCKET_APP_PASSWORD` and re-run the script.
+Export both in the shell you run the install script in: the script copies each
+exported value into the credential file and writes its reference, and prints
+the names it did not find. If you installed without them, export
+`BITBUCKET_USERNAME` and `BITBUCKET_APP_PASSWORD` and re-run the script, or set
+them from the Desktop's Collectors page.
 
 **Use `${BITBUCKET_APP_PASSWORD}` and not `${BITBUCKET_APP_PASSWORD:-}`.** The
-second is a default: in a process that does not hold the name it resolves to the
-empty string, and this collector is then handed a credential that is present and
-empty, which it reports as a missing one. The first has nothing to fall back to,
-so the entry is refused naming the file, the entry, the key and the variable —
-and only that entry: every other collector in the same config file keeps
-collecting.
+second is a default: when the credential file does not set the name it resolves
+to the empty string, and this collector is then handed a credential that is
+present and empty, which it reports as a missing one. The first has nothing to
+fall back to, so the entry is refused naming the file, the entry, the key and
+the variable — and only that entry: every other collector in the same config
+file keeps collecting.
 
 The selector is the one key an installer writes as a LITERAL, and only when it is
 set in the installing shell. Unset, the key is omitted entirely rather than

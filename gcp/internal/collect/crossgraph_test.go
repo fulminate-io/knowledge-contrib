@@ -13,15 +13,13 @@ import (
 // EMPTY, and the two controls that make an empty set a measurement rather than a
 // blind instrument.
 //
-// WHY THERE IS A ROW AT ALL. The client that spawns this collector used to run a
-// post-collect pass that wrote edges into a linkage graph, and that pass is now
-// gated off for a registered collector: whatever it produced for this provider
-// family is this module's to emit. What it produced for this family is NOTHING,
-// because every one of that pass's source predicates matches a Kubernetes-shaped
-// node and none matches anything this collector emits.
+// The client runs no post-collect pass for any family, so every cross-graph
+// edge this family's graph carries is one this module emits. The set is empty:
+// no node this collector emits is Kubernetes-shaped, and the cross-graph edges
+// of this provider family are Kubernetes-shaped at their source.
 //
-// ONE SHAPE COMES CLOSE and is recorded rather than carried. That pass also
-// matched a cloud resource by two Helm labels — a chart name and a chart
+// ONE SHAPE COMES CLOSE and is recorded rather than carried. The retired client
+// pass matched a cloud resource by two Helm labels — a chart name and a chart
 // reference — and this collector stamps arbitrary provider labels into metadata
 // under a label/ prefix. A resource literally labeled with one of those two
 // keys would therefore have satisfied the predicate. The edge's SOURCE would

@@ -67,6 +67,7 @@ func (c Collector) Tool() framework.ToolSpec {
 	return framework.ToolSpec{
 		Name:        c.ToolName,
 		Description: "Enumerate a Google Cloud project's resources and their relationships.",
+		Summary:     "GCP resource inventory",
 	}
 }
 

@@ -65,7 +65,7 @@ func New() *Collector { return &Collector{} }
 
 // Tool names the MCP tool this collector serves.
 func (c *Collector) Tool() framework.ToolSpec {
-	return framework.ToolSpec{Name: framework.DefaultToolName, Description: toolDescription}
+	return framework.ToolSpec{Name: framework.DefaultToolName, Description: toolDescription, Summary: "Azure resource inventory"}
 }
 
 // Walk enumerates the subscription and returns everything it found together

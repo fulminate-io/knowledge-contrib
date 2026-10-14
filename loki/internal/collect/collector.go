@@ -165,6 +165,7 @@ func (c *Collector) Tool() framework.ToolSpec {
 			"of templates, streams, chunks and labels. Credentials and transport settings come from the standard " +
 			"Loki client environment (LOKI_USERNAME, LOKI_BEARER_TOKEN, LOKI_ORG_ID and the rest); the endpoint " +
 			"address is a parameter of this call.",
+		Summary: "Loki log graphs",
 	}
 }
 

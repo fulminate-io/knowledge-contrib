@@ -103,15 +103,20 @@ It takes `--version <tag>` to pin a release, and reads a GitHub token from
 needs neither, and the token is never written to the entry, to the version
 sidecar or to any other file.
 
-**It writes no provider credential VALUE into the entry.** For a credential name
-your installing shell holds it writes a REFERENCE — `"NAME": "${NAME}"` — and the
-process that serves the collect reads the value out of your own environment when
-it starts this collector; a name that shell does not hold is left out of the
-entry entirely. It never writes the `${NAME:-}` form: that one is expanded by the
-serving process too and resolves to an empty value, which this collector refuses
-by name. The bare form has no such default, so a serving process without the name
-refuses that entry by name and leaves every other collector in the file
-collecting. What the script also writes is the non-secret configuration below.
+**It writes no provider credential value into the entry.** For each
+credential name this collector declares that your installing shell exports,
+it copies the value into this collector's own credential file,
+`collectors.d/loki.json` beside your user-scope `collectors.json`
+(`~/.knowledge/collectors.d/loki.json` by default): a JSON object of
+variable name to value, mode 0600. The value reaches the client on standard
+input, through `knowledge desktop-collectors credentials`, and never an
+argument or a message. The entry names it with a bare `"NAME": "${NAME}"`
+reference, which the client fills from that file when it starts this
+collector. A name your shell does not export is not written; the script
+prints it, and exporting it and re-running the script adds it. A reference
+the file does not set refuses that entry by name and leaves every other
+collector in the file collecting. What the script also writes is the non-secret
+configuration below.
 
 Reversing it removes the binary, its version sidecar and the config entry, and
 no graph:
@@ -283,18 +288,18 @@ is simply absent is unset, which is not an error.
 
 **Every value above is a literal you replace, and none is a `${VAR}`
 reference.** The config file does support that spelling, and for a credential it
-is the RIGHT one: `"LOKI_PASSWORD": "${LOKI_PASSWORD}"` keeps the password out of
-the file and the process serving the collect reads it from your own environment.
-The install script writes exactly that for a credential name your installing
-shell holds, and leaves the others out. This worked entry shows literals instead
-because it lists every name at once, and a reference to a name you do not set
-refuses this entry — naming the file, the entry, the key and the variable, and
-leaving every other collector in the file collecting. So reference the credential
-names you use, write the rest as literals, and **drop the lines you have no use
-for**.
+is the RIGHT one: `"LOKI_PASSWORD": "${LOKI_PASSWORD}"` keeps the password out
+of the entry, and the client fills it from this collector's credential file,
+`collectors.d/loki.json` beside your user-scope `collectors.json` (a JSON object
+of variable name to value, mode 0600), when it starts the collector. This worked
+entry shows literals instead because it lists every name at once, and a
+reference the credential file does not set refuses this entry — naming the file,
+the entry, the key and the variable, and leaving every other collector in the
+file collecting. So reference the credential names you use, write the rest as
+literals, and **drop the lines you have no use for**.
 
 What is never right here is `${LOKI_PASSWORD:-}`: the default resolves to the
-empty string in a serving process that does not hold the name, and this collector
+empty string when the credential file does not set the name, and this collector
 refuses a present-and-empty name by name.
 
 Two of them are not Loki's. `SSL_CERT_FILE` and `SSL_CERT_DIR` are read by Go's

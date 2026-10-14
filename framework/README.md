@@ -222,13 +222,13 @@ and says so once in the collect output.
 
 ## What this module adds
 
-Everything above is the contract. This module is 1519 lines of Go across ten
+Everything above is the contract. This module is 1498 lines of Go across ten
 files that implement it once, so that none of it is visible to a collector:
 
 | Symbol | What it is |
 |---|---|
 | `Collector[P]` | the whole surface you implement: `Tool()`, `Describe()` and `Walk()` |
-| `ToolSpec`, `DefaultToolName` | the served tool's name and description; `DefaultToolName` is `collect` |
+| `ToolSpec`, `DefaultToolName` | the served tool's name and description, and the one-line summary `--describe-summary` prints; `DefaultToolName` is `collect` |
 | `Result`, `Node`, `Edge` | the walk's output, in the shapes the envelope encodes |
 | `Complete()`, `Incomplete(reason)` | the completeness assertion, as a type with no usable zero value |
 | `ForeignContext` and its accessors | the declared foreign-graph block the walk receives |
@@ -383,11 +383,13 @@ present with an empty value is PRESENT-and-empty, which a provider SDK reads as
 a deliberate empty selection rather than as an unset variable. The two are
 different inputs and the block is how you choose between them.
 
-**No provider secret belongs in the entry**, neither a value nor a reference to
-one. A reference is expanded by the process serving the collect, which under a
-service manager holds almost no environment, so it reaches the collector as an
-empty value that looks set. Supply a secret to the daemon's own environment
-instead.
+**No provider secret value belongs in the entry.** A secret is a bare
+`"NAME": "${NAME}"` reference, which the client fills from the collector's own
+credential file, `collectors.d/<entry name>.json` beside the user-scope
+`collectors.json` (a JSON object of variable name to value, mode 0600), when it
+starts the collector. The contrib `install.sh` and the Desktop's Collectors page
+write that file; `knowledge desktop-collectors credentials` is the operation
+both use.
 
 ## Testing your collector
 

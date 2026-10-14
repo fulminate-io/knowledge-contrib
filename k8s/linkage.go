@@ -12,16 +12,11 @@ import (
 // through the contract's two graph-family fields against the declared foreign
 // context.
 //
-// === WHY THIS COLLECTOR OWES THEM ===
+// === WHO EMITS THEM ===
 //
-// The client's post-collect linker walks the code and cloud graphs and matches
-// them against each other. Kubernetes-collected nodes are the only SOURCE
-// predicate it has: a Helm label, a ServiceAccount's identity binding. The
-// built-in Kubernetes collector writes into the CLOUD family, so the linker's
-// cloud scan finds its nodes. This collector's registration name is its family,
-// so its nodes land in family "k8s", which no linker read touches. Replace the
-// built-in with this collector and these edges stop existing — not because
-// anyone decided to drop them, but because the scan looks somewhere else.
+// No client pass derives these edges from a Kubernetes graph: this collector
+// emits them in its own result, from a Helm label or a ServiceAccount's identity
+// binding.
 //
 // === WHICH FIELD A SHAPE USES IS ITS DIRECTION, NOT A DETAIL ===
 //
@@ -37,11 +32,11 @@ import (
 // WORKLOAD_IDENTITY shapes, each running from a ServiceAccount to a cloud
 // identity.
 //
-// DEPLOYS IS THE ONE THAT RUNS THE OTHER WAY AND USES SourceGraph. The built-in
-// linker emits it FROM the Chart.yaml file node TO the Kubernetes node, so its
-// foreign endpoint is the FROM. It was computed and held while the contract had
-// only the target-graph field, because both ways of forcing it were wrong —
-// reversing the direction asserts a relationship the built-in does not, and
+// DEPLOYS IS THE ONE THAT RUNS THE OTHER WAY AND USES SourceGraph. It runs
+// FROM the Chart.yaml file node TO the Kubernetes node, so its foreign endpoint
+// is the FROM. It was computed and held while the contract had only the
+// target-graph field, because both ways of forcing it were wrong — reversing
+// the direction asserts the reverse relationship, and
 // emitting it with no family lands an in-graph edge to a chart id nothing in the
 // k8s graph resolves. The mirror field is the third option and this collector
 // now takes it. See [deploysEdges].
@@ -211,11 +206,10 @@ func computeLinkageEdges(nodes []framework.Node, fc framework.ForeignContext) []
 // deploysEdges is shape 1: a Helm-labeled node matching a Chart.yaml.
 //
 // IT IS THE ONE SHAPE WHOSE FOREIGN ENDPOINT IS THE FROM, which is why it names
-// its family in SourceGraph and leaves TargetGraph empty. The built-in linker
-// emits it FROM the chart file node TO the Kubernetes node, and that direction
-// is the relationship: reversing it to fit TargetGraph would assert something
-// the built-in does not, and emitting it with neither field would land an
-// in-graph edge to a chart id nothing in the k8s graph resolves. Setting the
+// its family in SourceGraph and leaves TargetGraph empty. The edge runs FROM
+// the chart file node TO the Kubernetes node: reversing it to fit TargetGraph
+// would reverse the relationship, and emitting it with neither field would land
+// an in-graph edge to a chart id nothing in the k8s graph resolves. Setting the
 // mirror field is the third option, and it is the one the contract now has.
 //
 // TWO LABELS, AND THE SECOND NEEDS STRIPPING. app.kubernetes.io/name is the
@@ -242,9 +236,8 @@ func deploysEdges(nodes []framework.Node, fc framework.ForeignContext) []linkage
 			}
 			seen[key] = true
 			out = append(out, linkageEdge{
-				// FROM the chart file node, TO this Kubernetes node — the
-				// built-in linker's direction. The chart file is the FOREIGN
-				// endpoint, so the code family goes in SourceGraph and
+				// FROM the chart file node, TO this Kubernetes node. The chart
+				// file is the FOREIGN endpoint, so the code family goes in SourceGraph and
 				// TargetGraph stays empty; setting the latter instead would send
 				// the client looking for a Kubernetes node in a code graph.
 				FromID:      file.ID,

@@ -60,6 +60,7 @@ func (c Collector) Tool() framework.ToolSpec {
 		Description: "Enumerate a GitHub organization's Actions CI/CD resources and their " +
 			"relationships: repositories, workflows, recent runs, self-hosted runners, " +
 			"environments, recent deployments and secret names.",
+		Summary: "GitHub Actions runs",
 	}
 }
 

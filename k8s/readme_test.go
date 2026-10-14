@@ -63,7 +63,7 @@ func TestREADME_CrossGraphSectionDescribesTheEmittedShapes(t *testing.T) {
 			why: "beside the field the other three use"},
 		{phrase: "is not emitted",
 			why: "and the workload-to-repository shape that this collector does NOT emit, so a reader " +
-				"comparing against the built-in linker is told about the gap rather than left to find it"},
+				"is told about the gap rather than left to find it"},
 	} {
 		assert.Contains(t, section, want.phrase, want.why)
 	}

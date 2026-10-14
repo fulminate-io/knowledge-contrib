@@ -62,6 +62,7 @@ func (c Collector) Tool() framework.ToolSpec {
 			"projects, pipeline definitions, recent pipeline runs and their jobs, runners and " +
 			"their tags, environments and their protection rules, recent deployments, and " +
 			"CI/CD variable names.",
+		Summary: "GitLab CI pipelines",
 	}
 }
 

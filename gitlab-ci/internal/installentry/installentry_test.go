@@ -61,11 +61,8 @@ func TestTheDecodeRefusesAnUndeclaredKey(t *testing.T) {
 
 // TestTheFamilyNameIsNeitherTheBuiltInTypeNorTheBareProviderName.
 //
-// Two names are unusable here and for different reasons: the built-in graph type,
-// which the client refuses to register at all; and the provider's bare one-word
-// name, which a compiled-in collector already holds and which the client's
-// post-collect linker is keyed on — a registration under it would have a linker
-// run over a graph whose data it was never written for.
+// The family name is neither the built-in graph type `cicd`, which the client
+// refuses to register, nor the provider's bare one-word name `gitlab`.
 func TestTheFamilyNameIsNeitherTheBuiltInTypeNorTheBareProviderName(t *testing.T) {
 	if installentry.FamilyName != "gitlab-ci" {
 		t.Errorf("the family name is %q", installentry.FamilyName)

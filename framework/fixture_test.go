@@ -73,7 +73,7 @@ type fixtureCollector struct {
 }
 
 func (f *fixtureCollector) Tool() ToolSpec {
-	return ToolSpec{Name: f.name, Description: "a fixture collector for the framework's own suite"}
+	return ToolSpec{Name: f.name, Description: "a fixture collector for the framework's own suite", Summary: "Fixture graphs"}
 }
 
 // Describe is the fixture's declaration, and it is deliberately a FULL one:

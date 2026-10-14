@@ -60,6 +60,7 @@ func (c *Collector) Tool() framework.ToolSpec {
 		Description: "Collect Kubernetes pod and container logs into a log graph of streams, " +
 			"Drain-clustered templates and compressed chunks. Reads through the standard kubeconfig " +
 			"or in-cluster credentials; the caller passes none.",
+		Summary: "Kubernetes pod log graphs",
 	}
 }
 

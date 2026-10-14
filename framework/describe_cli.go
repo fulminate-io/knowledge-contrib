@@ -8,71 +8,46 @@ import (
 	"os"
 )
 
-// describe_cli.go — the DECLARATION, ANSWERED WITHOUT A SESSION.
+// describe_cli.go — the argv queries a collector answers before it serves.
 //
-// WHY A COLLECTOR ANSWERS THESE ON ARGV AT ALL, when it already serves the same
-// facts on the describe tool: the installer that writes a collector's config
-// entry is `#!/bin/sh`, has no JSON parser and cannot speak MCP, and it needs
-// two of these facts BEFORE it can register anything — which environment names
-// to pass and which tool to name. The alternative was a hand-written table per
-// collector inside the installer, which is the thing this ticket removes. So the
-// binary answers three line-oriented questions, and the installer's tables are
-// generated from those answers.
+// Each query is matched exactly, and only as the first argument (os.Args[1]).
+// Its answer is written to stdout, one item per line, and the program returns
+// before any session starts:
 //
-// THE THIRD QUESTION IS NOT ONE THE INSTALLER NEEDS TO REGISTER ANYTHING; it is
-// one the DOCUMENTATION gate needs. Which of a collector's names it tells
-// present-and-empty apart from absent decides whether a worked entry may show a
-// `${NAME:-}` reference for that name, and only the collector knows the answer.
-//
-// THE SWITCHES ARE MATCHED EXACTLY AND ONLY IN FIRST POSITION, mirroring
-// --version and for the same reason: a config entry may carry args of its own,
-// the daemon passes them to the collector verbatim, and a looser match would eat
-// one of them and serve nothing.
-//
-// STDOUT IS THE PROTOCOL STREAM once a session starts, so these arms write and
-// return BEFORE anything serves.
+//	--describe-env-table      one `class name` row per declared variable
+//	--describe-tool           the served collect tool's name
+//	--describe-env-sensitive  one name per empty-sensitive variable
+//	--describe-summary        the collector's ToolSpec.Summary
 
-// The three argv switches. They are spelled with the tool's own name so a
-// reader of an installer script can find what answers them.
+// The argv switches.
 const (
 	describeEnvTableArg = "--describe-env-table"
 	describeToolArg     = "--describe-tool"
-	// describeEnvSensitiveArg answers WHICH DECLARED NAMES ARE EMPTY-SENSITIVE,
+	// describeEnvSensitiveArg answers which declared names are empty-sensitive,
 	// one bare name per line and nothing when none are.
-	//
-	// IT IS ITS OWN QUESTION RATHER THAN A COLUMN ON THE ENV TABLE, and the
-	// reason is a consumer rather than taste: the printed class table is read by
-	// a gate that greps a WHOLE LINE with a trailing anchor, so an appended
-	// field stops matching whether it is populated or empty. Keeping the two
-	// answers separate leaves the class table's readers untouched, and the
-	// not-carried class — which the class table drops by construction — can
-	// carry a mark here with nowhere else to put it.
 	describeEnvSensitiveArg = "--describe-env-sensitive"
+	// describeSummaryArg answers the collector's ToolSpec.Summary on one line,
+	// an empty line when it is empty.
+	describeSummaryArg = "--describe-summary"
 )
 
-// describeQuery reports which of the three switches an argv asks for, if any.
+// describeQuery reports which of the argv switches an argv asks for, if any.
 // args is a whole argv, os.Args-shaped, so index 0 is the program name.
 func describeQuery(args []string) string {
 	if len(args) < 2 {
 		return ""
 	}
 	switch args[1] {
-	case describeEnvTableArg, describeToolArg, describeEnvSensitiveArg:
+	case describeEnvTableArg, describeToolArg, describeEnvSensitiveArg, describeSummaryArg:
 		return args[1]
 	default:
 		return ""
 	}
 }
 
-// serveDescribeQuery answers one of the three argv questions, if that is what
-// this argv is, and reports whether it answered.
-//
-// A MALFORMED DECLARATION IS AN ERROR HERE TOO, not an empty table. A generator
-// reading an empty table would write an empty install row and the collector
-// would install with no environment at all, which is the silent-narrowing shape
-// the whole contract refuses; so the arm fails loudly with the same message
-// NewServer would have given, returned up to the collector's main, which prints
-// it and exits non-zero.
+// serveDescribeQuery answers one of the argv questions, if that is what this
+// argv is, and reports whether it answered. A malformed declaration is returned
+// as the error NewServer would have returned, with nothing written.
 func serveDescribeQuery[P any](c Collector[P]) (bool, error) {
 	query := describeQuery(os.Args)
 	if query == "" {
@@ -93,6 +68,9 @@ func writeDescribeQuery[P any](w io.Writer, query string, c Collector[P]) error 
 	switch query {
 	case describeToolArg:
 		fmt.Fprintln(w, defaultedToolName(c.Tool().Name))
+		return nil
+	case describeSummaryArg:
+		fmt.Fprintln(w, c.Tool().Summary)
 		return nil
 	case describeEnvTableArg:
 		decl := c.Describe()

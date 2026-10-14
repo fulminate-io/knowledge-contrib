@@ -47,6 +47,7 @@ func (c *Collector) Tool() framework.ToolSpec {
 		Description: "Read Google Cloud Logging entries for one project and return them as a log graph: " +
 			"clustered templates, label streams, compressed entry chunks and shared labels. " +
 			"Credentials come from Application Default Credentials only.",
+		Summary: "Cloud Logging log graphs",
 	}
 }
 

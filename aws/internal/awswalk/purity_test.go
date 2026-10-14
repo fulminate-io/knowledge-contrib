@@ -64,7 +64,6 @@ func TestPurity_RequiresTheFrameworkAndNothingElseOfOurs(t *testing.T) {
 	forbidden := map[string]string{
 		"github.com/fulminate-io/knowledge/cmd/knowledge\n":      "the client module",
 		"github.com/fulminate-io/knowledge/cmd/knowledge-server": "the server module",
-		"github.com/fulminate-io/knowledge/cmd/server-bench":     "the bench module",
 	}
 	for path, what := range forbidden {
 		if strings.Contains(text, path) {

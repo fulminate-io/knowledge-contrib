@@ -59,10 +59,15 @@ Neither script is required. A collector is registered by a config file entry and
 nothing else, so building from source and writing the entry yourself is equally
 supported; each module's README shows the entry.
 
-**No provider credential is written into the config entry** by these scripts,
-neither a value nor a reference to one, because a reference is expanded by the
-process serving the collect and reaches the collector as an empty value that
-looks set; a secret is supplied to the daemon's own environment instead.
+**No provider credential value is written into the config entry** by these
+scripts. For each credential name the collector declares that your installing
+shell exports, `install.sh` copies the value into the collector's own credential
+file, `~/.knowledge/collectors.d/<collector>.json` (a JSON object of variable
+name to value, mode 0600), through `knowledge desktop-collectors credentials`,
+which reads it on standard input, and writes a `${NAME}` reference into the
+entry, which the client fills from that file when it starts the collector. A
+name the shell does not export is printed and not written. Each module's README
+shows the entry.
 
 ## Writing your own
 

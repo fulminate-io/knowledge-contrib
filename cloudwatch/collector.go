@@ -38,6 +38,7 @@ func (c *Collector) Tool() framework.ToolSpec {
 		Description: "Walk AWS CloudWatch log groups over a time window and return the log graph: " +
 			"clustered message templates, label streams, per-window entry chunks and shared label nodes. " +
 			"Credentials come from the AWS default credential chain.",
+		Summary: "CloudWatch log graphs",
 	}
 }
 

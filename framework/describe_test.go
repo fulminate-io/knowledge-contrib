@@ -266,9 +266,7 @@ func describeDocument(t *testing.T, p *provider) map[string]any {
 	return envelopeOf(t, res)
 }
 
-// TestDescribeArgvQueriesAnswerTheInstaller pins the two line-oriented answers
-// the installer's table generator reads, on a REAL CHILD PROCESS: the format is
-// a contract with a `#!/bin/sh` consumer that has no JSON parser.
+// TestDescribeArgvQueriesAnswerTheInstaller runs the test binary as a child process with each argv query and compares its stdout lines with the expected answer.
 func TestDescribeArgvQueriesAnswerTheInstaller(t *testing.T) {
 	for _, tc := range []struct {
 		arg  string
@@ -276,6 +274,7 @@ func TestDescribeArgvQueriesAnswerTheInstaller(t *testing.T) {
 	}{
 		{describeToolArg, []string{DefaultToolName}},
 		{describeEnvTableArg, []string{"path HOME", "selector FIXTURE_REGION", "secret FIXTURE_TOKEN"}},
+		{"--describe-summary", []string{"Fixture graphs"}},
 	} {
 		t.Run(tc.arg, func(t *testing.T) {
 			self, err := os.Executable()
@@ -305,12 +304,9 @@ func TestDescribeArgvQueriesDoNotEatEntryArgs(t *testing.T) {
 	for _, args := range [][]string{
 		{"--region", describeEnvTableArg},
 		{"--region", describeToolArg},
-		// THE THIRD SWITCH GETS ITS OWN CELL, even though describeQuery reads
-		// args[1] and nothing else, so all three share one position rule by
-		// construction. The guide now states that rule of all THREE switches, in
-		// public prose; a later loosening of the new one alone would ship against
-		// that sentence with nothing red.
+		// One cell per argv switch, each in the second position.
 		{"--region", describeEnvSensitiveArg},
+		{"--region", describeSummaryArg},
 	} {
 		self, err := os.Executable()
 		if err != nil {

@@ -11,12 +11,9 @@ import (
 // proxy.go — the cloud-linkage families: the proxy node, its EMITTED_BY edge,
 // and the CORRELATES_WITH edge.
 //
-// WHY THIS COLLECTOR EMITS THEM RATHER THAN THE CLIENT. The client's
-// post-collect tail is gated on registration, and the log materializer that
-// built these three for the built-in loki family is reachable only from the
-// built-in logs collect. For a registered custom family the client writes NO
-// proxy node, NO EMITTED_BY and NO CORRELATES_WITH, so this module's walk is
-// the only writer of them and they are part of its floor.
+// The client writes NO proxy node, NO EMITTED_BY and NO CORRELATES_WITH for
+// any family, so this module's walk is the only writer of them and they are
+// part of its floor.
 //
 // WHY NO CONTRACT CHANGE IS NEEDED FOR THE SHAPE. A proxy is an ORDINARY LOCAL
 // node whose cross-graph reference rides its deterministic id, its Source and

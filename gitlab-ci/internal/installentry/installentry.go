@@ -47,11 +47,8 @@ const (
 // IT IS NOT `cicd`. That name is a BUILT-IN graph type and the client refuses to
 // register it, so a collector could not claim it however it was spelled.
 //
-// AND IT IS NOT THE BARE PROVIDER NAME EITHER. A family registered under the
-// provider's own one-word name collides with a compiled-in collector of that
-// name, and the client's post-collect linker is keyed on exactly those names — so
-// such a registration would have a linker run over a graph whose data it was
-// never written for. This module names nothing else and attempts nothing else.
+// AND IT IS NOT THE BARE PROVIDER NAME EITHER (`gitlab`). This module names
+// nothing else and attempts nothing else.
 const FamilyName = "gitlab-ci"
 
 // ToolName is the single MCP tool this collector serves. It must match what the

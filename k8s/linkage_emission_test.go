@@ -97,8 +97,8 @@ func TestLinkage_FourShapesReachTheResultThroughTheGraphFamilyFields(t *testing.
 // stood here: the predicate fires AND the edge leaves the walk.
 //
 // WHAT THE EMISSION MUST NOT DO, asserted rather than assumed. The two wrong
-// forcings were reversing the edge — which asserts a relationship the built-in
-// linker does not — and emitting it with no family, which lands an in-graph edge
+// forcings were reversing the edge, which asserts the reverse relationship, and
+// emitting it with no family, which lands an in-graph edge
 // to a chart id nothing in the k8s graph resolves. Both are excluded here: the
 // direction is pinned FROM the chart file node, and the family is pinned present
 // in SourceGraph rather than absent.
@@ -116,7 +116,7 @@ func TestLinkage_DeploysIsComputedAndEmittedThroughSourceGraph(t *testing.T) {
 		}
 		emitted++
 		assert.Equal(t, "charts/api/Chart.yaml", e.FromID,
-			"the edge runs FROM the chart file node, the built-in linker's direction")
+			"the edge runs FROM the chart file node")
 		assert.Equal(t, "prod/Deployment/api-server", e.ToID, "TO the Kubernetes node")
 		assert.Equal(t, graphFamilyCode, e.SourceGraph,
 			"the FOREIGN endpoint is the FROM, so the family belongs in source_graph")

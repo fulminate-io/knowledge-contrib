@@ -59,17 +59,21 @@ It takes `--version <tag>` to pin a release, and reads a GitHub token from
 needs neither, and the token is never written to the entry, to the version
 sidecar or to any other file.
 
-**It writes no provider credential VALUE into the entry.** For a credential name
-your installing shell holds it writes a REFERENCE — `"NAME": "${NAME}"` — and the
-process that serves the collect reads the value out of your own environment when
-it starts this collector; a name that shell does not hold is left out of the
-entry entirely. It never writes the `${NAME:-}` form: that one is expanded by the
-serving process too and resolves to an empty value the provider sees as set,
-which is a different failure and not a working credential. The bare form has no
-such default, so a serving process without the name refuses that entry by name
-and leaves every other collector in the file collecting. What the script also
-writes is the non-secret configuration and the paths below, and a credential
-reaches this collector the way the entry above shows.
+**It writes no provider credential value into the entry.** For each
+credential name this collector declares that your installing shell exports,
+it copies the value into this collector's own credential file,
+`collectors.d/cloudwatch.json` beside your user-scope `collectors.json`
+(`~/.knowledge/collectors.d/cloudwatch.json` by default): a JSON object of
+variable name to value, mode 0600. The value reaches the client on standard
+input, through `knowledge desktop-collectors credentials`, and never an
+argument or a message. The entry names it with a bare `"NAME": "${NAME}"`
+reference, which the client fills from that file when it starts this
+collector. A name your shell does not export is not written; the script
+prints it, and exporting it and re-running the script adds it. A reference
+the file does not set refuses that entry by name and leaves every other
+collector in the file collecting. What the script also writes is the non-secret
+configuration and the paths below, and a credential reaches this collector the
+way the entry above shows.
 
 Reversing it removes the binary, its version sidecar and the config entry, and
 no graph:
@@ -211,12 +215,14 @@ collector's process receives exactly the names the entry lists and nothing else,
 so a name left off is a capability the credential chain does not have. `HOME` is
 the one worth pointing at: without it no profile, single-sign-on session or
 assumed role from the shared credentials and config files can be found at all.
-Set the values in your own environment and the references carry them in, so no
-credential is written into a config file; change the `command` to wherever you
+Put the values you use in this collector's credential file,
+`collectors.d/cloudwatch.json` beside your user-scope `collectors.json` (a JSON
+object of variable name to value, mode 0600), and the references carry them in,
+so no credential is written into the entry; change the `command` to wherever you
 installed the binary.
 
-The `:-` in each reference is not decoration. A reference that is unset and
-carries no default REFUSES THE ENTRY it sits in when the file is read, naming the
+The `:-` in each reference is not decoration. A reference its credential file
+does not set and that carries no default REFUSES THE ENTRY it sits in when the file is read, naming the
 file, the entry, the field and the variable — the other collectors in that file
 are unaffected, but this one does not collect. Almost every name here is
 optional, and `${VAR:-}` resolves an unset one to the empty string, which is the
@@ -224,11 +230,9 @@ same input the AWS credential chain sees when the variable is simply absent, so
 the defaulted form is what lets one block list every name at once.
 
 **A credential you actually use is better written bare**, as
-`"AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}"`. Then a serving process
-that does not hold the name refuses this entry and says so, rather than handing
-the credential chain an empty key it reports as a permissions failure. That is
-the shape the install script writes for a credential name your installing shell
-holds.
+`"AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}"`. Then an entry whose
+credential file does not set the name is refused and says so, rather than
+handing the credential chain an empty key it reports as a permissions failure.
 
 ### The `context` block, and what each entry is for
 

@@ -52,6 +52,7 @@ func (c *Collector) Tool() framework.ToolSpec {
 		Description: "Enumerate an AWS account's resources and the relationships among them, " +
 			"as cloud-resource nodes carrying a resource_type. Credentials come from the AWS " +
 			"default chain; the collect id names the graph instance.",
+		Summary: "AWS resource inventory",
 	}
 }
 

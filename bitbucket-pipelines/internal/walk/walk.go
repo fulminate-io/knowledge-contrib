@@ -74,6 +74,7 @@ func (c Collector) Tool() framework.ToolSpec {
 			"relationships: repositories, pipeline definitions, recent runs, runners and their " +
 			"labels, deployment environments and their approval gates, and pipeline variable " +
 			"names.",
+		Summary: "Bitbucket Pipelines runs",
 	}
 }
 

@@ -14,25 +14,22 @@
 # per-collector environment table and exits, --print-env-sensitive-table prints
 # the per-collector empty-sensitive names and exits, --help.
 #
-# Credentials: none are read from argv and NO CREDENTIAL VALUE IS WRITTEN
-# ANYWHERE. A provider secret this shell holds reaches the config entry as a bare
-# `${NAME}` REFERENCE to the operator's own environment — never as its value, and
-# never as a `${NAME:-}` default. The two spellings are not interchangeable and
-# the difference is the whole of this rule: the defaulted form EXPANDS TO THE
-# EMPTY STRING in a process that does not hold the name, so the collector is
-# handed the name present and empty and reports a permissions failure; the bare
-# form is REFUSED BY NAME at collect time, naming the file, the entry, the field
-# and the variable, and that refusal is scoped to the entry that carries it. A
-# literal that is a URL carrying userinfo is refused rather than written. A GitHub
-# token for a private release is read from GH_TOKEN, then GITHUB_TOKEN, and is
-# never placed in argv, in the entry, in the sidecar, in any file, or in any
-# message.
+# Credentials: none are read from argv. A secret-class name the collector
+# declares and this shell exports has its value written into the collector's own
+# credential file, <home>/.knowledge/collectors.d/<collector>.json (mode 0600),
+# through `knowledge desktop-collectors credentials`, which reads it on stdin;
+# the entry carries a `${NAME}` reference to it. No value is placed in argv, in
+# the entry or in any message. A literal that is a URL carrying userinfo is
+# refused rather than written. A GitHub token for a private release is read from
+# GH_TOKEN, then GITHUB_TOKEN, and is never placed in argv, in the entry, in the
+# sidecar, in any file, or in any message.
 
 set -eu
 
 REPO="fulminate-io/knowledge-contrib"
 GITHUB_API="https://api.github.com"
-INSTALL_DIR="${HOME:-}/.knowledge/bin"
+STATE_DIR="${HOME:-}/.knowledge"
+INSTALL_DIR="$STATE_DIR/bin"
 COLLECTORS="aws azure bitbucket-pipelines cloudwatch gcp github-actions gitlab-ci k8s k8s-logs loki stackdriver"
 
 fail() {
@@ -58,19 +55,9 @@ usage() {
 #   selector  a LITERAL when set; the key is OMITTED ENTIRELY when unset. An
 #             empty selector is not the same as an absent one: it selects the
 #             thing named by the empty string, which resolves nothing.
-#   secret    A BARE `${NAME}` REFERENCE when this shell holds the name; nothing
-#             at all when it does not. Never the value, and never a `${NAME:-}`
-#             default. The operator's own environment supplies the value at
-#             spawn, so the credential lives in no file.
-#
-# WHY THE REFERENCE IS BARE AND NOT DEFAULTED, and it took a measurement to see:
-# a `${NAME:-}` reference is expanded by the process SERVING the collect, whose
-# environment under a service manager holds PATH and nothing else, so it reaches
-# the collector as the name PRESENT AND EMPTY on every collect. The bare form has
-# no such default to fall back to, so the same process REFUSES the entry by name
-# instead — naming the file, the entry, the field and the variable — and every
-# other entry in that file keeps collecting. A refusal an operator can act on is
-# what this class is choosing over a credential that silently arrives empty.
+#   secret    when this shell exports it, the VALUE goes into the collector's
+#             credential file and the entry carries a `${NAME}` reference; when
+#             it does not, nothing is written and the name is reported.
 #
 # WHICH COLLECTORS TELL THAT STATE APART FROM ABSENT IS DECLARED, NOT COUNTED
 # HERE. Every collector marks each name it discriminates on with
@@ -80,15 +67,6 @@ usage() {
 # comment named three collectors and one of the three had no discriminating name
 # at all, which is what a hand-maintained count beside a derived table turns
 # into.
-#
-# WHY THE ROW IS WRITTEN ONLY WHEN THIS SHELL HOLDS THE NAME, which is the same
-# set-ness gate the selector class uses. A collector's secret rows are frequently
-# ALTERNATIVES rather than a set to satisfy together — one names a token and its
-# other common spelling, another names a bearer token beside a username and
-# password — so a reference written for every declared secret would demand that
-# an operator set names their authentication mode does not use, and would fail
-# the add-time dial outright for the ones they cannot supply. The name they DID
-# export is the one they authenticate with.
 #
 # AND NO LITERAL CARRIES A CREDENTIAL. A path or selector value that is a URL
 # with userinfo is refused by name rather than written or rewritten; see
@@ -538,11 +516,11 @@ refuse_fetch() {
 # interrupted half-written. The sweep clears orphans left by a run that died
 # before its trap could fire; the `|| true` is required because an unmatched glob
 # exits nonzero under `set -e`.
-WORK="${HOME}/.knowledge/.staging-collector.$$"
+WORK="$STATE_DIR/.staging-collector.$$"
 cleanup() { rm -rf "$WORK"; }
 trap cleanup EXIT INT TERM
 rm -rf "$WORK"
-rm -rf "${HOME}/.knowledge"/.staging-collector.* 2>/dev/null || true
+rm -rf "$STATE_DIR"/.staging-collector.* 2>/dev/null || true
 mkdir -p "$WORK"
 
 if [ -n "$PIN_VERSION" ]; then
@@ -724,9 +702,36 @@ refuse_userinfo_token() {
 	done
 }
 
+# credentials_request <collector> <name>... — prints the desktop-collectors
+# credentials request {"name":<collector>,"set":{<name>:<value>,...}} on one
+# line. awk reads each value from its own environment and escapes '"', '\' and
+# the control characters, so no value is ever an argument.
+credentials_request() {
+	cr_collector=$1
+	shift
+	awk -v collector="$cr_collector" -v names="$*" 'BEGIN {
+		for (i = 1; i < 32; i++) ctl[sprintf("%c", i)] = sprintf("\\u%04x", i)
+		n = split(names, list, " ")
+		printf "{\"name\":\"%s\",\"set\":{", collector
+		for (k = 1; k <= n; k++) {
+			v = ENVIRON[list[k]]
+			out = ""
+			for (j = 1; j <= length(v); j++) {
+				c = substr(v, j, 1)
+				if (c == "\\") out = out "\\\\"
+				else if (c == "\"") out = out "\\\""
+				else if (c in ctl) out = out ctl[c]
+				else out = out c
+			}
+			printf "%s\"%s\":\"%s\"", (k > 1 ? "," : ""), list[k], out
+		}
+		print "}}"
+	}'
+}
+
 set -- --tool "$TOOL"
 env_rows="$(collector_env_table "$COLLECTOR")"
-referenced_secrets=""
+exported_secrets=""
 unset_secrets=""
 while read -r class name; do
 	[ -n "$name" ] || continue
@@ -753,29 +758,10 @@ while read -r class name; do
 		fi
 		;;
 	secret)
-		# A SECRET NAME IS WRITTEN AS A BARE REFERENCE TO ITSELF, and its VALUE is
-		# written nowhere. `"NAME": "${NAME}"` names the variable in the file and
-		# leaves the credential in the operator's own environment, which is where
-		# the process serving the collect reads it from at spawn.
-		#
-		# NOT THE VALUE, for the obvious reason. And NOT a `${NAME:-}` reference,
-		# which is what this arm wrote two rounds ago: the default is expanded by
-		# the process SERVING the collect, whose environment under a service
-		# manager holds PATH and nothing else, so it reaches the collector as the
-		# name PRESENT AND EMPTY — a credential that looks supplied and is not.
-		# The bare form has no default to fall back to and is REFUSED BY NAME
-		# instead, on the entry that carries it and on no other.
-		#
-		# THE KEY IS OMITTED ENTIRELY WHEN THIS SHELL DOES NOT HOLD THE NAME. A
-		# reference to a name the operator never exported would refuse a collect
-		# they never asked for: a collector's secret rows are commonly
-		# alternatives — a token and its other spelling, a bearer token beside a
-		# username and password — and only the ones they set are the ones they
-		# authenticate with. It is the same set-ness gate the selector class uses,
-		# and an operator who wants another name adds that one key themselves.
+		# A secret-class name this shell exports is appended to exported_secrets,
+		# and one it does not is appended to unset_secrets.
 		if [ -n "$value" ]; then
-			set -- "$@" -e "$name=\${$name}"
-			referenced_secrets="$referenced_secrets $name"
+			exported_secrets="$exported_secrets $name"
 		else
 			unset_secrets="$unset_secrets $name"
 		fi
@@ -786,20 +772,52 @@ done <<EOF
 $env_rows
 EOF
 
-# NAMES ONLY, NEVER VALUES, in both reports. An operator is owed what was written
-# for their credentials and what was not; printing the name costs nothing and
-# printing the value is the thing this whole class exists to prevent.
-if [ -n "$referenced_secrets" ]; then
-	echo "install.sh: these credential names are written into the entry as \${NAME} references to your own environment, never as values:${referenced_secrets}"
-	echo "install.sh: the value is read at collect time from the environment the daemon serves from — set it there, or the collect is refused by name."
-fi
-if [ -n "$unset_secrets" ]; then
-	echo "install.sh: these credential names are not set in this shell, so no reference was written for them:${unset_secrets}"
-	echo "install.sh: export the one your provider needs and re-run, or add that one key to the entry yourself."
-fi
-
-"$CLIENT" collector add "$@" "$COLLECTOR" -- "$DEST" ||
+# The first add's report is printed after the credential step, and only when
+# no second add replaces the entry it describes.
+first_add="$("$CLIENT" collector add --state-dir "$STATE_DIR" "$@" "$COLLECTOR" -- "$DEST")" ||
 	fail "'knowledge collector add $COLLECTOR' failed — nothing was registered."
+
+# The credential file. When a declared secret is exported, or the file exists,
+# the client's credentials op is run: credentials_request reads each exported
+# value from the environment and the op reads the request on stdin, so no value
+# reaches argv or a message. The op answers the names the file then holds; every
+# declared secret name among them gets a ${NAME} reference in a second add.
+CRED_FILE="$STATE_DIR/collectors.d/$COLLECTOR.json"
+saved=""
+if [ -n "$exported_secrets" ] || [ -e "$CRED_FILE" ]; then
+	# shellcheck disable=SC2086 # the names are variable names, split on spaces.
+	answer="$(credentials_request "$COLLECTOR" $exported_secrets |
+		"$CLIENT" desktop-collectors credentials --state-dir "$STATE_DIR")" ||
+		fail "writing the credentials of '$COLLECTOR' into $CRED_FILE failed; it is registered without them."
+	saved="$(printf '%s\n' "$answer" | sed -n 's/.*"saved":\[\([^]]*\)\].*/\1/p' | tr -d '"' | tr ',' ' ')"
+fi
+referenced=""
+missing=""
+for name in $exported_secrets $unset_secrets; do
+	case " $saved " in
+	*" $name "*)
+		set -- "$@" -e "$name=\${$name}"
+		referenced="$referenced $name"
+		;;
+	*) missing="$missing $name" ;;
+	esac
+done
+if [ -n "$referenced" ]; then
+	"$CLIENT" collector add --state-dir "$STATE_DIR" "$@" "$COLLECTOR" -- "$DEST" ||
+		fail "'knowledge collector add $COLLECTOR' with its credential references failed; it is registered without them."
+else
+	printf '%s\n' "$first_add"
+fi
+if [ -n "$exported_secrets" ]; then
+	echo "install.sh: wrote these credential names into $CRED_FILE:${exported_secrets}"
+fi
+if [ -n "$referenced" ]; then
+	echo "install.sh: the '$COLLECTOR' entry references these names in $CRED_FILE:${referenced}"
+fi
+if [ -n "$missing" ]; then
+	echo "install.sh: these credential names are neither exported in this shell nor in $CRED_FILE, so the entry does not reference them:${missing}"
+	echo "install.sh: export the ones your provider uses and re-run this script."
+fi
 
 echo "install.sh: registered '$COLLECTOR' (tool $TOOL) at $DEST"
 echo "install.sh: collect with: knowledge collect --type $COLLECTOR --id <graph>"

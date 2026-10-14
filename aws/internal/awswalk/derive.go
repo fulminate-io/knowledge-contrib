@@ -21,11 +21,8 @@ import (
 //	WORKLOAD_IDENTITY                       needs a role's trust policy AND the
 //	                                        EKS clusters whose OIDC issuers it names
 //
-// THE BUILT-IN COLLECTOR PRODUCES THESE IN A POST-POPULATE HOOK the client runs
-// after a collect. THIS COLLECTOR CANNOT USE ONE: the client's post-populate tail
-// returns before the hook lookup for any registered custom family, so a hook
-// would never fire. So the derivation happens HERE, inside the walk, which is
-// also the only place with the raw rules — the service walks record what they
+// The client runs no post-collect hook for any family, so these are derived
+// HERE, inside the walk, from the raw rules: the service walks record what they
 // saw and the passes below turn it into nodes and edges once every walk is done.
 //
 // THE RECORDING IS SEPARATE FROM THE DERIVATION for one reason: a rule
