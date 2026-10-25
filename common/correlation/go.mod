@@ -2,7 +2,7 @@ module github.com/fulminate-io/knowledge-contrib/common/correlation
 
 go 1.26.4
 
-toolchain go1.26.8
+toolchain go1.27.3
 
 // Dependency-purity lock: this module is imported BY logs collectors and imports
 // NOTHING of ours except the collector framework, whose Edge type is the shape

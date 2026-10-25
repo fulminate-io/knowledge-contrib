@@ -2,7 +2,7 @@ module github.com/fulminate-io/knowledge-contrib/loki
 
 go 1.26.4
 
-toolchain go1.26.8
+toolchain go1.27.3
 
 // Dependency-purity lock: this module is a CONTRIB COLLECTOR. It requires the
 // collector framework and nothing else of ours — not the root contract module,
@@ -23,12 +23,12 @@ toolchain go1.26.8
 // github.com/klauspost/compress is a NON-TEST dependency and is forced: a
 // log-chunk's Content is a zstd frame, and Go's standard library carries no
 // usable zstd (internal/zstd is decode-only and importable only inside std).
-// It is pinned at v1.18.5 to match the client module the parity target is
+// It is pinned at v1.19.1 to match the client module the parity target is
 // measured against.
 require (
 	github.com/fulminate-io/knowledge-contrib/common/correlation v0.0.0
 	github.com/fulminate-io/knowledge-contrib/framework v0.0.0
-	github.com/klauspost/compress v1.18.5
+	github.com/klauspost/compress v1.19.1
 )
 
 require github.com/modelcontextprotocol/go-sdk v1.7.0

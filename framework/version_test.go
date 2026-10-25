@@ -51,7 +51,7 @@ func TestVersionFlagPrintsStampedToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("--version should exit 0, got %v (stderr: %s)", err, stderr)
 	}
-	first := strings.SplitN(strings.TrimSpace(stdout), "\n", 2)[0]
+	first, _, _ := strings.Cut(strings.TrimSpace(stdout), "\n")
 	fields := strings.Fields(first)
 	if len(fields) < 2 {
 		t.Fatalf("the banner must carry more than a bare token so an extraction cannot pass vacuously; got %q", stdout)

@@ -615,11 +615,12 @@ fn pin_9_the_ingest_vocabulary_refusal_is_driven_end_to_end() {
 
     let ingest = repo_root()
         .join("cmd")
-        .join("knowledge-server")
+        .join("knowledge")
+        .join("server")
         .join("internal")
         .join("bootstrap")
         .join("ingest.go");
-    let landed = std::fs::read_to_string(&ingest).unwrap_or_default();
+    let landed = read(&ingest);
 
     // The refusal is a per-node type check. Its tell is a message naming the
     // offending value beside the node; read the source for one rather than for

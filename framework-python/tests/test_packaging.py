@@ -171,7 +171,12 @@ class SuiteInvocationTest(unittest.TestCase):
 class CILegTest(unittest.TestCase):
     def test_row24a_the_leg_exists_and_runs_on_a_hosted_runner(self):
         block = _job_block(_workflow_text(self), _JOB_NAME)
-        self.assertIn("runs-on: ubuntu-latest", block)
+        self.assertIn(
+            "runs-on: ubuntu-24.04",
+            block,
+            "the leg tests the declared floor, 3.9, and only an image that carries it can serve "
+            "setup-python: ubuntu-latest resolved to 26.04, which has no 3.9",
+        )
 
     def test_row24b_the_leg_is_gated_on_this_ports_own_filter_and_not_the_class_wide_one(self):
         """The leg rode the class-wide `collectors` filter while that was what
@@ -215,9 +220,8 @@ class CILegTest(unittest.TestCase):
         )
 
     def test_row24c_the_leg_is_not_a_dir_shaped_collector_leg(self):
-        """A port carries no go.mod, and the membership census partitions modules
-        by go.mod presence while reading CI legs out of the `dir:` key. A port leg
-        in that shape is the shape the census refuses."""
+        """A port carries no go.mod, so its CI leg is not a `dir: ./cmd/collectors`
+        module leg; the port's job block carries no such key."""
         block = _job_block(_workflow_text(self), _JOB_NAME)
         self.assertNotIn("dir: ./cmd/collectors", block)
 

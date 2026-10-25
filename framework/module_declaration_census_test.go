@@ -142,7 +142,7 @@ func collectorModules(t *testing.T, root string) []string {
 		if rel == "." {
 			return nil
 		}
-		top := strings.Split(rel, string(filepath.Separator))[0]
+		top, _, _ := strings.Cut(rel, string(filepath.Separator))
 		if slices.Contains(nonCollectorModules, top) {
 			return nil
 		}

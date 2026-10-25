@@ -30,7 +30,7 @@ REPO="fulminate-io/knowledge-contrib"
 GITHUB_API="https://api.github.com"
 STATE_DIR="${HOME:-}/.knowledge"
 INSTALL_DIR="$STATE_DIR/bin"
-COLLECTORS="aws azure bitbucket-pipelines cloudwatch gcp github-actions gitlab-ci k8s k8s-logs loki stackdriver"
+COLLECTORS="aws azure bitbucket-pipelines cloudwatch gcp github-actions gitlab-ci hubspot k8s k8s-logs loki notion slack stackdriver"
 
 fail() {
 	echo "install.sh: $*" >&2
@@ -56,8 +56,10 @@ usage() {
 #             empty selector is not the same as an absent one: it selects the
 #             thing named by the empty string, which resolves nothing.
 #   secret    when this shell exports it, the VALUE goes into the collector's
-#             credential file and the entry carries a `${NAME}` reference; when
-#             it does not, nothing is written and the name is reported.
+#             credential file. The entry carries a `${NAME}` reference for every
+#             declared secret the file holds, exported now or on an earlier run;
+#             a name neither exported nor in the file is written nowhere and is
+#             reported.
 #
 # WHICH COLLECTORS TELL THAT STATE APART FROM ABSENT IS DECLARED, NOT COUNTED
 # HERE. Every collector marks each name it discriminates on with
@@ -195,6 +197,11 @@ collector_env_table() {
 			secret GITLAB_TOKEN
 		EOF
 		;;
+	hubspot)
+		cat <<-'EOF'
+			secret HUBSPOT_ACCESS_TOKEN
+		EOF
+		;;
 	k8s)
 		cat <<-'EOF'
 			path CLOUDSDK_CONFIG
@@ -240,6 +247,16 @@ collector_env_table() {
 			secret LOKI_USERNAME
 		EOF
 		;;
+	notion)
+		cat <<-'EOF'
+			secret NOTION_API_KEY
+		EOF
+		;;
+	slack)
+		cat <<-'EOF'
+			secret SLACK_TOKEN
+		EOF
+		;;
 	stackdriver)
 		cat <<-'EOF'
 			path HOME
@@ -270,9 +287,12 @@ collector_tool() {
 	gcp) echo "collect" ;;
 	github-actions) echo "collect" ;;
 	gitlab-ci) echo "collect" ;;
+	hubspot) echo "collect" ;;
 	k8s) echo "collect" ;;
 	k8s-logs) echo "collect_k8s_logs" ;;
 	loki) echo "collect_loki_logs" ;;
+	notion) echo "collect" ;;
+	slack) echo "collect" ;;
 	stackdriver) echo "collect" ;;
 	*) return 1 ;;
 	esac
@@ -310,6 +330,10 @@ collector_env_sensitive() {
 		cat <<-'EOF'
 		EOF
 		;;
+	hubspot)
+		cat <<-'EOF'
+		EOF
+		;;
 	k8s)
 		cat <<-'EOF'
 		EOF
@@ -339,6 +363,14 @@ collector_env_sensitive() {
 			LOKI_QUERY_TAGS
 			LOKI_TLS_SKIP_VERIFY
 			LOKI_USERNAME
+		EOF
+		;;
+	notion)
+		cat <<-'EOF'
+		EOF
+		;;
+	slack)
+		cat <<-'EOF'
 		EOF
 		;;
 	stackdriver)

@@ -122,7 +122,7 @@ func importsOf(t *testing.T, name string, body []byte) []string {
 func TestNoNonTestFileImportsTheKnowledgeClientOrServer(t *testing.T) {
 	const (
 		client = "github.com/fulminate-io/knowledge/cmd/knowledge/"
-		server = "github.com/fulminate-io/knowledge/cmd/knowledge-server/"
+		server = "github.com/fulminate-io/knowledge/cmd/knowledge/server/"
 	)
 	files := nonTestGoFiles(t)
 	for name, body := range files {

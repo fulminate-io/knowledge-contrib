@@ -140,7 +140,7 @@ func TestNoRequireNamesTheClientOrTheServer(t *testing.T) {
 		ourModulePrefix: "the root contract module: a collector speaks MCP, not the knowledge wire",
 		ourModulePrefix + "/cmd/knowledge": "the client, whose collectors this module exists to " +
 			"replace",
-		ourModulePrefix + "/cmd/knowledge-server": "the server, which a collector never talks to",
+		ourModulePrefix + "/cmd/knowledge/server": "the server, which a collector never talks to",
 	}
 	for _, req := range parsed.Require {
 		if reason, bad := forbidden[req.Mod.Path]; bad {

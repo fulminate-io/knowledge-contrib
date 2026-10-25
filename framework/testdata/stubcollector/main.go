@@ -11,6 +11,14 @@
 // writes {"env_names": [...], "sha256": {NAME: hex}} for the declared secrets
 // present in its environment to that file at mode 0600.
 //
+// The package variable declare, set at link time with
+// -ldflags "-X main.declare=<value>", selects the environment describe
+// declares: secret (the default) declares STUB_TOKEN and the STUB_SECRETS
+// names as secret-class; none declares no variable; chrome declares exactly
+// the browser collectors' entries, KNOWLEDGE_CHROME_USER_DATA_DIR (path,
+// empty-sensitive) and HOME (path). Any other value is refused at start,
+// naming it.
+//
 // Usage:
 //
 //	stubcollector [--no-describe] [--http <addr>]
@@ -55,6 +63,36 @@ const secretsEnv = "STUB_SECRETS"
 // reportEnv names the file each start writes its report to.
 const reportEnv = "STUB_REPORT"
 
+// declare is the link-time environment selector: secret, none or chrome.
+var declare = "secret"
+
+// chromeUserDataDirEnv is the Chrome directory variable declare=chrome
+// declares beside HOME.
+const chromeUserDataDirEnv = "KNOWLEDGE_CHROME_USER_DATA_DIR"
+
+// declaredEnvironment returns the environment declare selects, and an error
+// naming declare when it is none of secret, none and chrome.
+func declaredEnvironment() ([]framework.EnvDeclaration, error) {
+	switch declare {
+	case "secret":
+		return declaredSecrets(), nil
+	case "none":
+		return []framework.EnvDeclaration{}, nil
+	case "chrome":
+		return []framework.EnvDeclaration{
+			{
+				Name: chromeUserDataDirEnv, Class: framework.EnvClassPath, EmptySensitive: true,
+				Description: "the user data directory of the Chrome you are signed in with; unset reads Chrome's default directory under HOME",
+			},
+			{
+				Name: "HOME", Class: framework.EnvClassPath,
+				Description: "the home directory Chrome's default user data directory is under",
+			},
+		}, nil
+	}
+	return nil, fmt.Errorf("the link-time declare value %q is not one of secret, none, chrome", declare)
+}
+
 // params is the stub's collect params: an optional note copied into the probe
 // node's metadata.
 type params struct {
@@ -62,10 +100,12 @@ type params struct {
 }
 
 // stub is the fixture collector. lastAuthorization holds the most recent
-// Authorization header the HTTP arm received.
+// Authorization header the HTTP arm received; environment is the declaration
+// describe serves.
 type stub struct {
 	mu                sync.Mutex
 	lastAuthorization string
+	environment       []framework.EnvDeclaration
 }
 
 func (s *stub) Tool() framework.ToolSpec {
@@ -77,7 +117,7 @@ func (s *stub) Describe() framework.Declaration {
 		Behavior:    framework.BehaviorDeclaration{Summarizable: new(false), Embeddable: new(false), Syncable: new(true)},
 		NodeTypes:   []string{"probe", "peer"},
 		EdgeTypes:   []string{"reaches"},
-		Environment: declaredSecrets(),
+		Environment: s.environment,
 	}
 }
 
@@ -221,7 +261,11 @@ func main() {
 
 // run serves the stub as the command line asks.
 func run() error {
-	s := &stub{}
+	env, err := declaredEnvironment()
+	if err != nil {
+		return err
+	}
+	s := &stub{environment: env}
 	if err := writeReport(); err != nil {
 		return err
 	}

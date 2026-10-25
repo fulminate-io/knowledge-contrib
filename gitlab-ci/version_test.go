@@ -102,7 +102,7 @@ func TestTheBinaryAnswersTheVersionFlagWithItsStamp(t *testing.T) {
 			"up-to-date check reads the first line of this, so a silent binary makes every " +
 			"installed copy look out of date and be reinstalled on every run")
 	}
-	first := strings.SplitN(strings.TrimRight(out, "\n"), "\n", 2)[0]
+	first, _, _ := strings.Cut(strings.TrimRight(out, "\n"), "\n")
 	if strings.TrimSpace(first) == "" {
 		t.Fatalf("the first line of the banner is blank: %q", out)
 	}

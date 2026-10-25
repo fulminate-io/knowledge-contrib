@@ -129,9 +129,10 @@ var declaredEnvNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 //     file-based credential chain resolves.
 //   - [EnvClassSelector] a literal when set; the key is omitted entirely when
 //     unset, because an empty selector selects the thing named by "".
-//   - [EnvClassSecret] NOTHING, in any state — not the value and not a
-//     reference to it, because a reference is expanded by the process serving
-//     the collect and reaches the collector present-and-empty.
+//   - [EnvClassSecret] an exported value is written into the collector's
+//     credential file, collectors.d/<collector>.json; the entry gets a bare
+//     `${NAME}` reference for each declared secret that file holds; a name
+//     neither exported nor in the file is written nowhere.
 //   - [EnvClassNotCarried] NOTHING either, for a different reason: the collector
 //     reads the name and an installed entry deliberately does not declare it —
 //     a machine fact, a platform the installer does not target, or a non-default

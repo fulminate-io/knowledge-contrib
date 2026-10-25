@@ -13,7 +13,7 @@
 set -eu
 
 INSTALL_DIR="${HOME:-}/.knowledge/bin"
-COLLECTORS="aws azure bitbucket-pipelines cloudwatch gcp github-actions gitlab-ci k8s k8s-logs loki stackdriver"
+COLLECTORS="aws azure bitbucket-pipelines cloudwatch gcp github-actions gitlab-ci hubspot k8s k8s-logs loki notion slack stackdriver"
 
 fail() {
 	echo "uninstall.sh: $*" >&2

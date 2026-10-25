@@ -406,7 +406,7 @@ test("R7.1 the package carries the port manifest, with a build, a test, a langua
   assert.equal(m.get("ci_leg"), "framework-typescript-tests");
 });
 
-test("R7.1 the package carries NO go.mod: a directory in two classes reds the membership census", () => {
+test("R7.1 the package carries NO go.mod: a port is not also a Go module", () => {
   assert.equal(existsSync(join(ROOT, "go.mod")), false);
   assert.equal(existsSync(join(ROOT, "go.sum")), false);
 });
@@ -475,7 +475,7 @@ test("R7.1 the manifest's declared CI leg is a job in the workflow", (t) => {
   assert.ok(
     ci.includes(`${leg}:`),
     `the manifest declares the CI leg ${leg} and the workflow must name it; a leg named in one and not the other ` +
-      `is exactly the drift the membership census exists to catch`,
+      `is a CI leg that never runs`,
   );
 });
 

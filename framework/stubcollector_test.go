@@ -60,6 +60,13 @@ func fenceTestCacheOnStubSources(t *testing.T) {
 // failure reports.
 func buildStubCollector(t *testing.T) string {
 	t.Helper()
+	return buildStubCollectorWith(t)
+}
+
+// buildStubCollectorWith builds the fixture with buildArgs passed to go build
+// before the package path, and returns the binary's path.
+func buildStubCollectorWith(t *testing.T, buildArgs ...string) string {
+	t.Helper()
 	fenceTestCacheOnStubSources(t)
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "stubcollector")
@@ -68,7 +75,8 @@ func buildStubCollector(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("go", "build", "-o", bin, "./"+stubSourceDir)
+	args := append([]string{"build", "-o", bin}, buildArgs...)
+	cmd := exec.Command("go", append(args, "./"+stubSourceDir)...) //nolint:gosec // the test's own arguments.
 	cmd.Stdout, cmd.Stderr = logFile, logFile
 	runErr := cmd.Run()
 	_ = logFile.Close()

@@ -42,7 +42,7 @@ import (
 // refusedImportPrefixes are the paths no file in this module may import.
 var refusedImportPrefixes = []string{
 	"github.com/fulminate-io/knowledge/cmd/knowledge/",
-	"github.com/fulminate-io/knowledge/cmd/knowledge-server/",
+	"github.com/fulminate-io/knowledge/cmd/knowledge/server/",
 	"github.com/fulminate-io/knowledge/gen/",
 }
 
@@ -107,7 +107,7 @@ func TestTheRefusedPrefixesWouldActuallyFire(t *testing.T) {
 	for _, bad := range []string{
 		"github.com/fulminate-io/knowledge/cmd/knowledge/internal/logwire",
 		"github.com/fulminate-io/knowledge/cmd/knowledge/internal/collector/logs",
-		"github.com/fulminate-io/knowledge/cmd/knowledge-server/internal/store",
+		"github.com/fulminate-io/knowledge/cmd/knowledge/server/internal/store",
 		"github.com/fulminate-io/knowledge/gen/knowledge/v1",
 	} {
 		if !refuse(bad) {

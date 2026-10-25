@@ -160,7 +160,7 @@ func TestImportCensus_TheOnlyPathOfOursIsTheFramework(t *testing.T) {
 
 	assert.Empty(t, unexpected,
 		"a non-test file in this module may import only the collector framework of ours. "+
-			"cmd/knowledge and cmd/knowledge-server are refused by the compiler; a gen/ path is NOT, "+
+			"cmd/knowledge and cmd/knowledge/server are refused by the compiler; a gen/ path is NOT, "+
 			"which is what this census covers: %v", unexpected)
 
 	// KNOWN POSITIVE for rule 2, and it is what makes the assertion above

@@ -19,9 +19,12 @@ every release, with a `checksums.txt` covering all of them.
 - [`gcp`](gcp/)
 - [`github-actions`](github-actions/)
 - [`gitlab-ci`](gitlab-ci/)
+- [`hubspot`](hubspot/)
 - [`k8s-logs`](k8s-logs/)
 - [`k8s`](k8s/)
 - [`loki`](loki/)
+- [`notion`](notion/)
+- [`slack`](slack/)
 - [`stackdriver`](stackdriver/)
 <!-- END GENERATED: modules -->
 
@@ -66,7 +69,9 @@ file, `~/.knowledge/collectors.d/<collector>.json` (a JSON object of variable
 name to value, mode 0600), through `knowledge desktop-collectors credentials`,
 which reads it on standard input, and writes a `${NAME}` reference into the
 entry, which the client fills from that file when it starts the collector. A
-name the shell does not export is printed and not written. Each module's README
+name the shell does not export keeps its reference when the credential file
+already holds it from an earlier run; a name neither exported nor in the file
+is written nowhere and is printed. Each module's README
 shows the entry.
 
 ## Writing your own

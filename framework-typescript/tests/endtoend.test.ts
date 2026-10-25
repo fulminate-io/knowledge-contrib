@@ -1,5 +1,5 @@
 // endtoend.test.ts — R3 and R4.4: the sample collector registered by hand on an
-// ISOLATED client and server pair and COLLECTED, with the four observables the
+// ISOLATED client, whose built-in backend holds the graph store, and COLLECTED, with the four observables the
 // ticket names asserted against the real client rather than against this
 // package's own driver.
 //
@@ -10,17 +10,17 @@
 // where walk_complete, the deletion phase, the node vocabulary and the error arm
 // are decided.
 //
-// THE VENUE IS AN ISOLATED PAIR ON PICKED FREE PORTS UNDER A SCRATCH HOME. Every
-// process is spawned with an explicit, complete environment rather than an
-// inherited one, so nothing of the developer's machine reaches it. The operator's
-// own daemon and graph store are never contacted: this row starts its own server
-// and its own client and kills both by pid.
+// THE VENUE IS ONE ISOLATED CLIENT ON A PICKED FREE PORT UNDER A SCRATCH HOME,
+// its store in the scratch graph directory. The client is spawned with an
+// explicit, complete environment rather than an inherited one. The operator's own
+// daemon and graph store are never contacted: this row starts its own client and
+// kills it by pid.
 //
 // THE MCP CALLS GO THROUGH curl, and that is deliberate rather than convenient.
 // R4.1 requires that this package's runtime and test code open NO socket, and a
-// row that imported node:http to drive the pair would make that claim false
+// row that imported node:http to drive the client would make that claim false
 // while leaving the scan green only by exempting itself. A subprocess talking to
-// a server this test started is not the package opening a socket, and it is not
+// a client this test started is not the package opening a socket, and it is not
 // the network access R4.1 is about.
 
 import assert from "node:assert/strict";
@@ -61,7 +61,7 @@ function pickFreePort(from: number): number {
  * "reaches nothing" because it is not a real key. It reached Anthropic: with a
  * provider configured the client's precheck DIALS it at startup, and the run
  * logged a completed HTTPS round trip to the vendor carrying a real request id
- * and a 401, on every start of the pair. Ticket requirement R4 says the suite
+ * and a 401, on every start of the client. Ticket requirement R4 says the suite
  * makes no network call, and a fake credential is still a credential the test
  * handed to a process that then used it.
  *
@@ -95,7 +95,7 @@ const LOG_TAIL_BYTES = 16 * 1024;
  * diagnostic, because nothing was reading the stream that would have said why.
  *
  * AND A PIPE WITH AN EVENT-HANDLER READER DOES NOT FIX IT HERE. This row's body
- * is synchronous from end to end: it drives the pair with spawnSync, so the event
+ * is synchronous from end to end: it drives the client with spawnSync, so the event
  * loop never turns between the spawn and the assertions and a `data` handler is
  * never dispatched. Measured on the first attempt at this fix — both buffers were
  * empty at the first assertion, which is what the control below caught.
@@ -239,26 +239,24 @@ class McpSession {
   }
 }
 
-test("R3 and R4.4 the sample is registered and COLLECTED by the real client on an isolated pair", { timeout: 180_000 }, (t) => {
+test("R3 and R4.4 the sample is registered and COLLECTED by the real client on an isolated client", { timeout: 180_000 }, (t) => {
   const client = process.env["KNOWLEDGE_BIN"];
-  const server = process.env["KNOWLEDGE_SERVER_BIN"];
-  if (client === undefined || client === "" || server === undefined || server === "") {
+  if (client === undefined || client === "") {
     // The same rule the registration row follows: a skip is not a red, so in CI
     // this must be impossible. Locally it is honest.
     if (process.env["CI"] !== undefined && process.env["CI"] !== "") {
       assert.fail(
-        "KNOWLEDGE_BIN and KNOWLEDGE_SERVER_BIN must both be set in CI: this row is the only place the " +
-          "COLLECT half of the requirement is observed, and without the pair the leg proves registration alone.",
+        "KNOWLEDGE_BIN must be set in CI: this row is the only place the " +
+          "COLLECT half of the requirement is observed, and without the client the leg proves registration alone.",
       );
     }
     t.skip(
-      "KNOWLEDGE_BIN and KNOWLEDGE_SERVER_BIN are not both set: this row starts an isolated client and " +
-        "server pair and drives a real collect through them. Build both and set them to run it locally.",
+      "KNOWLEDGE_BIN is not set: this row starts an isolated client " +
+        "and drives a real collect through it. Build the client and set it to run it locally.",
     );
     return;
   }
   assert.ok(existsSync(client), `KNOWLEDGE_BIN names ${client}, which does not exist`);
-  assert.ok(existsSync(server), `KNOWLEDGE_SERVER_BIN names ${server}, which does not exist`);
 
   const scratch = mkdtempSync(join(tmpdir(), "kn-ts-e2e-"));
   const home = join(scratch, "home");
@@ -271,20 +269,15 @@ test("R3 and R4.4 the sample is registered and COLLECTED by the real client on a
   writeFileSync(join(tree, "beta.txt"), "bb");
   writeFileSync(join(tree, "nested", "gamma.txt"), "ggg");
 
-  const graphPort = pickFreePort(15801);
-  const mcpPort = pickFreePort(graphPort + 1);
+  const mcpPort = pickFreePort(15802);
   const env = isolatedEnv(home);
   const children: LoggedChild[] = [];
   const diagnostics = (): string => children.map((c) => c.diagnostic()).join("");
 
   try {
     children.push(
-      spawnLogged("server", scratch, server, ["-port", String(graphPort), "-graph-storage", graphs], env),
-    );
-    children.push(
       spawnLogged("client", scratch, client, [
         "serve",
-        "-port", String(graphPort),
         "-http-port", String(mcpPort),
         "-no-auth",
         // NO LLM PIPELINE. Nothing here asserts a search result, and wiring it
@@ -319,7 +312,7 @@ test("R3 and R4.4 the sample is registered and COLLECTED by the real client on a
     // absence of a reader rather than of a call.
     assert.ok(
       children.every((c) => c.bytesRead > 0),
-      `control: both children must have written something for the absences below to be about them. ${diagnostics()}`,
+      `control: the client must have written something for the absences below to be about it. ${diagnostics()}`,
     );
     // EVERY SHAPE HERE OCCURS ONLY ON A COMPLETED OUTBOUND CALL. "precheck
     // failed" is NOT among them and was removed after it fired on a clean run:
@@ -340,7 +333,7 @@ test("R3 and R4.4 the sample is registered and COLLECTED by the real client on a
       assert.equal(
         shape.test(children.map((c) => c.stderr).join("\n")),
         false,
-        `the pair dialed a third-party API: ${String(shape)} appears in a child's log. The suite makes no ` +
+        `the client dialed a third-party API: ${String(shape)} appears in its log. The suite makes no ` +
           `network call, and a credential this test supplied is still a credential.${diagnostics()}`,
       );
     }
@@ -412,7 +405,7 @@ test("R3 and R4.4 the sample is registered and COLLECTED by the real client on a
 
     // --- R3.5: what walk_complete actually decides ----------------------------
     // The deletion pair is the row that matters: an INCOMPLETE collect must not
-    // let the server treat a row it did not carry as gone, and a COMPLETE one
+    // let the store treat a row it did not carry as gone, and a COMPLETE one
     // must. The control is the second half; without it the first proves nothing.
     rmSync(join(tree, "beta.txt"));
     const locked = join(tree, "locked");
@@ -436,7 +429,7 @@ test("R3 and R4.4 the sample is registered and COLLECTED by the real client on a
     assert.equal(
       afterComplete.isError,
       true,
-      "THE CONTROL: a COMPLETE collect that no longer carries the row must let the server treat it as gone, " +
+      "THE CONTROL: a COMPLETE collect that no longer carries the row must let the store treat it as gone, " +
         `or the assertion above is about a deletion phase that never runs. It said: ${afterComplete.text}`,
     );
 
@@ -446,7 +439,7 @@ test("R3 and R4.4 the sample is registered and COLLECTED by the real client on a
     assert.match(boom.text, /the walk failed/, boom.text);
     assert.match(boom.text, /names the directory to walk/, boom.text);
   } finally {
-    // TEARDOWN IS NOT THE VERDICT. The pair writes into the graph directory until
+    // TEARDOWN IS NOT THE VERDICT. The client writes into the graph directory until
     // it dies, so removing the scratch tree while they are still exiting raced and
     // threw ENOTEMPTY over whatever the assertions had decided. Kill, wait for the
     // exit, then remove with bounded retries; a scratch directory that survives is

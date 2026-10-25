@@ -1,13 +1,13 @@
-# collector-manifest.tsv — what this directory is, for the four readers that
-# partition cmd/collectors: the membership census, the standalone census, the
-# isolation census and the publish sweep.
+# collector-manifest.tsv — what this directory is, for the three readers that
+# partition cmd/collectors: the standalone census, the isolation census and the
+# publish sweep.
 #
 # THE FORMAT IS key<TAB>value, one pair per line, `#` comments and blank lines
 # ignored. Neither the name of this file nor its key names are chosen here: both
 # come from scripts/testdata/collector-port-contract.tsv, the ONE declaration
-# those four readers share, so no two of them can look for different spellings of
+# those readers share, so no two of them can look for different spellings of
 # the same thing. A tab separator is what lets a build command carry spaces with
-# no quoting rule for four readers in two languages to disagree about.
+# no quoting rule for readers in two languages to disagree about.
 #
 # CARRYING THIS FILE IS WHAT MAKES THIS DIRECTORY A PORT rather than a Go module.
 # A directory carrying both this and a go.mod is a contradiction, not a merge, so
@@ -20,7 +20,8 @@
 # and fails rather than updating it.
 #
 # ci_leg IS THE JOB KEY in .github/workflows/ci.yml, not the job's display name.
-# The membership census fails when the two disagree.
+# The test "the manifest's declared CI leg is a job in the workflow" in
+# tests/package.test.ts fails when the workflow does not name it.
 language	typescript
 build	npm ci --no-audit --no-fund && npm run build
 test	npm test

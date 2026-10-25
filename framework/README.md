@@ -222,7 +222,7 @@ and says so once in the collect output.
 
 ## What this module adds
 
-Everything above is the contract. This module is 1498 lines of Go across ten
+Everything above is the contract. This module is 1499 lines of Go across ten
 files that implement it once, so that none of it is visible to a collector:
 
 | Symbol | What it is |

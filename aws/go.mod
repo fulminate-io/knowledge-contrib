@@ -2,7 +2,7 @@ module github.com/fulminate-io/knowledge-contrib/aws
 
 go 1.26.4
 
-toolchain go1.26.8
+toolchain go1.27.3
 
 // Dependency-purity lock: this module is a pure PEER-CONSUMER of the collector
 // contract, which is JSON over MCP rather than a Go type. It requires the

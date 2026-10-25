@@ -2,7 +2,7 @@ module github.com/fulminate-io/knowledge-contrib/stackdriver
 
 go 1.26.4
 
-toolchain go1.26.8
+toolchain go1.27.3
 
 // Dependency-purity lock: this module requires the Cloud Logging read client,
 // the compressor the log-chunk payload format is defined in, and the collector

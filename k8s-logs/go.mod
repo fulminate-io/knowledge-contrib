@@ -2,7 +2,7 @@ module github.com/fulminate-io/knowledge-contrib/k8s-logs
 
 go 1.26.4
 
-toolchain go1.26.8
+toolchain go1.27.3
 
 // Dependency-purity lock: this module is a custom collector, and the only
 // thing it may take from the knowledge tree is the collector framework. It
@@ -29,7 +29,7 @@ toolchain go1.26.8
 require (
 	github.com/fulminate-io/knowledge-contrib/common/correlation v0.0.0
 	github.com/fulminate-io/knowledge-contrib/framework v0.0.0
-	github.com/klauspost/compress v1.18.5
+	github.com/klauspost/compress v1.19.1
 )
 
 require (

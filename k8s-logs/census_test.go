@@ -235,7 +235,7 @@ The collector contract crossing is JSON over MCP, never a Go type`,
 func TestThePurityCensusRefusesTheForbiddenTrees(t *testing.T) {
 	for _, imp := range []string{
 		"github.com/fulminate-io/knowledge/cmd/knowledge/internal/collector/logs",
-		"github.com/fulminate-io/knowledge/cmd/knowledge-server/internal/store",
+		"github.com/fulminate-io/knowledge/cmd/knowledge/server/internal/store",
 		"github.com/fulminate-io/knowledge/gen/knowledge/v1",
 		"github.com/fulminate-io/knowledge-contrib/stackdriver",
 		"github.com/fulminate-io/knowledge-contrib/loki",

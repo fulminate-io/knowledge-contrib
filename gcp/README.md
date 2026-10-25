@@ -77,8 +77,10 @@ variable name to value, mode 0600. The value reaches the client on standard
 input, through `knowledge desktop-collectors credentials`, and never an
 argument or a message. The entry names it with a bare `"NAME": "${NAME}"`
 reference, which the client fills from that file when it starts this
-collector. A name your shell does not export is not written; the script
-prints it, and exporting it and re-running the script adds it. A reference
+collector. A name your shell does not export keeps its reference when the
+credential file already holds it from an earlier run. A name neither exported
+nor in the file is written nowhere; the script prints it, and exporting it and
+re-running the script adds it. A reference
 the file does not set refuses that entry by name and leaves every other
 collector in the file collecting. What the script also writes is the non-secret
 configuration and the paths below, and a credential reaches this collector the

@@ -2,7 +2,7 @@ module github.com/fulminate-io/knowledge-contrib/azure
 
 go 1.26.4
 
-toolchain go1.26.8
+toolchain go1.27.3
 
 // Dependency-purity lock: this module requires the Azure SDK, the collector
 // framework, and nothing else of ours. It MUST NOT require cmd/knowledge,

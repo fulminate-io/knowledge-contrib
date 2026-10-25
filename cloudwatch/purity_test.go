@@ -62,7 +62,7 @@ var directRequirements = []string{
 // directly or transitively. Each is a boundary rather than a preference.
 var forbiddenRequirements = map[string]string{
 	"github.com/fulminate-io/knowledge/cmd/knowledge":        "the client's own implementation of this contract; the crossing is JSON over MCP, never a Go type",
-	"github.com/fulminate-io/knowledge/cmd/knowledge-server": "the server; a collector speaks to it through no Go package at all",
+	"github.com/fulminate-io/knowledge/cmd/knowledge/server": "the server; a collector speaks to it through no Go package at all",
 	"github.com/fulminate-io/knowledge":                      "the root contract module; a collector needs no generated protobuf",
 }
 

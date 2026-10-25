@@ -2,7 +2,7 @@ module github.com/fulminate-io/knowledge-contrib/cloudwatch
 
 go 1.26.4
 
-toolchain go1.26.8
+toolchain go1.27.3
 
 // Dependency-purity lock: this module requires the collector framework, the
 // MCP Go SDK (transitively, through the framework) and exactly three

@@ -63,7 +63,7 @@ func TestPurity_RequiresTheFrameworkAndNothingElseOfOurs(t *testing.T) {
 	// types rather than on the JSON contract it is a peer consumer of.
 	forbidden := map[string]string{
 		"github.com/fulminate-io/knowledge/cmd/knowledge\n":      "the client module",
-		"github.com/fulminate-io/knowledge/cmd/knowledge-server": "the server module",
+		"github.com/fulminate-io/knowledge/cmd/knowledge/server": "the server module",
 	}
 	for path, what := range forbidden {
 		if strings.Contains(text, path) {
